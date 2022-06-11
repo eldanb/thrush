@@ -7,7 +7,7 @@ import { MessagePortRpcDispatcher } from "../../../../util/MessagePortRpc";
 class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorkerRpcInterface {
   _rpcDispathcer: MessagePortRpcDispatcher<ScriptSynthWorkerRpcInterface>;
   _synthEngine: ScriptSynthEngine | null = null;
-
+  
   constructor() {
     super();
     this._rpcDispathcer = new MessagePortRpcDispatcher<ScriptSynthWorkerRpcInterface>(this.port, this);

@@ -1,33 +1,52 @@
+import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
 import { NativeSynthesizerInstrument } from "./NativeSynthesizerInstrument";
 
 type NativeSynthesizerChannelState = {
   lastScheduledNode: AudioBufferSourceNode | null;
 }
+export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
+  private _channelState: NativeSynthesizerChannelState[] = [];
+  private _instruments: NativeSynthesizerInstrument[] = [];
 
-export class NativeSynthesizer {
-  private _channelState: NativeSynthesizerChannelState[];
-
-  constructor(private _audioContext: AudioContext, numChannels: number) {
-    this._channelState = [];
+  constructor(private _audioContext: AudioContext, numChannels: number) {    
     for(let i=0; i<numChannels; i++) {
       this._channelState[i] = {
         lastScheduledNode: null
       }
     }
   }
+  
+  async panic(): Promise<void> {    
+  }
 
+  
+  registerInstrument(
+    sampleBuff: ArrayBuffer, 
+    sampleRate: number, 
+    sampleStart: number, 
+    loopStart: number, 
+    loopLen: number, 
+    volume: number): number {
 
-  public scheduleNote(time: number, channel: number, note: number, instrument: NativeSynthesizerInstrument) {
-    const lastScheduled = this._channelState[channel].lastScheduledNode;
+    return this._instruments.push(
+      new NativeSynthesizerInstrument(new Float32Array(sampleBuff), sampleRate, loopStart, loopLen)
+    ) - 1;
+  }
+  
+  
+  async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
+    const lastScheduled = this._channelState[synthEvent.channel].lastScheduledNode;
     if(lastScheduled) {
-      lastScheduled.stop(time);
+      lastScheduled.stop(synthEvent.time);
     }
 
-    // TODO time
-    const audioBuffer = instrument.getAudioBuffer(1);
-    const noteNode = new AudioBufferSourceNode(this._audioContext, { buffer: audioBuffer, playbackRate: Math.pow(2, (note/12))});
-    noteNode.start(time);
-    noteNode.connect(this._audioContext.destination);
-    this._channelState[channel].lastScheduledNode = noteNode;
-  }
+    // TODO time, vibrato, volume change, ...
+    if(synthEvent.commands.newNote) {
+      const audioBuffer = this._instruments[synthEvent.commands.newNote?.instrumentId].getAudioBuffer(1);
+      const noteNode = new AudioBufferSourceNode(this._audioContext, { buffer: audioBuffer, playbackRate: Math.pow(2, (synthEvent.commands.newNote.note/12))});
+      noteNode.start(synthEvent.time);
+      noteNode.connect(this._audioContext.destination);
+      this._channelState[synthEvent.channel].lastScheduledNode = noteNode;  
+    }
+  }    
 }

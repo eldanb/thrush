@@ -1,8 +1,9 @@
 import { createMessagePortRpcProxy } from "src/lib/util/MessagePortRpc";
+import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
 import { ScriptSynthWorkerRpcInterface } from "./worklet/ScriptSynthWorkerRpcInterface";
 
 
-export class ScriptSynthesizer {
+export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
   private _audioContext: AudioContext;
   private _workletNode: AudioWorkletNode;
   private _workletNodeRpcProxy: ScriptSynthWorkerRpcInterface;
@@ -29,7 +30,38 @@ export class ScriptSynthesizer {
     return this._workletNode;
   }
 
-  get synthInterface(): ScriptSynthWorkerRpcInterface {
-    return this._workletNodeRpcProxy;
+  panic() {
+    return this._workletNodeRpcProxy.clearEventQueue();
   }
+
+  initialize(): Promise<void> {
+    return this._workletNodeRpcProxy.configure(this._audioContext.sampleRate);
+  }
+
+  createInstrument(instrument: ArrayBuffer,
+    sampleRate: number,
+    sampleStart: number,
+    loopStart: number, 
+    loopLen: number,
+    volume: number): Promise<number> {
+      return this._workletNodeRpcProxy.createInstrument(
+        instrument, 
+        sampleRate, 
+        sampleStart, 
+        loopStart,
+        loopLen, 
+        volume);
+  }
+
+  async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
+    await this._workletNodeRpcProxy.enqueueEvent({
+      time: synthEvent.time,
+      channel: synthEvent.channel,
+      newNote: synthEvent.commands.newNote,
+      panning: synthEvent.commands.panning,
+      volume: synthEvent.commands.volume
+    });
+  }
+
+
 }

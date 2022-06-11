@@ -41,7 +41,7 @@ export class NativeSynthesizerInstrument {
 
     return this._audioBuffer!;
   }
-
+  
   static fromWavFileContent(instrumentBuff: ArrayBuffer): NativeSynthesizerInstrument {
     const parsedWav = parseWav(instrumentBuff);
 

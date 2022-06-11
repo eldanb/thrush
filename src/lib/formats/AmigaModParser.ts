@@ -1,10 +1,13 @@
-import { not } from "@angular/compiler/src/output/output_ast";
-import { debug } from "console";
+import { NativeSynthesizer } from "../thrush_engine/synth/native/NativeSynthesizer";
 import { ScriptSynthEngineEvent } from "../thrush_engine/synth/scriptsynth/ScriptSynthEngine";
+import { ScriptSynthesizer } from "../thrush_engine/synth/scriptsynth/ScriptSynthesizer";
+import { ThrushPattern, ThrushPatternBinding, ThrushPatternChannelCommand, ThrushPatternChannelEffectSetVolume, ThrushPatternRow } from "../thrush_engine/ThrushPatternSequenceGenerator";
 import { ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "../thrush_engine/ThrushSequencer";
+import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../thrush_engine/ThrushSynthesizerInterface";
 
 // File format taken from:
 // See https://www.ocf.berkeley.edu/~eek/index.html/tiny_examples/ptmod/ap12.html
+// https://www.fileformat.info/format/mod/spec/3bc11a4842e342498a6230e60187b463/view.htm
 
 const textDecoder = new TextDecoder('ascii');
 
@@ -37,25 +40,31 @@ type AmigaModeFile = {
 };
 
 export function parseModFile(file: ArrayBuffer): AmigaModeFile {
+  const fileSig = textDecoder.decode(file.slice(1080, 1084));
+  
+  const numSamples = fileSig == 'M.K.' ? 31 : 15;
+  const postSamples = 50+30*(numSamples-1);
+  const fileSigLen = fileSig == 'M.K.' ? 4 : 0;
+
   const dv = new DataView(file);
   const songName = textDecoder.decode(file.slice(0, 20));
   const samples = [];
 
-  for(let sampleIdx=0; sampleIdx<31; sampleIdx++) {
+  for(let sampleIdx=0; sampleIdx<numSamples; sampleIdx++) {
     samples.push(loadSample(file.slice(20 + 30*sampleIdx, 50 + 30*sampleIdx)))
   }
 
-  const songLength = dv.getUint8(950);
-  const songPatterns = Array.from(new Uint8Array(file.slice(952, 952+songLength)));
+  const songLength = dv.getUint8(postSamples);
+  const songPatterns = Array.from(new Uint8Array(file.slice(postSamples+2, postSamples+2+songLength)));
 
   const numPatterns = Math.max(...songPatterns) + 1;
 
   const patterns = [];
   for(let patternIndex = 0; patternIndex<numPatterns; patternIndex++) {
-    patterns.push(loadPattern(file.slice(1084 + patternIndex*1024, 2108+patternIndex*1024)));
+    patterns.push(loadPattern(file.slice(postSamples+130+fileSigLen + patternIndex*1024, postSamples+130+fileSigLen+1024+patternIndex*1024)));
   }
 
-  let sampleOffset = 1084+numPatterns*1024;
+  let sampleOffset = postSamples+130+fileSigLen+numPatterns*1024;
   samples.forEach((sample) => {
     sample.content = file.slice(sampleOffset, sampleOffset + sample.sampleLen);
     sampleOffset+=sample.sampleLen;
@@ -206,6 +215,7 @@ export class AmigaModPlayer implements ThrushSequenceGenerator {
         )
     }));
   }
+
   start(sequencer: ThrushSequencer): void {
   }
 
@@ -220,7 +230,7 @@ export class AmigaModPlayer implements ThrushSequenceGenerator {
     currentPatternRow.forEach((channelCommand, channelIndex) => {
       if(channelCommand.sampleNumber && channelCommand.noteInfo) {
         this._lastChannelState[channelIndex].sample = channelCommand.sampleNumber;
-        this._lastChannelState[channelIndex].volume = this._modFile.samples[channelCommand.sampleNumber].volume;
+        this._lastChannelState[channelIndex].volume = this._modFile.samples[channelCommand.sampleNumber-1].volume;
       }
 
       switch(channelCommand.noteEffect) {
@@ -283,7 +293,7 @@ export class AmigaModPlayer implements ThrushSequenceGenerator {
           const rowEvent: ScriptSynthEngineEvent = {
             channel: channelIndex,
             time: currentTime,
-            panning: (channelIndex == 1 || channelIndex == 4) ? 0 : 1
+            panning: (channelIndex == 0 || channelIndex == 3) ? 0 : 1
           };
 
           if(channelCommand.noteInfo) {
@@ -329,13 +339,21 @@ export class AmigaModPlayer implements ThrushSequenceGenerator {
           }
 
           if(hasEvent) {
-            sequencer.tsynthToneGenerator.enqueueEvent(rowEvent);
-          }
+            sequencer.tsynthToneGenerator.enqueueSynthEvent(new ThrushCommonSynthesizerEvent(
+              rowEvent.time,
+              sequencer.tsynthToneGenerator,
+              rowEvent.channel,
+              {
+                newNote: rowEvent.newNote,
+                panning: rowEvent.panning,
+                volume: rowEvent.volume
+              }));
+          }              
         });
       }
     }
-/*
-    const tm = this._time;
+
+   /*const tm = this._time;
 
     this._patternRowIndex++;
     this._time += 8;
@@ -345,9 +363,12 @@ export class AmigaModPlayer implements ThrushSequenceGenerator {
       route: async (sequencer) => {
         sequencer.tsynthToneGenerator.enqueueEvent({
               channel: 0,
-              instrumentId: this._sampleInstrumentIndex[this._patternRowIndex-1],
+              newNote: {
+                note: 12,
+                instrumentId: this._sampleInstrumentIndex[this._patternRowIndex-1]
+              },              
               time: tm,
-              note: 24
+              
             });
       }
     }*/
@@ -356,4 +377,222 @@ export class AmigaModPlayer implements ThrushSequenceGenerator {
 
   private _sampleInstrumentIndex: number[];
 
+}
+
+
+
+
+export interface AmigaModImportSynthDriver {  
+  createPatternBindings(samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding>;
+}
+
+export class AmigaModScriptSynthImportSynthDriver implements AmigaModImportSynthDriver {
+  constructor(public synth: ScriptSynthesizer) {
+
+  }
+
+
+  async createPatternBindings(samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding> {
+    const ret: ThrushPatternBinding = {
+      sampleInsturmentHandles: [],
+      synth: this.synth
+    }
+
+    await Promise.all(samples.map(async (sample, index) => {
+      ret.sampleInsturmentHandles[index] =
+        await this.synth.createInstrument(
+          new Float32Array(Array.from(new Int8Array(sample.content!)).map((s) => (s)/256)).buffer,
+          4143,
+          0,
+          sample.loopStart,
+          sample.loopLen,
+          (sample.volume/64)
+        )
+    }));
+
+    return ret;
+  }
+}
+
+
+export class AmigaModNativeSynthImportSynthDriver implements AmigaModImportSynthDriver {
+  constructor(public synth: NativeSynthesizer) {
+
+  }
+
+  async createPatternBindings(samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding> {
+    const ret: ThrushPatternBinding = {
+      sampleInsturmentHandles: [],
+      synth: this.synth
+    }
+
+    await Promise.all(samples.map(async (sample, index) => {
+      ret.sampleInsturmentHandles[index] =
+        await this.synth.registerInstrument(
+          new Float32Array(Array.from(new Int8Array(sample.content!)).map((s) => (s)/256)).buffer,
+          4143,
+          0,
+          sample.loopStart,
+          sample.loopLen,
+          (sample.volume/64)
+        )
+    }));
+
+    return ret;
+  }
+}
+
+export class AmigaModPlayer2 {
+
+  private _ticksPerDiv = 6;
+  private _bpm = 125;
+
+  constructor(private _modFile: AmigaModeFile, private _driver: AmigaModImportSynthDriver) {    
+  }
+
+  public createPatternBinding(): Promise<ThrushPatternBinding> {
+    return this._driver.createPatternBindings(this._modFile.samples)
+  }
+
+  private compilePattern(pattern: AmigaModPattern): { 
+    thrushPattern: ThrushPattern,
+    nextPatternOffset: number
+  } {
+    const patternRows: ThrushPatternRow[] = [];
+    const thrushPattern: ThrushPattern = {
+      bpm: this._bpm,
+      ticksPerDivision: this._ticksPerDiv,
+      rows: patternRows
+    }
+    let nextPatternOffset = 0;
+
+    for(let rowIndex=0; rowIndex<pattern.length; rowIndex++) {
+      const patternRow: ThrushPatternRow = {
+        rowCommands: [],
+        channelCommands: []
+      }
+      patternRows.push(patternRow);
+
+      pattern[rowIndex].forEach((channelCommand, channelIndex) => {        
+        const thrushChannelCommand: ThrushPatternChannelCommand =  {
+          effects: []
+        }
+        patternRow.channelCommands[channelIndex] = thrushChannelCommand;
+
+        if(channelCommand.sampleNumber) {
+          thrushChannelCommand.sampleNumber = channelCommand.sampleNumber-1;
+          thrushChannelCommand.effects?.push({type: "vol_set", value: this._modFile.samples[channelCommand.sampleNumber-1].volume/63});
+        }
+        
+        if(channelCommand.noteInfo) {
+          thrushChannelCommand.note = channelCommand.noteInfo.num;          
+        }
+        
+        switch(channelCommand.noteEffect) {
+          case 0xa:            
+            if(channelCommand.noteEffectParam & 0xf0) {
+              thrushChannelCommand.effects = [{
+                type: "vol_slide",
+                slide: ((this._ticksPerDiv-1) * (channelCommand.noteEffectParam >> 4))/63
+              }];
+            } else {
+              thrushChannelCommand.effects = [{
+                type: "vol_slide",
+                slide: ((this._ticksPerDiv-1) * channelCommand.noteEffectParam)/63
+              }];
+            }
+            break;
+
+          case 0xc:
+            let existingVolSet: ThrushPatternChannelEffectSetVolume = 
+              thrushChannelCommand.effects?.find((eff) => eff.type === "vol_set") as ThrushPatternChannelEffectSetVolume;
+            if(existingVolSet) {
+              existingVolSet.value = channelCommand.noteEffectParam / 63;
+            } else {
+              thrushChannelCommand.effects = [{
+                type: "vol_set",
+                value: channelCommand.noteEffectParam / 63
+              }];  
+            }
+            break;
+
+          case 0xd: // Break
+            // Handled below.
+            break;
+
+          case 0xf: // Set speed          
+            if(channelCommand.noteEffectParam <= 32) {
+              this._ticksPerDiv = channelCommand.noteEffectParam;
+              console.debug(`Ticks per div ${this._ticksPerDiv}`);
+            } else {
+              this._bpm = channelCommand.noteEffectParam;
+            }
+            
+            patternRow.rowCommands?.push({type: "set_speed", bpm: this._bpm, ticksPerDiv: this._ticksPerDiv});
+            break;
+
+          case 0xe:
+            if(channelCommand.noteEffectParam >> 4 == 0) {
+              // This is Amiga Filter on / off. Nothing to do here.
+            } else {
+              console.warn(`Ignoring effect ${channelCommand.noteEffect.toString(16)} ${channelCommand.noteEffectParam.toString(16)}`);
+            }
+            break;
+
+          default:
+            console.warn(`Ignoring effect ${channelCommand.noteEffect.toString(16)} ${channelCommand.noteEffectParam.toString(16)}`);
+            break;
+        }
+      })
+
+      const breakRequest = pattern[rowIndex].find(channelCommand => channelCommand.noteEffect == 0xd);
+      if(breakRequest) {
+        nextPatternOffset = (breakRequest.noteEffectParam >> 4)*10 + breakRequest.noteEffectParam & 0xf;
+        break;
+      }
+    }
+
+    return {
+      thrushPattern,
+      nextPatternOffset
+    }
+  }
+
+  public compileSong() {    
+    let songPatternIndex: number = 0;
+    let patternRowOffset: number = 0;
+    let thrushSong: number[] = [];
+    let thrushPatterns: ThrushPattern[] = [];
+    let modPatternAndOfsToThrushPatternAndTargetOfs: {
+      [cacheKey: string]: {
+        thrushPatternIndex: number,
+        nextPatternOffset: number
+      }
+    } = {};    
+  
+    while(songPatternIndex < this._modFile.songPatterns.length) {      
+      const currentPatternIdx = this._modFile.songPatterns[songPatternIndex];
+      const patternCacheKey = JSON.stringify({p: currentPatternIdx, o: patternRowOffset});
+
+      let patternInfo = modPatternAndOfsToThrushPatternAndTargetOfs[patternCacheKey];
+      if(!modPatternAndOfsToThrushPatternAndTargetOfs[patternCacheKey]) {
+        const currentPattern = this._modFile.patterns[currentPatternIdx];
+        const compilationResult = this.compilePattern(currentPattern);
+        patternInfo = {
+          nextPatternOffset: compilationResult.nextPatternOffset,
+          thrushPatternIndex: thrushPatterns.push(compilationResult.thrushPattern)-1
+        }
+        modPatternAndOfsToThrushPatternAndTargetOfs[patternCacheKey] = patternInfo;
+      }
+
+      thrushSong.push(patternInfo.thrushPatternIndex);
+      patternRowOffset = patternInfo.nextPatternOffset;
+      songPatternIndex++;
+    }
+
+    return {
+      patterns: thrushPatterns,
+      song: thrushSong
+    }
+  }
 }

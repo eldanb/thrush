@@ -1,11 +1,12 @@
 <div>
-  Yeah
-
   Sample file: <input id="samplefile" type="file" (change)="load_sample($event.target)"/>
-  <button (click)="play_sample()" [disabled]="!instrumentArray || !synthReady">Play</button>
-  <button (click)="stop()" [disabled]="!instrumentArray || !synthReady">Stop</button>
   <br/>
-
   Module file: <input id="modulefile" type="file" (change)="load_module($event.target)"/>
+  <br/>
+  Module file indirect: <input id="modulefile2" type="file" (change)="load_module2($event.target)"/>
+  <br/>
+  <button (click)="play_sample()" [disabled]="!seqContextToPlay || !synthReady">Play</button>
+  <button (click)="stop()" [disabled]="!seqContextToPlay || !synthReady">Stop</button>
+
 </div>
 <router-outlet></router-outlet>

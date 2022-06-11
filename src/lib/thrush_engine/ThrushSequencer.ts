@@ -1,9 +1,19 @@
 import { NativeSynthesizer } from "./synth/native/NativeSynthesizer";
+import { ScriptSynthesizer } from "./synth/scriptsynth/ScriptSynthesizer";
 import { ScriptSynthWorkerRpcInterface } from "./synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface";
 
-export interface ThrushSequenceEvent {
-  time: number;
-  route(sequencer: ThrushSequencer) : Promise<void>;
+export abstract class ThrushSequenceEvent {
+  time: number = 0;
+  abstract route(sequencer: ThrushSequencer) : Promise<void>;
+}
+export class ThrushSequenceMarkerEvent extends ThrushSequenceEvent{
+  constructor(public override time: number) {
+    super();
+  }
+
+  route(sequencer: ThrushSequencer) : Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 export abstract class ThrushSequenceGenerator {
@@ -19,7 +29,7 @@ export class ThrushSequencer {
   private _lastBufferedEvent = -1;
 
   constructor(private _audioContext: AudioContext,
-              private _tsynthToneGenerator: ScriptSynthWorkerRpcInterface,
+              private _tsynthToneGenerator: ScriptSynthesizer,
               private _waveSynth: NativeSynthesizer) {
 
   }
@@ -48,14 +58,14 @@ export class ThrushSequencer {
     this._sequencerContext = null;
     this._timerId = null;
 
-    await this._tsynthToneGenerator.clearEventQueue();
+    await this._tsynthToneGenerator.panic();
   }
 
-  get tsynthToneGenerator(): ScriptSynthWorkerRpcInterface {
+  get tsynthToneGenerator() {
     return this._tsynthToneGenerator;
   }
-
-  get waveTableSynthesizer(): NativeSynthesizer {
+  
+  get waveTableSynthesizer() {
     return this._waveSynth;
   }
 
@@ -66,6 +76,8 @@ export class ThrushSequencer {
         nextEvent.time += this._startTime;
         await nextEvent.route(this);
         this._lastBufferedEvent = nextEvent.time;
+      } else {
+        break;
       }
     }
   }

@@ -99,6 +99,9 @@ export class ScriptSynthToneGenerator {
             }
 
             channelState.sampleCursor = sampleIndex;
+          } else {
+            channelState.sample = null;
+            console.log("End sample channel " + channelIndex);
           }
         }
       });
