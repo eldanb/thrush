@@ -3,10 +3,14 @@
   <br/>
   Module file: <input id="modulefile" type="file" (change)="load_module($event.target)"/>
   <br/>
-  Module file indirect: <input id="modulefile2" type="file" (change)="load_module2($event.target)"/>
+  Module file indirect: 
+    <input id="modulefile2" type="file" (change)="load_module2($event.target)"/>
+    <input type="radio" id="script" name="method" value="script" [(ngModel)]="synthMode"> Script 
+    <input type="radio" id="script" name="method" value="native" [(ngModel)]="synthMode"> Native    
   <br/>
   <button (click)="play_sample()" [disabled]="!seqContextToPlay || !synthReady">Play</button>
   <button (click)="stop()" [disabled]="!seqContextToPlay || !synthReady">Stop</button>
 
+  Pattern cursor: {{patternCursor}}
 </div>
 <router-outlet></router-outlet>

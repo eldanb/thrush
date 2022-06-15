@@ -32,14 +32,14 @@ type AmigaModPatternChannelCommand = {
 type AmigaModPatternRow = AmigaModPatternChannelCommand[];
 type AmigaModPattern = AmigaModPatternRow[];
 
-type AmigaModeFile = {
+export type AmigaModFile = {
   songName: string;
   samples: AmigaModSampleInfo[];
   songPatterns: number[];
   patterns: AmigaModPattern[];
 };
 
-export function parseModFile(file: ArrayBuffer): AmigaModeFile {
+export function parseModFile(file: ArrayBuffer): AmigaModFile {
   const fileSig = textDecoder.decode(file.slice(1080, 1084));
   
   const numSamples = fileSig == 'M.K.' ? 31 : 15;
@@ -191,7 +191,7 @@ export class AmigaModPlayer implements ThrushSequenceGenerator {
   private _ticksPerDiv = 6;
   private _bpm = 125;
 
-  constructor(private _modFile: AmigaModeFile) {
+  constructor(private _modFile: AmigaModFile) {
     this._sampleInstrumentIndex = [];
     this._lastChannelState = [];
     for(let i=0; i<4; i++) {
@@ -447,7 +447,7 @@ export class AmigaModPlayer2 {
   private _ticksPerDiv = 6;
   private _bpm = 125;
 
-  constructor(private _modFile: AmigaModeFile, private _driver: AmigaModImportSynthDriver) {    
+  constructor(private _modFile: AmigaModFile, private _driver: AmigaModImportSynthDriver) {    
   }
 
   public createPatternBinding(): Promise<ThrushPatternBinding> {
@@ -481,7 +481,8 @@ export class AmigaModPlayer2 {
 
         if(channelCommand.sampleNumber) {
           thrushChannelCommand.sampleNumber = channelCommand.sampleNumber-1;
-          thrushChannelCommand.effects?.push({type: "vol_set", value: this._modFile.samples[channelCommand.sampleNumber-1].volume/63});
+          thrushChannelCommand.effects!.push({type: "vol_set", value: this._modFile.samples[channelCommand.sampleNumber-1].volume/63});
+          thrushChannelCommand.effects!.push({type: "pan_set", value: (channelIndex == 0 || channelIndex == 3) ? 0 : 1});
         }
         
         if(channelCommand.noteInfo) {
@@ -491,15 +492,15 @@ export class AmigaModPlayer2 {
         switch(channelCommand.noteEffect) {
           case 0xa:            
             if(channelCommand.noteEffectParam & 0xf0) {
-              thrushChannelCommand.effects = [{
+              thrushChannelCommand.effects!.push({
                 type: "vol_slide",
                 slide: ((this._ticksPerDiv-1) * (channelCommand.noteEffectParam >> 4))/63
-              }];
+              });
             } else {
-              thrushChannelCommand.effects = [{
+              thrushChannelCommand.effects!.push({
                 type: "vol_slide",
                 slide: ((this._ticksPerDiv-1) * channelCommand.noteEffectParam)/63
-              }];
+              });
             }
             break;
 

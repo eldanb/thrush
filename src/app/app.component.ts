@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AmigaModNativeSynthImportSynthDriver, AmigaModPlayer, AmigaModPlayer2, AmigaModScriptSynthImportSynthDriver, parseModFile } from 'src/lib/formats/AmigaModParser';
+import { AmigaModFile, AmigaModNativeSynthImportSynthDriver, AmigaModPlayer, AmigaModPlayer2, AmigaModScriptSynthImportSynthDriver, parseModFile } from 'src/lib/formats/AmigaModParser';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { NativeSynthesizer } from 'src/lib/thrush_engine/synth/native/NativeSynthesizer';
 import { ScriptSynthesizer } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthesizer';
@@ -50,6 +50,19 @@ export class AppComponent implements OnInit {
   instrumentArray: ArrayBuffer | null = null;
   synthReady = false;
   seqContextToPlay: ThrushSequenceGenerator | null = null;
+  patternCursor: any;
+
+  private _synthMode: string = 'script';
+  private _parsedModule: AmigaModFile | null = null;
+  
+  get synthMode(): string {
+    return this._synthMode;
+  } 
+
+  set synthMode(v: string) {
+    this._synthMode = v;
+    this.reloadModFile();
+  } 
 
   async stop() {
     await sequencer.stop();
@@ -60,6 +73,10 @@ export class AppComponent implements OnInit {
     sequencer.start(this.seqContextToPlay!);
   }
 
+  setSynthMode(mode: string) {
+    alert('l');
+  }
+  
   load_sample(eTarget: EventTarget | null) {
     const file_picker = eTarget as HTMLInputElement;
     var sample_file = file_picker!.files![0];
@@ -102,9 +119,9 @@ export class AppComponent implements OnInit {
       const seqContext3 = new ThrushFunctionSequenceGenerator(function* (tg) {
         for(;;) {
           yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
-          yield 2*TEMPO;
+          yield 3*TEMPO;
           yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
-          yield 2*TEMPO;
+          yield 3*TEMPO;
           yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
           yield 2*TEMPO;
         }
@@ -125,8 +142,8 @@ export class AppComponent implements OnInit {
 
     reader.readAsArrayBuffer(module_file);
     reader.onloadend = async () => {
-      const parsedModule = parseModFile(reader.result as ArrayBuffer);
-      const player = new AmigaModPlayer(parsedModule);
+      this._parsedModule = parseModFile(reader.result as ArrayBuffer);
+      const player = new AmigaModPlayer(this._parsedModule);
       await player.loadInstruments(sequencer);
 
       this.seqContextToPlay = player;
@@ -140,21 +157,29 @@ export class AppComponent implements OnInit {
 
     reader.readAsArrayBuffer(module_file);
     reader.onloadend = async () => {
-      const parsedModule = parseModFile(reader.result as ArrayBuffer);
-      const driver = new AmigaModScriptSynthImportSynthDriver(sequencer.tsynthToneGenerator);
-      //const driver = new AmigaModNativeSynthImportSynthDriver(sequencer.waveTableSynthesizer);
-      
-      const player = new AmigaModPlayer2(parsedModule, driver);
+      this._parsedModule = parseModFile(reader.result as ArrayBuffer);
+      this.reloadModFile();
+    }
+  }
+
+  private async reloadModFile() {
+    if(this._parsedModule) {
+
+      const driver = 
+        this._synthMode == 'script' 
+          ? new AmigaModScriptSynthImportSynthDriver(sequencer.tsynthToneGenerator)
+          : new AmigaModNativeSynthImportSynthDriver(sequencer.waveTableSynthesizer);
+            
+      const player = new AmigaModPlayer2(this._parsedModule, driver);
       const bindings = await player.createPatternBinding();
       const cres = player.compileSong();      
 
       this.seqContextToPlay = 
         new ThrushConcatSequenceGenerator(
           cres.song.map((patternIndex) => 
-            new ThrushPatternSequenceGenerator(cres.patterns[patternIndex], bindings)
+            new ThrushPatternSequenceGenerator(cres.patterns[patternIndex], bindings, "pattern")
           )
         );
-      //new ThrushPatternSequenceGenerator(cres.patterns[0], bindings);
     }
   }
 
@@ -171,7 +196,11 @@ export class AppComponent implements OnInit {
 
       sequencer = new ThrushSequencer(audioContext, audioWorkletNode, wavetableSynth);
 
-      this.synthReady = true
+      this.synthReady = true;
+
+      setInterval(() => {
+        this.patternCursor = sequencer.cursorTracker.getCursor('pattern');
+      }, 50)
     })();
   }
 }

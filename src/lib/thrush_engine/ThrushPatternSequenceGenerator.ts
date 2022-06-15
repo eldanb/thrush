@@ -12,7 +12,22 @@ export type ThrushPatternChannelEffectSetVolume = {
   value: number
 }
 
-export type ThrushPatternChannelEffect = ThrushPatternChannelEffectSlideVolume | ThrushPatternChannelEffectSetVolume;
+export type ThrushPatternChannelEffectSlidePadding = {
+  type: "pan_slide",
+  slide: number
+}
+
+export type ThrushPatternChannelEffectSetPadding = {
+  type: "pan_set",
+  value: number
+}
+
+export type ThrushPatternChannelEffect = 
+  ThrushPatternChannelEffectSlideVolume | 
+  ThrushPatternChannelEffectSetVolume | 
+  ThrushPatternChannelEffectSlidePadding | 
+  ThrushPatternChannelEffectSetPadding;
+;
 
 
 export type ThrushPatternChannelCommand = {
@@ -52,12 +67,55 @@ type ThrushPatternChannelState = {
   panning: number;
 }
 
+const CHANNEL_EFFECT_APPLIERS: { 
+  [effectType in ThrushPatternChannelEffect['type']]: 
+    (effect: ThrushPatternChannelEffect & { type: effectType }, channel: ThrushPatternChannelState) => boolean
+} = {
+  vol_set(effect, channel) {
+    channel.volume = effect.value;
+    return true;
+  },
+
+  vol_slide(effect, channel) {
+    
+    channel.volume += effect.slide;
+    
+    if(channel.volume > 1) {
+      channel.volume = 1;
+    } else 
+    if(channel.volume < 0) {
+      channel.volume = 0;
+    }
+
+    return true;
+  },
+
+  pan_set(effect, channel) {
+    channel.panning = effect.value
+    return true;
+  },
+
+  pan_slide(effect, channel) {
+    
+    channel.panning += effect.slide;
+    
+    if(channel.panning > 1) {
+      channel.panning = 1;
+    } else 
+    if(channel.panning < 0) {
+      channel.panning = 0;
+    }
+
+    return true;
+  }
+}
+
 export class ThrushPatternSequenceGenerator extends ThrushArraySequenceGenerator {
-  constructor(private _pattern: ThrushPattern, private _binding: ThrushPatternBinding) {
-    super(ThrushPatternSequenceGenerator.compilePattern(_pattern, _binding));
+  constructor(private _pattern: ThrushPattern, private _binding: ThrushPatternBinding, private _cursorName: string) {
+    super(ThrushPatternSequenceGenerator.compilePattern(_pattern, _binding, _cursorName));
   }
 
-  private static compilePattern(pattern: ThrushPattern, binding: ThrushPatternBinding): ThrushSequenceEvent[] {
+  private static compilePattern(pattern: ThrushPattern, binding: ThrushPatternBinding, cursorName: string): ThrushSequenceEvent[] {
     const ret: ThrushSequenceEvent[] = [];
     let bpm: number = pattern.bpm;
     let ticksPerDiv: number = pattern.ticksPerDivision;
@@ -65,6 +123,8 @@ export class ThrushPatternSequenceGenerator extends ThrushArraySequenceGenerator
     let channelState: ThrushPatternChannelState[] = [];
 
     pattern.rows.forEach((row, index) => {
+      ret.push(new ThrushSequenceMarkerEvent(time, cursorName, index));
+
       row.channelCommands.forEach((channelCommand, channelIndex) => {
         const orgLookup = channelState[channelIndex];
         const currentChannelState = orgLookup || { sample: 0, volume: 1 };
@@ -83,6 +143,10 @@ export class ThrushPatternSequenceGenerator extends ThrushArraySequenceGenerator
         }
 
         channelCommand.effects?.forEach((channelEffect) => {
+          const applyChannelEffect = CHANNEL_EFFECT_APPLIERS[channelEffect.type];
+          if(applyChannelEffect) {
+            applyChannelEffect(channelEffect as any, currentChannelState);
+          }
           switch(channelEffect.type) {
             case "vol_slide":
               hasPrimaryEvent = true;
@@ -138,7 +202,7 @@ export class ThrushPatternSequenceGenerator extends ThrushArraySequenceGenerator
       time += 60/((24 * bpm)/ticksPerDiv);
     })
 
-    ret.push(new ThrushSequenceMarkerEvent(time));
+    ret.push(new ThrushSequenceMarkerEvent(time, cursorName, null));
     return ret;
   }
 }

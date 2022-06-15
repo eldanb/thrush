@@ -2,6 +2,9 @@ import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "
 import { NativeSynthesizerInstrument } from "./NativeSynthesizerInstrument";
 
 type NativeSynthesizerChannelState = {
+  channelInput: AudioNode;
+  gainNode: GainNode;
+  panNode: StereoPannerNode;
   lastScheduledNode: AudioBufferSourceNode | null;
 }
 export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
@@ -10,8 +13,15 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
 
   constructor(private _audioContext: AudioContext, numChannels: number) {    
     for(let i=0; i<numChannels; i++) {
+      const gainNode = new GainNode(_audioContext);
+      const panNode = new StereoPannerNode(_audioContext);
+      panNode.connect(_audioContext.destination);
+      gainNode.connect(panNode);
       this._channelState[i] = {
-        lastScheduledNode: null
+        lastScheduledNode: null,
+        gainNode,
+        panNode,
+        channelInput: gainNode        
       }
     }
   }
@@ -35,18 +45,40 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
   
   
   async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
-    const lastScheduled = this._channelState[synthEvent.channel].lastScheduledNode;
+    const channelState = this._channelState[synthEvent.channel];
+    const lastScheduled = channelState.lastScheduledNode;
     if(lastScheduled) {
       lastScheduled.stop(synthEvent.time);
     }
 
-    // TODO time, vibrato, volume change, ...
+    // TODO vibrato
     if(synthEvent.commands.newNote) {
-      const audioBuffer = this._instruments[synthEvent.commands.newNote?.instrumentId].getAudioBuffer(1);
-      const noteNode = new AudioBufferSourceNode(this._audioContext, { buffer: audioBuffer, playbackRate: Math.pow(2, (synthEvent.commands.newNote.note/12))});
+      const instrument = this._instruments[synthEvent.commands.newNote?.instrumentId];      
+      const noteNode = new AudioBufferSourceNode(
+        this._audioContext, 
+        { 
+          buffer: instrument.getAudioBuffer(1), 
+          playbackRate: Math.pow(2, (synthEvent.commands.newNote.note/12))
+        });
+      
+      if(instrument.sampleLoopLen) {
+        noteNode.loop = !!instrument.sampleLoopLen;
+        noteNode.loopStart = (instrument.sampleLoopStart / instrument.sampleRate);
+        noteNode.loopEnd = (instrument.sampleLoopLen + instrument.sampleLoopStart) / instrument.sampleRate;
+      }
+
       noteNode.start(synthEvent.time);
-      noteNode.connect(this._audioContext.destination);
-      this._channelState[synthEvent.channel].lastScheduledNode = noteNode;  
+      noteNode.connect(channelState.channelInput);
+      channelState.lastScheduledNode = noteNode;  
     }
+    
+    if(synthEvent.commands.volume != null) {
+      channelState.gainNode.gain.setValueAtTime(synthEvent.commands.volume, synthEvent.time);
+    }
+
+    if(synthEvent.commands.panning != null) {
+      channelState.panNode.pan.setValueAtTime(synthEvent.commands.panning, synthEvent.time);
+    }
+      
   }    
 }

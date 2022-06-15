@@ -31,6 +31,10 @@ export class NativeSynthesizerInstrument {
     return this._sampleLoopLen;
   }
 
+  get sampleRate(): number {
+    return this._sampleRate;
+  }
+  
   getAudioBuffer(minDuration: number): AudioBuffer {
     if(this._audioBuffer?.duration || 0 <= minDuration) {
       // Todo generate loop

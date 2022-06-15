@@ -1,18 +1,20 @@
 import { NativeSynthesizer } from "./synth/native/NativeSynthesizer";
 import { ScriptSynthesizer } from "./synth/scriptsynth/ScriptSynthesizer";
-import { ScriptSynthWorkerRpcInterface } from "./synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface";
+import { ThrushCursorTracker } from "./ThrushCursorTracker";
 
 export abstract class ThrushSequenceEvent {
   time: number = 0;
   abstract route(sequencer: ThrushSequencer) : Promise<void>;
 }
 export class ThrushSequenceMarkerEvent extends ThrushSequenceEvent{
-  constructor(public override time: number) {
+  constructor(public override time: number, public cursorName?: string, public cursorValue?: any) {
     super();
   }
 
-  route(sequencer: ThrushSequencer) : Promise<void> {
-    return Promise.resolve();
+  async route(sequencer: ThrushSequencer) : Promise<void> {
+    if(this.cursorName) { 
+      sequencer.cursorTracker.postCusrorChangeEvent(this.time, this.cursorName, this.cursorValue);
+    }
   }
 }
 
@@ -27,11 +29,12 @@ export class ThrushSequencer {
   private _timerId: any = null;
   private _startTime: number = -1;
   private _lastBufferedEvent = -1;
+  private _cursorTracker: ThrushCursorTracker;
 
   constructor(private _audioContext: AudioContext,
               private _tsynthToneGenerator: ScriptSynthesizer,
               private _waveSynth: NativeSynthesizer) {
-
+    this._cursorTracker = new ThrushCursorTracker(_audioContext);
   }
 
   async start(sequencerData: ThrushSequenceGenerator): Promise<void> {
@@ -69,6 +72,10 @@ export class ThrushSequencer {
     return this._waveSynth;
   }
 
+  get cursorTracker() {
+    return this._cursorTracker;
+  }
+  
   private async bufferEvents() {
     while(this._lastBufferedEvent < this._audioContext.currentTime + 3) {
       const nextEvent = this._sequencerContext?.nextEvent();
