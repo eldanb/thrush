@@ -145,24 +145,8 @@ export class ThrushPatternSequenceGenerator extends ThrushArraySequenceGenerator
         channelCommand.effects?.forEach((channelEffect) => {
           const applyChannelEffect = CHANNEL_EFFECT_APPLIERS[channelEffect.type];
           if(applyChannelEffect) {
-            applyChannelEffect(channelEffect as any, currentChannelState);
-          }
-          switch(channelEffect.type) {
-            case "vol_slide":
-              hasPrimaryEvent = true;
-              currentChannelState.volume += channelEffect.slide;
-              if(currentChannelState.volume > 1) {
-                currentChannelState.volume = 1;
-              } else 
-              if(currentChannelState.volume < 0) {
-                currentChannelState.volume = 0;
-              }
-              break;
-
-            case "vol_set":
-              hasPrimaryEvent = true;
-              currentChannelState.volume = channelEffect.value;
-              break;
+            const appliedEffectRequiresEvent = applyChannelEffect(channelEffect as any, currentChannelState);
+            hasPrimaryEvent = hasPrimaryEvent || appliedEffectRequiresEvent;
           }
         })
 

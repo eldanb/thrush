@@ -15,7 +15,7 @@ export class NativeSynthesizerInstrument {
     this._sampleRate = sampleRate;
 
     this._sampleLoopStart = loopStart || 0;
-    this._sampleLoopLen = loopLen || sample.length;
+    this._sampleLoopLen = loopLen || 0;
   }
 
 
