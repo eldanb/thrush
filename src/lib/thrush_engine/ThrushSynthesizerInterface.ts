@@ -1,4 +1,11 @@
+import { WaveFormType } from "./synth/common/WaveFormGenerators";
 import { ThrushSequenceEvent, ThrushSequencer } from "./ThrushSequencer";
+
+export type ThrushCommonSynthesizerVibratoParameters = {
+  waveform: "none" | WaveFormType;
+  frequency: number;
+  amplitude: number;  
+}
 
 export type ThrushCommonSynthesizerEventCommands = {
   newNote?: { 
@@ -7,6 +14,7 @@ export type ThrushCommonSynthesizerEventCommands = {
   };
   volume?: number;
   panning?: number;
+  vibrato?: ThrushCommonSynthesizerVibratoParameters;
 }
 
 export class ThrushCommonSynthesizerEvent extends ThrushSequenceEvent {

@@ -12,6 +12,12 @@ export type ScriptSynthEngineEvent = {
 
   volume?: number;
   panning?: number;
+
+  vibrato?: {
+    waveform: "none" | "sine";
+    frequency: number;
+    amplitude: number;    
+  }
 }
 
 export class ScriptSynthEngine {
@@ -58,6 +64,10 @@ export class ScriptSynthEngine {
 
         if(event.panning != null) {
           this._toneGenerator.setPanningOnChannel(event.channel, event.panning);
+        }
+
+        if(event.vibrato != null) {
+          this._toneGenerator.setVibratoOnChannel(event.channel, event.vibrato.waveform, event.vibrato.frequency, event.vibrato.amplitude);
         }
 
     }

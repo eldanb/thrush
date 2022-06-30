@@ -1,3 +1,4 @@
+import { WaveFormGenerator, WaveFormGeneratorFactories, WaveFormType } from "../common/WaveFormGenerators";
 import { ScriptSynthGeneratedToneParameters, ScriptSynthInstrument } from "./ScriptSynthInstrument";
 
 
@@ -12,6 +13,7 @@ class ChannelState implements ScriptSynthGeneratedToneParameters {
   sampleRate: number = 0;
   volume: number = 0;
   panning: number = 0.5;
+  vibratoGenerator: WaveFormGenerator | null = null;
 
   sampleCursor: number = 0;
   effectivePitch: number = 1;
@@ -36,6 +38,7 @@ class ChannelState implements ScriptSynthGeneratedToneParameters {
 export class ScriptSynthToneGenerator {
   private _sampleRate: number;
   private _channelStates: ChannelState[];
+  private _currentTime: number = 0;
 
   constructor(sampleRate: number, numChannels: number) {
     this._channelStates = [];
@@ -61,6 +64,15 @@ export class ScriptSynthToneGenerator {
     channelState.panning = panning;
   }
 
+  public setVibratoOnChannel(channel: number, waveform: "none" | WaveFormType, frequency: number, amplitude: number) {
+    const channelState = this._channelStates[channel];
+    channelState.vibratoGenerator = 
+      waveform === "none"
+        ? null
+        : WaveFormGeneratorFactories[waveform](this._currentTime, amplitude, frequency);
+    
+  }
+
   public readBuffer(destinationLeft: Float32Array, destinationRight: Float32Array, destOffset: number, destLength: number): void
   {
     for(let i=destOffset; i<destOffset+destLength; i++)
@@ -84,8 +96,9 @@ export class ScriptSynthToneGenerator {
             leftSample += baseSample * (1-channelState.panning);
             rightSample += baseSample * channelState.panning;
 
-
-            sampleIndex += channelState.effectivePitch;
+            sampleIndex += channelState.vibratoGenerator === null 
+              ? channelState.effectivePitch 
+              : (1 + channelState.vibratoGenerator(this._currentTime)) * channelState.effectivePitch; 
 
             if(!channelState.inLoop && sampleIndex >= channelState.sample.length-1 && channelState.sampleLoopLen) {
               console.log("Start loop channel " + channelIndex);
@@ -107,8 +120,10 @@ export class ScriptSynthToneGenerator {
       });
 
       destinationLeft[i] = leftSample;
-      destinationRight[i] = rightSample;
+      destinationRight[i] = rightSample;      
     }
+
+    this._currentTime += destLength / this._sampleRate;
   }
 
   get outputSampleRate(): number {

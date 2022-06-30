@@ -59,7 +59,8 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
       channel: synthEvent.channel,
       newNote: synthEvent.commands.newNote,
       panning: synthEvent.commands.panning,
-      volume: synthEvent.commands.volume
+      volume: synthEvent.commands.volume,
+      vibrato: synthEvent.commands.vibrato
     });
   }
 
