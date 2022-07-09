@@ -1,12 +1,13 @@
 import { ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequencer } from "./ThrushSequencer";
 
 export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {
-  constructor() {
+  constructor(...contexts: ThrushSequenceGenerator[]) {
     super();
     this._cachedNextEvent = [];
+    this._aggregatedContexts = contexts;
   }
 
-  private _aggregatedContexts: ThrushSequenceGenerator[] = [];
+  private _aggregatedContexts: ThrushSequenceGenerator[];
   private _cachedNextEvent: (ThrushSequenceEvent | null | false)[];
 
   addChild(childSequencerContext: ThrushSequenceGenerator) {

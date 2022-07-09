@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ComponentRef, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { AmigaModFile, AmigaModNativeSynthImportSynthDriver, AmigaModPlayer, AmigaModPlayer2, AmigaModScriptSynthImportSynthDriver, parseModFile } from 'src/lib/formats/AmigaModParser';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { NativeSynthesizer } from 'src/lib/thrush_engine/synth/native/NativeSynthesizer';
@@ -9,6 +9,7 @@ import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/ThrushFun
 import { ThrushPatternSequenceGenerator } from 'src/lib/thrush_engine/ThrushPatternSequenceGenerator';
 import { ThrushSequenceGenerator, ThrushSequencer } from 'src/lib/thrush_engine/ThrushSequencer';
 import { ThrushCommonSynthesizerEvent } from 'src/lib/thrush_engine/ThrushSynthesizerInterface';
+import { MonacoEditorComponent } from './widget-lib/monaco-editor/monaco-editor.component';
 
 const audioContext = new AudioContext();
 
@@ -16,6 +17,24 @@ let sequencer: ThrushSequencer;
 let audioWorkletNode: ScriptSynthesizer;
 let synthReady = false;
 let wavetableSynth = new NativeSynthesizer(audioContext, 16);
+
+const DEFAULT_CODE=`
+(() => {
+  const TEMPO = 0.2;
+  const g = function* (tg) {  
+    for(;;) {
+      yield playNoteOnChannel(0, 0, 0);
+      yield 2*TEMPO;
+      yield playNoteOnChannel(0, 0, 4);
+      yield 2*TEMPO;
+      yield playNoteOnChannel(0, 0, 7);
+      yield 2*TEMPO;
+    }
+  }
+
+  return g;
+})()
+`;
 
 function playNoteOnChannel(channel: number, instrumentId: number, note: number) {
   return (time: number) => new ThrushCommonSynthesizerEvent(time, sequencer.tsynthToneGenerator, 
@@ -51,10 +70,20 @@ export class AppComponent implements OnInit {
   synthReady = false;
   seqContextToPlay: ThrushSequenceGenerator | null = null;
   patternCursor: any;
+  codeSynth = DEFAULT_CODE;
 
   private _synthMode: string = 'script';
   private _parsedModule: AmigaModFile | null = null;
   
+  @ViewChild('meditor', { read: MonacoEditorComponent })
+  codeEditor: MonacoEditorComponent | null = null;
+  
+  public codeLoadedInsturments: Array<{
+    nativeId: number;
+    scriptId: number;
+    name: string;
+  }> = [];
+
   get synthMode(): string {
     return this._synthMode;
   } 
@@ -135,6 +164,30 @@ export class AppComponent implements OnInit {
     }
   }
 
+  load_code_sample(eTarget: EventTarget | null) {
+    const file_picker = eTarget as HTMLInputElement;
+    const fileName = file_picker!.value;
+    var sample_file = file_picker!.files![0];
+    var reader = new FileReader();
+
+    reader.readAsArrayBuffer(sample_file);
+    reader.onloadend = async () => {
+      const instrumentSampleArray =  (reader.result as ArrayBuffer);
+      const wavFile = parseWav(instrumentSampleArray!);
+      
+      let instrumentId = await audioWorkletNode.createInstrument(
+        wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
+      let instrumentIdNative = sequencer.waveTableSynthesizer.registerInstrument(
+        wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
+
+      this.codeLoadedInsturments.push({
+        scriptId: instrumentId,
+        nativeId: instrumentIdNative,
+        name: fileName
+      })
+    };
+
+  }
   load_module(eTarget: EventTarget | null) {
     const file_picker = eTarget as HTMLInputElement;
     var module_file = file_picker!.files![0];
@@ -160,6 +213,11 @@ export class AppComponent implements OnInit {
       this._parsedModule = parseModFile(reader.result as ArrayBuffer);
       this.reloadModFile();
     }
+  }
+
+  load_code() {
+    const generatorFunction = eval(this.codeEditor?.text!);
+    this.seqContextToPlay = new ThrushFunctionSequenceGenerator(generatorFunction);
   }
 
   private async reloadModFile() {
