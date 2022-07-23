@@ -17,8 +17,11 @@ export class MonacoEditorComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {    
     this.editor = monaco.editor.create(this.editorContainer!.nativeElement, {
-      model: monaco.editor.createModel(this.textFromProperty, 'typescript')
-    });    
+      model: monaco.editor.createModel(this.textFromProperty, 'javascript')
+    });
+
+    const thrushDts = require('!raw-loader!generated/ThrushFunctionGeneratorInterfaces.d.ts');
+    monaco.languages.typescript.javascriptDefaults.addExtraLib(thrushDts.default);
   }
  
   ngOnInit(): void {

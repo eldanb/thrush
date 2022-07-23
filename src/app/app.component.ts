@@ -17,39 +17,37 @@ let audioWorkletNode: ScriptSynthesizer;
 let synthReady = false;
 let wavetableSynth = new NativeSynthesizer(audioContext, 16);
 
-const DEFAULT_CODE=`() => {
-  return function* (c) { 
-    const TEMPO = 0.2;
+const DEFAULT_CODE=
+`/**
+ * @param {ThrushSequenceGenerationCalls} c
+ */
+function* d(c) { 
+
+  const TEMPO = 0.2;
   
   for(;;) {
     yield c.playGenerator(function* (c) {
-      
-        yield c.playNoteOnWaveSynthChannel(1, 0, 12);
-        yield c.delay(3*TEMPO);
-        yield c.playNoteOnWaveSynthChannel(1, 0, 16);
-        yield c.delay(3*TEMPO);
-        yield c.playNoteOnWaveSynthChannel(1, 0, 19);
-        yield c.delay(2*TEMPO);
-      
+      yield c.playNoteOnWaveSynthChannel(1, 0, 12);
+      yield c.delay(3*TEMPO);
+      yield c.playNoteOnWaveSynthChannel(1, 0, 16);
+      yield c.delay(3*TEMPO);
+      yield c.playNoteOnWaveSynthChannel(1, 0, 19);
+      yield c.delay(2*TEMPO);
     });
 
     yield c.playGenerator(function* (c) {
-      
-        yield c.playNoteOnChannel(0, 0, 0);
-        yield c.delay(2*TEMPO);
-        yield c.playNoteOnChannel(0, 0, 4);
-        yield c.delay(2*TEMPO);
-        yield c.playNoteOnChannel(0, 0, 7);
-        yield c.delay(2*TEMPO);
-          }
-    );
+      yield c.playNoteOnChannel(0, 0, 0);
+      yield c.delay(2*TEMPO);
+      yield c.playNoteOnChannel(0, 0, 4);
+      yield c.delay(2*TEMPO);
+      yield c.playNoteOnChannel(0, 0, 7);
+      yield c.delay(2*TEMPO);
+    });
 
     yield c.delay(9*TEMPO);
     yield c.marker('dummy', 1);
   }
 }
-}
-
 `;
 
 const TEMPO = 0.2;
@@ -242,7 +240,7 @@ export class AppComponent implements OnInit {
 
   load_code() {
     const aggregator = new ThrushAggregatedSequenceGenerator();
-    const generatorFunction = eval(this.codeEditor?.text!)();
+    const generatorFunction = new Function(`return (${this.codeEditor?.text!})`)();
     const generatorFunctionSeq = new ThrushFunctionSequenceGenerator(generatorFunction, aggregator);
     aggregator.addChild(generatorFunctionSeq);
 
