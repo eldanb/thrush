@@ -12,6 +12,14 @@ module.exports = (config, options, targetOptions) => {
   );
 
   config.plugins.push(
+    new WebpackBeforeBuildPlugin((status, callback) => {
+      console.log("Building synth generator .d.ts");
+      exec('webpack -c thrush-sequence-generator-interface.webpack.config.js');
+      callback();
+    })
+  );
+
+  config.plugins.push(
     new MonacoWebpackPlugin()
   );
 
@@ -27,6 +35,6 @@ module.exports = (config, options, targetOptions) => {
     use: ['style-loader', 'css-loader'],
     include: [/monaco/]
   });
-
+  
   return config;
 };

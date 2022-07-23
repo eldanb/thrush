@@ -1,4 +1,4 @@
-import { Component, ComponentRef, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { AmigaModFile, AmigaModNativeSynthImportSynthDriver, AmigaModPlayer, AmigaModPlayer2, AmigaModScriptSynthImportSynthDriver, parseModFile } from 'src/lib/formats/AmigaModParser';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { NativeSynthesizer } from 'src/lib/thrush_engine/synth/native/NativeSynthesizer';
@@ -8,7 +8,6 @@ import { ThrushConcatSequenceGenerator } from 'src/lib/thrush_engine/ThrushConca
 import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/ThrushFunctionSequenceGenerator';
 import { ThrushPatternSequenceGenerator } from 'src/lib/thrush_engine/ThrushPatternSequenceGenerator';
 import { ThrushSequenceGenerator, ThrushSequencer } from 'src/lib/thrush_engine/ThrushSequencer';
-import { ThrushCommonSynthesizerEvent } from 'src/lib/thrush_engine/ThrushSynthesizerInterface';
 import { MonacoEditorComponent } from './widget-lib/monaco-editor/monaco-editor.component';
 
 const audioContext = new AudioContext();
@@ -18,43 +17,40 @@ let audioWorkletNode: ScriptSynthesizer;
 let synthReady = false;
 let wavetableSynth = new NativeSynthesizer(audioContext, 16);
 
-const DEFAULT_CODE=`
-(() => {
-  const TEMPO = 0.2;
-  const g = function* (tg) {  
-    for(;;) {
-      yield playNoteOnChannel(0, 0, 0);
-      yield 2*TEMPO;
-      yield playNoteOnChannel(0, 0, 4);
-      yield 2*TEMPO;
-      yield playNoteOnChannel(0, 0, 7);
-      yield 2*TEMPO;
-    }
+const DEFAULT_CODE=`() => {
+  return function* (c) { 
+    const TEMPO = 0.2;
+  
+  for(;;) {
+    yield c.playGenerator(function* (c) {
+      
+        yield c.playNoteOnWaveSynthChannel(1, 0, 12);
+        yield c.delay(3*TEMPO);
+        yield c.playNoteOnWaveSynthChannel(1, 0, 16);
+        yield c.delay(3*TEMPO);
+        yield c.playNoteOnWaveSynthChannel(1, 0, 19);
+        yield c.delay(2*TEMPO);
+      
+    });
+
+    yield c.playGenerator(function* (c) {
+      
+        yield c.playNoteOnChannel(0, 0, 0);
+        yield c.delay(2*TEMPO);
+        yield c.playNoteOnChannel(0, 0, 4);
+        yield c.delay(2*TEMPO);
+        yield c.playNoteOnChannel(0, 0, 7);
+        yield c.delay(2*TEMPO);
+          }
+    );
+
+    yield c.delay(9*TEMPO);
+    yield c.marker('dummy', 1);
   }
+}
+}
 
-  return g;
-})()
 `;
-
-function playNoteOnChannel(channel: number, instrumentId: number, note: number) {
-  return (time: number) => new ThrushCommonSynthesizerEvent(time, sequencer.tsynthToneGenerator, 
-    channel, {
-      newNote: {
-        instrumentId,
-        note
-      }
-    });
-}
-
-function playNoteOnWaveSynthChannel(channel: number, instrumentId: number, note: number) {
-  return (time: number) => new ThrushCommonSynthesizerEvent(time, sequencer.waveTableSynthesizer, 
-    channel, {
-      newNote: {
-        instrumentId,
-        note
-      }
-    });
-}
 
 const TEMPO = 0.2;
 
@@ -123,42 +119,71 @@ export class AppComponent implements OnInit {
       let instrumentIdNative = sequencer.waveTableSynthesizer.registerInstrument(
         wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
   
-      const seqContext = new ThrushFunctionSequenceGenerator(function* (tg) {
-        for(;;) {
-          yield playNoteOnChannel(0, instrumentId, 0);
-          yield 2*TEMPO;
-          yield playNoteOnChannel(0, instrumentId, 4);
-          yield 2*TEMPO;
-          yield playNoteOnChannel(0, instrumentId, 7);
-          yield 2*TEMPO;
-        }
-      });
-  
-      const seqContext2 = new ThrushFunctionSequenceGenerator(function* (tg) {
-        for(;;) {
-          yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
-          yield 3*TEMPO;
-          yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
-          yield 3*TEMPO;
-          yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
-          yield 2*TEMPO;
-        }
-      });
-  
-      const seqContext3 = new ThrushFunctionSequenceGenerator(function* (tg) {
-        for(;;) {
-          yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
-          yield 3*TEMPO;
-          yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
-          yield 3*TEMPO;
-          yield playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
-          yield 2*TEMPO;
-        }
-      });
-  
       const aggSeqContext = new ThrushAggregatedSequenceGenerator();
-      aggSeqContext.addChild(seqContext);
-      aggSeqContext.addChild(seqContext3);
+
+      const seqContext = new ThrushFunctionSequenceGenerator(function* (c) {
+        for(;;) {
+          yield c.playNoteOnChannel(0, instrumentId, 0);
+          yield c.delay(2*TEMPO);
+          yield c.playNoteOnChannel(0, instrumentId, 4);
+          yield c.delay(2*TEMPO);
+          yield c.playNoteOnChannel(0, instrumentId, 7);
+          yield c.delay(2*TEMPO);
+        }
+      }, aggSeqContext);
+  
+      const seqContext2 = new ThrushFunctionSequenceGenerator(function* (c) {
+        for(;;) {
+          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
+          yield c.delay(3*TEMPO);
+          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
+          yield c.delay(3*TEMPO);
+          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
+          yield c.delay(2*TEMPO);
+        }
+      }, aggSeqContext);
+  
+      const seqContext3 = new ThrushFunctionSequenceGenerator(function* (c) {
+        for(;;) {
+          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
+          yield c.delay(3*TEMPO);
+          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
+          yield c.delay(3*TEMPO);
+          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
+          yield c.delay(2*TEMPO);
+        }
+      }, aggSeqContext);
+  
+      const seqContext4 = new ThrushFunctionSequenceGenerator(function* (c) {
+        for(;;) {
+          yield c.playGenerator(function* (c) {
+            
+              yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
+              yield c.delay(3*TEMPO);
+              yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
+              yield c.delay(3*TEMPO);
+              yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
+              yield c.delay(2*TEMPO);            
+          });
+
+          yield c.playGenerator(function* (c) {
+            
+              yield c.playNoteOnChannel(0, instrumentId, 0);
+              yield c.delay(2*TEMPO);
+              yield c.playNoteOnChannel(0, instrumentId, 4);
+              yield c.delay(2*TEMPO);
+              yield c.playNoteOnChannel(0, instrumentId, 7);
+              yield c.delay(2*TEMPO);
+                }
+          );
+
+          yield c.delay(9*TEMPO);
+          yield c.marker('dummy', 1);
+        }
+      }, aggSeqContext);
+      
+      aggSeqContext.addChild(seqContext4);
+      //aggSeqContext.addChild(seqContext3);
   
       this.seqContextToPlay = aggSeqContext;
     }
@@ -216,8 +241,12 @@ export class AppComponent implements OnInit {
   }
 
   load_code() {
-    const generatorFunction = eval(this.codeEditor?.text!);
-    this.seqContextToPlay = new ThrushFunctionSequenceGenerator(generatorFunction);
+    const aggregator = new ThrushAggregatedSequenceGenerator();
+    const generatorFunction = eval(this.codeEditor?.text!)();
+    const generatorFunctionSeq = new ThrushFunctionSequenceGenerator(generatorFunction, aggregator);
+    aggregator.addChild(generatorFunctionSeq);
+
+    this.seqContextToPlay = aggregator;
   }
 
   private async reloadModFile() {
