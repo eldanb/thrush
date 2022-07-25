@@ -16,13 +16,16 @@ export class ThrushConcatSequenceGenerator extends ThrushSequenceGenerator {
 
   start(sequencer: ThrushSequencer): void {
     this._aggregatedContexts.forEach((c) => c.start(sequencer));
+    this._currentAggIndex = 0; 
+    this._timeOfs = 0;
+    this._lastTime = 0;
   }
 
   nextEvent(): ThrushSequenceEvent | null {
     let ret: ThrushSequenceEvent | null = null;
 
     while(this._currentAggIndex < this._aggregatedContexts.length) {
-      ret = this._aggregatedContexts[this._currentAggIndex].nextEvent();
+      ret = this._aggregatedContexts[this._currentAggIndex].nextEvent()?.clone() || null;
       if(ret) {
         ret.time += this._timeOfs;
         this._lastTime = ret.time;

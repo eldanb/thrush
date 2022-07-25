@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { AmigaModFile, AmigaModNativeSynthImportSynthDriver, AmigaModPlayer, AmigaModPlayer2, AmigaModScriptSynthImportSynthDriver, parseModFile } from 'src/lib/formats/AmigaModParser';
+import { AmigaModFile, AmigaModNativeSynthImportSynthDriver, AmigaModPlayer2, AmigaModScriptSynthImportSynthDriver, parseModFile } from 'src/lib/formats/AmigaModParser';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { NativeSynthesizer } from 'src/lib/thrush_engine/synth/native/NativeSynthesizer';
 import { ScriptSynthesizer } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthesizer';
@@ -19,34 +19,40 @@ let wavetableSynth = new NativeSynthesizer(audioContext, 16);
 
 const DEFAULT_CODE=
 `/**
- * @param {ThrushSequenceGenerationCalls} c
- */
-function* d(c) { 
+* @param {ThrushSequenceGenerationCalls} c
+*/
+function* mainSequence(c) { 
 
-  const TEMPO = 0.2;
-  
-  for(;;) {
-    yield c.playGenerator(function* (c) {
-      yield c.playNoteOnWaveSynthChannel(1, 0, 12);
-      yield c.delay(3*TEMPO);
-      yield c.playNoteOnWaveSynthChannel(1, 0, 16);
-      yield c.delay(3*TEMPO);
-      yield c.playNoteOnWaveSynthChannel(1, 0, 19);
-      yield c.delay(2*TEMPO);
-    });
+ const TEMPO = 0.2;
+ 
+ const bells = (notes, instrumentId, tempo) => c.functionSequence(function* (c) {
+   let channel = 0;
+   for(;;) {
+     const noteStep = Math.round(Math.random() * (notes.length-1));     
+     yield c.playNote("soft", channel, instrumentId, notes[noteStep], { panning: Math.random() });
+     yield c.delay(tempo);
+     channel ++;
+     if(channel>1) {
+       channel = 0;
+     }
+   }
+ });
 
-    yield c.playGenerator(function* (c) {
-      yield c.playNoteOnChannel(0, 0, 0);
-      yield c.delay(2*TEMPO);
-      yield c.playNoteOnChannel(0, 0, 4);
-      yield c.delay(2*TEMPO);
-      yield c.playNoteOnChannel(0, 0, 7);
-      yield c.delay(2*TEMPO);
-    });
+ yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2));
 
-    yield c.delay(9*TEMPO);
-    yield c.marker('dummy', 1);
-  }
+ for(;;) {
+   yield c.playSequence(c.functionSequence(function* (c) {
+     yield c.playNote("native", 2, 0, 0);
+     yield c.delay(3*TEMPO);
+     yield c.playNote("native", 2, 0, 4);
+     yield c.delay(3*TEMPO);
+     yield c.playNote("native", 2, 0, 7);
+     yield c.delay(2*TEMPO);
+   }));
+    
+   yield c.delay(8*TEMPO);
+   yield c.marker('dummy', 1);   
+ }
 }
 `;
 
@@ -121,59 +127,59 @@ export class AppComponent implements OnInit {
 
       const seqContext = new ThrushFunctionSequenceGenerator(function* (c) {
         for(;;) {
-          yield c.playNoteOnChannel(0, instrumentId, 0);
+          yield c.playNote('soft', 0, instrumentId, 0);
           yield c.delay(2*TEMPO);
-          yield c.playNoteOnChannel(0, instrumentId, 4);
+          yield c.playNote('soft', 0, instrumentId, 4);
           yield c.delay(2*TEMPO);
-          yield c.playNoteOnChannel(0, instrumentId, 7);
+          yield c.playNote('soft', 0, instrumentId, 7);
           yield c.delay(2*TEMPO);
         }
       }, aggSeqContext);
   
       const seqContext2 = new ThrushFunctionSequenceGenerator(function* (c) {
         for(;;) {
-          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
+          yield c.playNote('soft', 1, instrumentIdNative, 12);
           yield c.delay(3*TEMPO);
-          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
+          yield c.playNote('soft', 1, instrumentIdNative, 16);
           yield c.delay(3*TEMPO);
-          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
+          yield c.playNote('soft', 1, instrumentIdNative, 19);
           yield c.delay(2*TEMPO);
         }
       }, aggSeqContext);
   
       const seqContext3 = new ThrushFunctionSequenceGenerator(function* (c) {
         for(;;) {
-          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
+          yield c.playNote('native', 1, instrumentIdNative, 12);
           yield c.delay(3*TEMPO);
-          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
+          yield c.playNote('native', 1, instrumentIdNative, 16);
           yield c.delay(3*TEMPO);
-          yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
+          yield c.playNote('native', 1, instrumentIdNative, 19);
           yield c.delay(2*TEMPO);
         }
       }, aggSeqContext);
   
       const seqContext4 = new ThrushFunctionSequenceGenerator(function* (c) {
         for(;;) {
-          yield c.playGenerator(function* (c) {
+          yield c.playSequence(c.functionSequence(function* (c) {
             
-              yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 12);
+              yield c.playNote('native', 1, instrumentIdNative, 12);
               yield c.delay(3*TEMPO);
-              yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 16);
+              yield c.playNote('native', 1, instrumentIdNative, 16);
               yield c.delay(3*TEMPO);
-              yield c.playNoteOnWaveSynthChannel(1, instrumentIdNative, 19);
+              yield c.playNote('native', 1, instrumentIdNative, 19);
               yield c.delay(2*TEMPO);            
-          });
+          }));
 
-          yield c.playGenerator(function* (c) {
+          yield c.playSequence(c.functionSequence(function* (c) {
             
-              yield c.playNoteOnChannel(0, instrumentId, 0);
+              yield c.playNote('soft', 0, instrumentId, 0);
               yield c.delay(2*TEMPO);
-              yield c.playNoteOnChannel(0, instrumentId, 4);
+              yield c.playNote('soft', 0, instrumentId, 4);
               yield c.delay(2*TEMPO);
-              yield c.playNoteOnChannel(0, instrumentId, 7);
+              yield c.playNote('soft', 0, instrumentId, 7);
               yield c.delay(2*TEMPO);
                 }
-          );
+          ));
 
           yield c.delay(9*TEMPO);
           yield c.marker('dummy', 1);
@@ -211,21 +217,7 @@ export class AppComponent implements OnInit {
     };
 
   }
-  load_module(eTarget: EventTarget | null) {
-    const file_picker = eTarget as HTMLInputElement;
-    var module_file = file_picker!.files![0];
-    var reader = new FileReader();
-
-    reader.readAsArrayBuffer(module_file);
-    reader.onloadend = async () => {
-      this._parsedModule = parseModFile(reader.result as ArrayBuffer);
-      const player = new AmigaModPlayer(this._parsedModule);
-      await player.loadInstruments(sequencer);
-
-      this.seqContextToPlay = player;
-    }
-  }
-
+  
   load_module2(eTarget: EventTarget | null) {
     const file_picker = eTarget as HTMLInputElement;
     var module_file = file_picker!.files![0];

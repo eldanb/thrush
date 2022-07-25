@@ -9,6 +9,11 @@ export class ThrushCursorTracker {
   constructor(private _audioContext: AudioContext) {
   }
 
+  panic() {
+    this._cursors = {};
+    this._eventQueue = [];
+  }
+  
   postCusrorChangeEvent(time: number, cursor: string, value: any) {
     this._eventQueue.push({
       time, cursor, value

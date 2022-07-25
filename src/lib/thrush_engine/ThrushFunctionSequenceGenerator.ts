@@ -1,4 +1,4 @@
-/// <reference path="ThrushFunctionGeneratorInterfaces.ts"/>
+/// <reference path="./ThrushFunctionGeneratorInterfaces.ts"/>
 import { ThrushAggregatedSequenceGenerator } from "./ThrushAggregatedSequenceGenerator";
 import { ThrushSequencer, ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequenceMarkerEvent } from "./ThrushSequencer";
 import { ThrushCommonSynthesizerEvent } from "./ThrushSynthesizerInterface";
@@ -14,11 +14,6 @@ export type ThrushSequenceGenerationDirectiveCallGenerator = {
   generator: ThrushSequenceGenerator;
 }
 
-export type ThrushSequenceGenerationDirectiveCallFnGenerator = {
-  type: 'call_fn_generator';
-  generationFunction: ThrushSequenceGenerationFunction;
-}
-
 export type ThrushSequenceGenerationDirectiveDelay = {
   type: 'delay';
   delay: number;
@@ -27,8 +22,7 @@ export type ThrushSequenceGenerationDirectiveDelay = {
 export type InternalThrushSequenceGenerationDirective = 
   ThrushSequenceGenerationDirectiveEvent | 
   ThrushSequenceGenerationDirectiveCallGenerator | 
-  ThrushSequenceGenerationDirectiveDelay |
-  ThrushSequenceGenerationDirectiveCallFnGenerator;
+  ThrushSequenceGenerationDirectiveDelay;
 
 export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
   private _nextEventTime: number = 0;
@@ -41,7 +35,7 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
   }
 
   start(sequencer: ThrushSequencer): void {    
-    this._eventGenerator = this._sequenceGeneratorFactory(new ThrushSequenceGenerationCallsImpl(sequencer));
+    this._eventGenerator = this._sequenceGeneratorFactory(new ThrushSequenceGenerationCallsImpl(sequencer, this._aggregator));
   }
 
   
@@ -68,12 +62,6 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
           this._aggregator.addChild(new ThrushTimeOffsetSequenceGenerator(genResult.value.generator, this._nextEventTime));
           break;
 
-        case "call_fn_generator":
-          this._aggregator.addChild(new ThrushTimeOffsetSequenceGenerator(
-            new ThrushFunctionSequenceGenerator(genResult.value.generationFunction, this._aggregator), 
-            this._nextEventTime));
-          break;
-  
         case "delay":
           this._nextEventTime += genResult.value.delay;
           break;
@@ -84,33 +72,35 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
 
 
 class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls {
-  constructor(private _sequencer: ThrushSequencer) {
+  constructor(private _sequencer: ThrushSequencer, private _aggregator: ThrushAggregatedSequenceGenerator) {
 
   }
 
-  playNoteOnChannel(channel: number, instrumentId: number, note: number): ThrushSequenceGenerationDirective {
+  playNote(synth: SynthesizerSelection, channel: number, instrumentId: number, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: 'event',
-      event: new ThrushCommonSynthesizerEvent(0, this._sequencer.tsynthToneGenerator, 
-      channel, {
-        newNote: {
-          instrumentId,
-          note
-        }
-      })
+      event: new ThrushCommonSynthesizerEvent(
+        0, 
+        synth === 'soft' ? this._sequencer.tsynthToneGenerator : this._sequencer.waveTableSynthesizer,  
+        channel, 
+        {
+          newNote: {
+            instrumentId,
+            note
+          },
+          ...options
+        })
     });
   }
 
-  playNoteOnWaveSynthChannel(channel: number, instrumentId: number, note: number): ThrushSequenceGenerationDirective {
+  changeNote(synth: SynthesizerSelection, channel: number, options: NoteSettings): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: 'event',
-      event: new ThrushCommonSynthesizerEvent(0, this._sequencer.waveTableSynthesizer, 
-      channel, {
-        newNote: {
-          instrumentId,
-          note
-        }
-      })
+      event: new ThrushCommonSynthesizerEvent(
+        0, 
+        synth === 'soft' ? this._sequencer.tsynthToneGenerator : this._sequencer.waveTableSynthesizer,  
+        channel, 
+        options)
     });
   }
 
@@ -121,13 +111,18 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     });
   }
 
-  playGenerator(generator: ThrushSequenceGenerationFunction): ThrushSequenceGenerationDirective {
+  playSequence(sequence: ThrushSequenceGeneratorHandle): ThrushSequenceGenerationDirective {
+    const typedSequence = sequence as unknown as ThrushSequenceGenerator;
     return this.internalEventToDirective({
-      type: 'call_fn_generator',
-      generationFunction: generator
+      type: "call_generator",
+      generator: typedSequence
     });
   }
 
+  functionSequence(generator: ThrushSequenceGenerationFunction): ThrushSequenceGeneratorHandle {
+    return new ThrushFunctionSequenceGenerator(generator, this._aggregator) as unknown as ThrushSequenceGeneratorHandle;
+  }
+    
   delay(time: number): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: 'delay',

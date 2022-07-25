@@ -32,8 +32,9 @@ export class ScriptSynthEngine {
     this._sampleRate = sampleRate;
   }
 
-  clearQueue(): void {
+  panic(): void {
     this._eventQueue = [];
+    this._toneGenerator.panic();
   }
 
   enqueueEvent(event: ScriptSynthEngineEvent) {

@@ -15,18 +15,18 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
 
   async enqueueEvent(event: ScriptSynthEngineEvent): Promise<void> {
     if(!this._synthEngine) {
-      throw Error("Node not conigured")
+      throw Error("Node not configured")
     }
 
     this._synthEngine.enqueueEvent(event);
   }
 
-  async clearEventQueue(): Promise<void> {
+  async panic(): Promise<void> {
     if(!this._synthEngine) {
-      throw Error("Node not conigured")
+      throw Error("Node not configured")
     }
 
-    this._synthEngine.clearQueue();
+    this._synthEngine.panic();
   }
 
   async createInstrument(

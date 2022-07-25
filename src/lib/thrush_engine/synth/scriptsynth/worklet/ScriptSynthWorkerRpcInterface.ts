@@ -8,5 +8,5 @@ export interface ScriptSynthWorkerRpcInterface {
     loopStart: number, loopLen: number,
     volume: number): Promise<number>;
   enqueueEvent(event: ScriptSynthEngineEvent): Promise<void>;
-  clearEventQueue(): Promise<void>;
+  panic(): Promise<void>;
 }

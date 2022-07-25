@@ -40,13 +40,18 @@ export class ScriptSynthToneGenerator {
   private _channelStates: ChannelState[];
   private _currentTime: number = 0;
 
-  constructor(sampleRate: number, numChannels: number) {
+  constructor(sampleRate: number, private _numChannels: number) {
     this._channelStates = [];
-    for(let channelIdx=0; channelIdx<numChannels; channelIdx++) {
-      this._channelStates[channelIdx] = new ChannelState(this);
-    }
+    
+    this.panic();
 
     this._sampleRate = sampleRate;
+  }
+
+  public panic() {
+    for(let channelIdx=0; channelIdx<this._numChannels; channelIdx++) {
+      this._channelStates[channelIdx] = new ChannelState(this);
+    }    
   }
 
   public playNoteOnChannel(channel: number, instrument: ScriptSynthInstrument, note: number) {

@@ -7,6 +7,7 @@ export class ThrushArraySequenceGenerator implements ThrushSequenceGenerator {
   }
 
   start(sequencer: ThrushSequencer): void {
+    this._index = 0;
   }
 
   nextEvent(): ThrushSequenceEvent | null {

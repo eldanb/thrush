@@ -28,6 +28,10 @@ export class ThrushCommonSynthesizerEvent extends ThrushSequenceEvent {
     super();
   }
 
+  clone(): ThrushSequenceEvent {
+    return new ThrushCommonSynthesizerEvent(this.time, this.targetSynth, this.channel, this.commands);
+  }
+
   route(sequencer: ThrushSequencer): Promise<void> {
     return this.targetSynth.enqueueSynthEvent(this);
   }

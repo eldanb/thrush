@@ -11,7 +11,7 @@ export class ThrushTimeOffsetSequenceGenerator extends ThrushSequenceGenerator {
   }
   
   nextEvent(): ThrushSequenceEvent | null {
-    const underlyingEvent = this._underlying.nextEvent();
+    const underlyingEvent = this._underlying.nextEvent()?.clone() || null;
     if(underlyingEvent) {
       underlyingEvent.time += this._timeOffset;
     }

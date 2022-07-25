@@ -4,11 +4,16 @@ import { ThrushCursorTracker } from "./ThrushCursorTracker";
 
 export abstract class ThrushSequenceEvent {
   time: number = 0;
+  abstract clone(): ThrushSequenceEvent;
   abstract route(sequencer: ThrushSequencer) : Promise<void>;
 }
-export class ThrushSequenceMarkerEvent extends ThrushSequenceEvent{
+export class ThrushSequenceMarkerEvent extends ThrushSequenceEvent {
   constructor(public override time: number, public cursorName?: string, public cursorValue?: any) {
     super();
+  }
+
+  clone(): ThrushSequenceEvent {
+    return new ThrushSequenceMarkerEvent(this.time, this.cursorName, this.cursorValue);
   }
 
   async route(sequencer: ThrushSequencer) : Promise<void> {
@@ -62,6 +67,8 @@ export class ThrushSequencer {
     this._timerId = null;
 
     await this._tsynthToneGenerator.panic();
+    await this._waveSynth.panic();
+    this._cursorTracker.panic();
   }
 
   get tsynthToneGenerator() {

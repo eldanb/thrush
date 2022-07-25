@@ -31,7 +31,7 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
   }
 
   panic() {
-    return this._workletNodeRpcProxy.clearEventQueue();
+    return this._workletNodeRpcProxy.panic();
   }
 
   initialize(): Promise<void> {

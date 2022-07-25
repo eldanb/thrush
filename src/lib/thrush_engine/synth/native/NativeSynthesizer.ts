@@ -42,7 +42,12 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     }, 100);
   }
   
-  async panic(): Promise<void> {    
+  async panic(): Promise<void> { 
+    this._channelState.forEach((channelState) => {      
+      this.clearChannelNoteModulation(channelState, 0);
+      channelState.lastScheduledNode?.disconnect();
+      channelState.lastScheduledNode = null;      
+    })
   }
   
   registerInstrument(
