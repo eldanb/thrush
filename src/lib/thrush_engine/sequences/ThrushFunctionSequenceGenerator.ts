@@ -172,7 +172,7 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
   waitFor(eventType: string, eventTarget?: string): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: "call_generator",
-      generator: new ThrushWaitForEventSequence(eventType, eventTarget)
+      generator: new ThrushWaitForEventSequence(0, eventType, eventTarget)
     });
   }
 

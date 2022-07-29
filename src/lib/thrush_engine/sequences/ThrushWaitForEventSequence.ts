@@ -3,7 +3,7 @@ import { ThrushSequenceEndEvent, ThrushSequenceEvent, ThrushSequenceGenerator, T
 export class ThrushWaitForEventSequence extends ThrushSequenceGenerator {
   _satisfiedTime: number | null = null;
 
-  constructor(private _eventType: string, private _eventTarget?: string) {
+  constructor(private _since: number, private _eventType: string, private _eventTarget?: string) {
     super();
   }
 
@@ -11,6 +11,10 @@ export class ThrushWaitForEventSequence extends ThrushSequenceGenerator {
   }
 
   postEvent(time: number, eventType: string, eventTarget: string, value: any): void {    
+    if(time < this._since) {
+      return;
+    }
+    
     if(eventType === this._eventType && (!this._eventTarget || eventTarget === this._eventTarget)) {
       if(this._satisfiedTime === null || this._satisfiedTime > time) {
         this._satisfiedTime = time;
