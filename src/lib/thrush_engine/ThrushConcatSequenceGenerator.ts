@@ -1,4 +1,4 @@
-import { ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "./ThrushSequencer";
+import { ThrushSequenceEndEvent, ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "./ThrushSequencer";
 
 export class ThrushConcatSequenceGenerator extends ThrushSequenceGenerator {
   
@@ -27,15 +27,17 @@ export class ThrushConcatSequenceGenerator extends ThrushSequenceGenerator {
     while(this._currentAggIndex < this._aggregatedContexts.length) {
       ret = this._aggregatedContexts[this._currentAggIndex].nextEvent()?.clone() || null;
       if(ret) {
-        ret.time += this._timeOfs;
-        this._lastTime = ret.time;
-        return ret;
-      } else {
-        this._timeOfs = this._lastTime;
-        this._currentAggIndex ++;      
-      }
+        if(ret instanceof ThrushSequenceEndEvent) {
+          this._timeOfs = this._lastTime;
+          this._currentAggIndex ++;
+        } else {
+          ret.time += this._timeOfs;
+          this._lastTime = ret.time;        
+          return ret;
+        }
+      } 
     }
 
-    return null;
+    return new ThrushSequenceEndEvent(this._lastTime);
   }
 }

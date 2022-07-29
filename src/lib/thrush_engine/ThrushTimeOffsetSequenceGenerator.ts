@@ -18,7 +18,4 @@ export class ThrushTimeOffsetSequenceGenerator extends ThrushSequenceGenerator {
 
     return underlyingEvent;
   }
-
-  
-
 }

@@ -1,4 +1,4 @@
-import { ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "./ThrushSequencer";
+import { ThrushSequenceEndEvent, ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "./ThrushSequencer";
 
 export class ThrushArraySequenceGenerator implements ThrushSequenceGenerator {
  _index: number = 0;
@@ -13,6 +13,6 @@ export class ThrushArraySequenceGenerator implements ThrushSequenceGenerator {
   nextEvent(): ThrushSequenceEvent | null {
     return this._index < this._sequence.length ? 
            this._sequence[this._index++] :
-           null;    
+           new ThrushSequenceEndEvent(this._sequence[this._sequence.length-1].time);    
   }
 }

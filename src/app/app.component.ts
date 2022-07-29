@@ -22,37 +22,49 @@ const DEFAULT_CODE=
 * @param {ThrushSequenceGenerationCalls} c
 */
 function* mainSequence(c) { 
-
- const TEMPO = 0.2;
- 
- const bells = (notes, instrumentId, tempo) => c.functionSequence(function* (c) {
-   let channel = 0;
-   for(;;) {
-     const noteStep = Math.round(Math.random() * (notes.length-1));     
-     yield c.playNote("soft", channel, instrumentId, notes[noteStep], { panning: Math.random() });
-     yield c.delay(tempo);
-     channel ++;
-     if(channel>1) {
-       channel = 0;
-     }
-   }
- });
-
- yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2));
-
- for(;;) {
-   yield c.playSequence(c.functionSequence(function* (c) {
-     yield c.playNote("native", 2, 0, 0);
-     yield c.delay(3*TEMPO);
-     yield c.playNote("native", 2, 0, 4);
-     yield c.delay(3*TEMPO);
-     yield c.playNote("native", 2, 0, 7);
-     yield c.delay(2*TEMPO);
-   }));
+  
+  const TEMPO = 0.2;
+  
+  const bells = (notes, instrumentId, tempo, count) => c.functionSequence(function* (c) {
+    let channel = 0;
+    for(let x=0; x<count; x++) {
+      const noteStep = Math.round(Math.random() * (notes.length-1));     
+      yield c.playNote("soft", channel, instrumentId, notes[noteStep], { panning: Math.random() });
+      yield c.delay(tempo);
+      channel ++;
+      if(channel>1) {
+        channel = 0;
+      }
+    }
+  });
+  
+  for(;;) {
+    yield c.startSequence(c.functionSequence(function* (c) {
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
+      
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
+    }));
     
-   yield c.delay(8*TEMPO);
-   yield c.marker('dummy', 1);   
- }
+    
+    for(let x=0; x<4; x++) {
+      yield c.playSequence(c.functionSequence(function* (c) {
+        yield c.playNote("native", 2, 0, 0);
+        yield c.delay(3*TEMPO);
+        yield c.playNote("native", 2, 0, 4);
+        yield c.delay(3*TEMPO);
+        yield c.playNote("native", 2, 0, 7);
+        yield c.delay(2*TEMPO);
+      }));
+    }
+
+    yield c.delay(8*TEMPO*4);
+  } 
 }
 `;
 

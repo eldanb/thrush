@@ -7,6 +7,21 @@ export abstract class ThrushSequenceEvent {
   abstract clone(): ThrushSequenceEvent;
   abstract route(sequencer: ThrushSequencer) : Promise<void>;
 }
+
+export class ThrushSequenceEndEvent extends ThrushSequenceEvent{
+  constructor(public override time: number) {
+    super();
+  }
+
+  clone(): ThrushSequenceEvent {
+    return new ThrushSequenceEndEvent(this.time);
+  }
+  
+  route(sequencer: ThrushSequencer) : Promise<void> {
+    return Promise.reject();
+  }
+}
+
 export class ThrushSequenceMarkerEvent extends ThrushSequenceEvent {
   constructor(public override time: number, public cursorName?: string, public cursorValue?: any) {
     super();
@@ -87,12 +102,14 @@ export class ThrushSequencer {
     while(this._lastBufferedEvent < this._audioContext.currentTime + 3) {
       const nextEvent = this._sequencerContext?.nextEvent();
       if(nextEvent) {
+        if(nextEvent instanceof ThrushSequenceEndEvent) {
+          break;
+        }
+
         nextEvent.time += this._startTime;
         await nextEvent.route(this);
         this._lastBufferedEvent = nextEvent.time;
-      } else {
-        break;
-      }
+      } 
     }
   }
 }

@@ -1,6 +1,6 @@
 /// <reference path="./ThrushFunctionGeneratorInterfaces.ts"/>
 import { ThrushAggregatedSequenceGenerator } from "./ThrushAggregatedSequenceGenerator";
-import { ThrushSequencer, ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequenceMarkerEvent } from "./ThrushSequencer";
+import { ThrushSequencer, ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequenceMarkerEvent, ThrushSequenceEndEvent } from "./ThrushSequencer";
 import { ThrushCommonSynthesizerEvent } from "./ThrushSynthesizerInterface";
 import { ThrushTimeOffsetSequenceGenerator } from "./ThrushTimeOffsetSequenceGenerator";
 
@@ -14,6 +14,11 @@ export type ThrushSequenceGenerationDirectiveCallGenerator = {
   generator: ThrushSequenceGenerator;
 }
 
+export type ThrushSequenceGenerationDirectiveStartGenerator = {
+  type: 'start_generator';
+  generator: ThrushSequenceGenerator;
+}
+
 export type ThrushSequenceGenerationDirectiveDelay = {
   type: 'delay';
   delay: number;
@@ -22,11 +27,14 @@ export type ThrushSequenceGenerationDirectiveDelay = {
 export type InternalThrushSequenceGenerationDirective = 
   ThrushSequenceGenerationDirectiveEvent | 
   ThrushSequenceGenerationDirectiveCallGenerator | 
+  ThrushSequenceGenerationDirectiveStartGenerator | 
   ThrushSequenceGenerationDirectiveDelay;
 
 export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
+  private _sequencer: ThrushSequencer | null = null;
   private _nextEventTime: number = 0;
   private _eventGenerator: Generator<ThrushSequenceGenerationDirective> | null = null;
+  private _calledGenerator: ThrushSequenceGenerator | null = null;
   
   constructor(
     private _sequenceGeneratorFactory: ThrushSequenceGenerationFunction,
@@ -34,7 +42,10 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
     super();
   }
 
-  start(sequencer: ThrushSequencer): void {    
+  start(sequencer: ThrushSequencer): void {  
+    this._sequencer = sequencer;  
+    this._calledGenerator = null;
+    this._nextEventTime = 0;
     this._eventGenerator = this._sequenceGeneratorFactory(new ThrushSequenceGenerationCallsImpl(sequencer, this._aggregator));
   }
 
@@ -45,10 +56,20 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
     }
 
     for(;;) {
+      if(this._calledGenerator) {
+        const nextEvent = this._calledGenerator.nextEvent();
+        if(nextEvent instanceof ThrushSequenceEndEvent) {
+          this._calledGenerator = null;
+          this._nextEventTime = nextEvent.time;
+        } else {
+          return nextEvent;
+        }
+      }
+
       const genResult = this._eventGenerator.next() as unknown as IteratorResult<InternalThrushSequenceGenerationDirective>;
 
       if(genResult.done) {
-        return null;
+        return new ThrushSequenceEndEvent(this._nextEventTime);
       }
 
       switch(genResult.value.type) {
@@ -56,12 +77,16 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
           const event = genResult.value.event;
           event.time = this._nextEventTime;
           return event;
-          break;
 
-        case "call_generator":
+        case "start_generator":
           this._aggregator.addChild(new ThrushTimeOffsetSequenceGenerator(genResult.value.generator, this._nextEventTime));
           break;
 
+        case "call_generator":
+          this._calledGenerator = new ThrushTimeOffsetSequenceGenerator(genResult.value.generator, this._nextEventTime);          
+          this._calledGenerator.start(this._sequencer!);
+          break;
+  
         case "delay":
           this._nextEventTime += genResult.value.delay;
           break;
@@ -115,6 +140,14 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     const typedSequence = sequence as unknown as ThrushSequenceGenerator;
     return this.internalEventToDirective({
       type: "call_generator",
+      generator: typedSequence
+    });
+  }
+
+  startSequence(sequence: ThrushSequenceGeneratorHandle): typeof ThrushSequenceGenerationDirectivez {
+    const typedSequence = sequence as unknown as ThrushSequenceGenerator;
+    return this.internalEventToDirective({
+      type: "start_generator",
       generator: typedSequence
     });
   }

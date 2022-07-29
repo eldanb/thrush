@@ -16,6 +16,7 @@ declare interface ThrushSequenceGenerationCalls {
   changeNote(synth: SynthesizerSelection, channel: number, options?: NoteSettings): ThrushSequenceGenerationDirective;
   
   marker(cursor: string, value: any): ThrushSequenceGenerationDirective;
+  startSequence(generator: ThrushSequenceGeneratorHandle): ThrushSequenceGenerationDirective;
   playSequence(generator: ThrushSequenceGeneratorHandle): ThrushSequenceGenerationDirective;
   
   functionSequence(generator: ThrushSequenceGenerationFunction): ThrushSequenceGeneratorHandle;
