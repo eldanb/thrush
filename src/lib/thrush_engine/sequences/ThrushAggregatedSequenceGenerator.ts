@@ -1,28 +1,28 @@
-import { ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequencer, ThrushSequenceEndEvent } from "./ThrushSequencer";
+import { ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequencer, ThrushSequenceEndEvent } from "../ThrushSequencer";
 
 export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {  
   private _sequencer: ThrushSequencer | null = null;
 
-  constructor(...contexts: ThrushSequenceGenerator[]) {
+  constructor(...sequences: ThrushSequenceGenerator[]) {
     super();
     this._cachedNextEvent = [];
-    this._aggregatedContexts = contexts;
+    this._aggregatedSequences = sequences;
   }
 
-  private _aggregatedContexts: ThrushSequenceGenerator[];
+  private _aggregatedSequences: ThrushSequenceGenerator[];
   private _cachedNextEvent: (ThrushSequenceEvent | null)[];
   private _lastTime: number = 0;
 
-  addChild(childSequencerContext: ThrushSequenceGenerator) {
-    this._aggregatedContexts.push(childSequencerContext);
+  addChild(childSequence: ThrushSequenceGenerator) {
+    this._aggregatedSequences.push(childSequence);
     if(this._sequencer) {
-      childSequencerContext.start(this._sequencer);
+      childSequence.start(this._sequencer);
     }
   }
 
   start(sequencer: ThrushSequencer): void {
     this._sequencer = sequencer;
-    this._aggregatedContexts.forEach((c) => c.start(sequencer));
+    this._aggregatedSequences.forEach((c) => c.start(sequencer));
   }
 
   nextEvent(): ThrushSequenceEvent | null {
@@ -30,20 +30,20 @@ export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {
     let selectedEvent: ThrushSequenceEvent | null = null;
     let selectedEventChildIndex: number | null = null;
 
-    if(this._aggregatedContexts.length == 0) {
+    if(this._aggregatedSequences.length == 0) {
       return new ThrushSequenceEndEvent(this._lastTime);
     }
 
-    while(childIndex < this._aggregatedContexts.length) {
-      const childContext = this._aggregatedContexts[childIndex];
+    while(childIndex < this._aggregatedSequences.length) {
+      const childSequence = this._aggregatedSequences[childIndex];
 
       let nextEventForChild: ThrushSequenceEvent | null = null;
       if(this._cachedNextEvent[childIndex] == null) {        
-        nextEventForChild = childContext.nextEvent();
+        nextEventForChild = childSequence.nextEvent();
 
         if(nextEventForChild instanceof ThrushSequenceEndEvent) {          
           this._cachedNextEvent.splice(childIndex, 1);
-          this._aggregatedContexts.splice(childIndex, 1);
+          this._aggregatedSequences.splice(childIndex, 1);
           continue;
         }
 
@@ -63,8 +63,14 @@ export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {
     if(selectedEventChildIndex !== null) {
       this._cachedNextEvent[selectedEventChildIndex] = null;
       this._lastTime = selectedEvent!.time;
-    }
+    } 
 
     return selectedEvent;
+  }
+
+  postEvent(time: number, eventType: string, eventTarget: string, value: any): void {
+      this._aggregatedSequences.forEach((sequence) => {
+        sequence.postEvent(time, eventType, eventTarget, value);
+      })
   }
 }

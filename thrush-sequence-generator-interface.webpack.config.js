@@ -1,6 +1,6 @@
 module.exports = {
   mode: 'development',
-  entry: './src/lib/thrush_engine/ThrushFunctionGeneratorInterfaces.ts',  
+  entry: './src/lib/thrush_engine/sequences/ThrushFunctionGeneratorInterfaces.ts',  
   output: {
     filename: 'generated/ThrushFunctionGeneratorInterfaces.d.ts',
     path: __dirname

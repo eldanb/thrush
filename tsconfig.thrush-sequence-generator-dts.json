@@ -22,6 +22,6 @@
     "module": "System"
   },
 
-  "include": ["src/lib/thrush_engine/ThrushFunctionGeneratorInterfaces.ts"],
+  "include": ["src/lib/thrush_engine/sequences/ThrushFunctionGeneratorInterfaces.ts"],
 
 }

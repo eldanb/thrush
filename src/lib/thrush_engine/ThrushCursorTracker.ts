@@ -1,3 +1,5 @@
+import { ThrushEventBus } from "./ThrushEventBus";
+
 export class ThrushCursorTracker {
   private _cursors: Record<string, any> = {};
   private _eventQueue: Array<{
@@ -6,18 +8,20 @@ export class ThrushCursorTracker {
     value?: any;
   }> = [];
 
-  constructor(private _audioContext: AudioContext) {
+  constructor(private _eventBus: ThrushEventBus, private _audioContext: AudioContext) {
   }
 
   panic() {
     this._cursors = {};
     this._eventQueue = [];
   }
-  
+
   postCusrorChangeEvent(time: number, cursor: string, value: any) {
     this._eventQueue.push({
       time, cursor, value
     });
+
+    this._eventBus.postEvent(time, 'cursor', cursor, value);
   }
 
   getCursor(cursorName: string): any {

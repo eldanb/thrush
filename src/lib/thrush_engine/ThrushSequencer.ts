@@ -1,9 +1,11 @@
 import { NativeSynthesizer } from "./synth/native/NativeSynthesizer";
 import { ScriptSynthesizer } from "./synth/scriptsynth/ScriptSynthesizer";
 import { ThrushCursorTracker } from "./ThrushCursorTracker";
+import { ThrushEventBus } from "./ThrushEventBus";
 
 export abstract class ThrushSequenceEvent {
   time: number = 0;
+
   abstract clone(): ThrushSequenceEvent;
   abstract route(sequencer: ThrushSequencer) : Promise<void>;
 }
@@ -40,30 +42,32 @@ export class ThrushSequenceMarkerEvent extends ThrushSequenceEvent {
 
 export abstract class ThrushSequenceGenerator {
   abstract start(sequencer: ThrushSequencer): void;
+  abstract postEvent(time: number, eventType: string, eventTarget: string, value: any): void;
   abstract nextEvent(): ThrushSequenceEvent | null;
 }
 
 
-export class ThrushSequencer {
-  private _sequencerContext: ThrushSequenceGenerator | null = null;
+export class ThrushSequencer implements ThrushEventBus {
+  private _sequence: ThrushSequenceGenerator | null = null;
   private _timerId: any = null;
   private _startTime: number = -1;
   private _lastBufferedEvent = -1;
   private _cursorTracker: ThrushCursorTracker;
-
+  
   constructor(private _audioContext: AudioContext,
               private _tsynthToneGenerator: ScriptSynthesizer,
               private _waveSynth: NativeSynthesizer) {
-    this._cursorTracker = new ThrushCursorTracker(_audioContext);
+    
+    this._cursorTracker = new ThrushCursorTracker(this, _audioContext);
   }
 
   async start(sequencerData: ThrushSequenceGenerator): Promise<void> {
-    if(this._sequencerContext) {
+    if(this._sequence) {
       await this.stop();
     }
 
-    this._sequencerContext = sequencerData;
-    this._sequencerContext.start(this);
+    this._sequence = sequencerData;
+    this._sequence.start(this);
 
     this._startTime = this._audioContext.currentTime;
 
@@ -73,12 +77,12 @@ export class ThrushSequencer {
 
 
   async stop() {
-    if(!this._sequencerContext) {
+    if(!this._sequence) {
       return;
     }
 
     clearInterval(this._timerId);
-    this._sequencerContext = null;
+    this._sequence = null;
     this._timerId = null;
 
     await this._tsynthToneGenerator.panic();
@@ -98,18 +102,20 @@ export class ThrushSequencer {
     return this._cursorTracker;
   }
   
+  postEvent(time: number, eventType: string, eventTarget: string, value: any): void {
+    this._sequence?.postEvent(time, eventType, eventTarget, value);
+  }
+
   private async bufferEvents() {
     while(this._lastBufferedEvent < this._audioContext.currentTime + 3) {
-      const nextEvent = this._sequencerContext?.nextEvent();
-      if(nextEvent) {
-        if(nextEvent instanceof ThrushSequenceEndEvent) {
-          break;
-        }
+      const nextEvent = this._sequence?.nextEvent();
+      if(!nextEvent || nextEvent instanceof ThrushSequenceEndEvent) {
+        break;
+      }
 
-        nextEvent.time += this._startTime;
-        await nextEvent.route(this);
-        this._lastBufferedEvent = nextEvent.time;
-      } 
+      nextEvent.time += this._startTime;
+      await nextEvent.route(this);
+      this._lastBufferedEvent = nextEvent.time;
     }
   }
 }

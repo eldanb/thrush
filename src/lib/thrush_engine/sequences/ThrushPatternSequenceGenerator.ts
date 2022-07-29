@@ -1,6 +1,6 @@
 import { ThrushArraySequenceGenerator } from "./ThrushArraySequenceGenerator";
-import { ThrushSequenceEvent, ThrushSequenceMarkerEvent } from "./ThrushSequencer";
-import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "./ThrushSynthesizerInterface";
+import { ThrushSequenceEvent, ThrushSequenceMarkerEvent } from "../ThrushSequencer";
+import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../ThrushSynthesizerInterface";
 
 export type ThrushPatternChannelEffectSlideVolume = {
   type: "vol_slide",
@@ -162,7 +162,12 @@ export class ThrushPatternSequenceGenerator extends ThrushArraySequenceGenerator
                 note: channelCommand.note
               } : undefined,
               panning: currentChannelState.panning,
-              volume: currentChannelState.volume
+              volume: currentChannelState.volume,
+              vibrato: {
+                waveform: "sine",
+                frequency: index / 30 * 3,
+                amplitude: 1/36
+              }
             }
           ))
         }

@@ -1,4 +1,4 @@
-import { ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "./ThrushSequencer";
+import { ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "../ThrushSequencer";
 
 
 export class ThrushTimeOffsetSequenceGenerator extends ThrushSequenceGenerator {
@@ -10,6 +10,10 @@ export class ThrushTimeOffsetSequenceGenerator extends ThrushSequenceGenerator {
     this._underlying.start(sequencer);
   }
   
+  postEvent(time: number, eventType: string, eventTarget: string, value: any): void {
+    this._underlying.postEvent(time - this._timeOffset, eventType, eventTarget, value);
+  }
+
   nextEvent(): ThrushSequenceEvent | null {
     const underlyingEvent = this._underlying.nextEvent()?.clone() || null;
     if(underlyingEvent) {

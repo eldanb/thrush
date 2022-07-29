@@ -1,8 +1,9 @@
 /// <reference path="./ThrushFunctionGeneratorInterfaces.ts"/>
 import { ThrushAggregatedSequenceGenerator } from "./ThrushAggregatedSequenceGenerator";
-import { ThrushSequencer, ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequenceMarkerEvent, ThrushSequenceEndEvent } from "./ThrushSequencer";
-import { ThrushCommonSynthesizerEvent } from "./ThrushSynthesizerInterface";
-import { ThrushTimeOffsetSequenceGenerator } from "./ThrushTimeOffsetSequenceGenerator";
+import { ThrushSequencer, ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSequenceMarkerEvent, ThrushSequenceEndEvent } from "../ThrushSequencer";
+import { ThrushCommonSynthesizerEvent } from "../ThrushSynthesizerInterface";
+import { ThrushTimeOffsetSequenceGenerator } from "../sequences/ThrushTimeOffsetSequenceGenerator";
+import { ThrushWaitForEventSequence } from "./ThrushWaitForEventSequence";
 
 export type ThrushSequenceGenerationDirectiveEvent = {
   type: 'event';
@@ -48,7 +49,6 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
     this._nextEventTime = 0;
     this._eventGenerator = this._sequenceGeneratorFactory(new ThrushSequenceGenerationCallsImpl(sequencer, this._aggregator));
   }
-
   
   nextEvent(): ThrushSequenceEvent | null {
     if(!this._eventGenerator) {
@@ -93,6 +93,12 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
       }
     }
   }
+
+  postEvent(time: number, eventType: string, eventTarget: string, value: any): void {
+      if(this._calledGenerator) {
+        this._calledGenerator.postEvent(time, eventType, eventTarget, value);
+      }
+  }
 }
 
 
@@ -129,7 +135,7 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     });
   }
 
-  marker(cursor: string, value: any): ThrushSequenceGenerationDirective {
+  cursor(cursor: string, value: any): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: 'event',
       event: new ThrushSequenceMarkerEvent(0, cursor, value)
@@ -160,6 +166,13 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     return this.internalEventToDirective({
       type: 'delay',
       delay: time
+    });
+  }
+
+  waitFor(eventType: string, eventTarget?: string): ThrushSequenceGenerationDirective {
+    return this.internalEventToDirective({
+      type: "call_generator",
+      generator: new ThrushWaitForEventSequence(eventType, eventTarget)
     });
   }
 

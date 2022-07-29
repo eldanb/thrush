@@ -1,7 +1,7 @@
 import { NativeSynthesizer } from "../thrush_engine/synth/native/NativeSynthesizer";
 import { ScriptSynthEngineEvent } from "../thrush_engine/synth/scriptsynth/ScriptSynthEngine";
 import { ScriptSynthesizer } from "../thrush_engine/synth/scriptsynth/ScriptSynthesizer";
-import { ThrushPattern, ThrushPatternBinding, ThrushPatternChannelCommand, ThrushPatternChannelEffectSetVolume, ThrushPatternRow } from "../thrush_engine/ThrushPatternSequenceGenerator";
+import { ThrushPattern, ThrushPatternBinding, ThrushPatternChannelCommand, ThrushPatternChannelEffectSetVolume, ThrushPatternRow } from "../thrush_engine/sequences/ThrushPatternSequenceGenerator";
 import { ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "../thrush_engine/ThrushSequencer";
 import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../thrush_engine/ThrushSynthesizerInterface";
 

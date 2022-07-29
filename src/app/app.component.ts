@@ -3,10 +3,10 @@ import { AmigaModFile, AmigaModNativeSynthImportSynthDriver, AmigaModPlayer2, Am
 import { parseWav } from 'src/lib/formats/WavParser';
 import { NativeSynthesizer } from 'src/lib/thrush_engine/synth/native/NativeSynthesizer';
 import { ScriptSynthesizer } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthesizer';
-import { ThrushAggregatedSequenceGenerator } from 'src/lib/thrush_engine/ThrushAggregatedSequenceGenerator';
-import { ThrushConcatSequenceGenerator } from 'src/lib/thrush_engine/ThrushConcatSequenceGenerator';
-import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/ThrushFunctionSequenceGenerator';
-import { ThrushPatternSequenceGenerator } from 'src/lib/thrush_engine/ThrushPatternSequenceGenerator';
+import { ThrushAggregatedSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushAggregatedSequenceGenerator';
+import { ThrushConcatSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushConcatSequenceGenerator';
+import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushFunctionSequenceGenerator';
+import { ThrushPatternSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushPatternSequenceGenerator';
 import { ThrushSequenceGenerator, ThrushSequencer } from 'src/lib/thrush_engine/ThrushSequencer';
 import { MonacoEditorComponent } from './widget-lib/monaco-editor/monaco-editor.component';
 
@@ -40,15 +40,15 @@ function* mainSequence(c) {
   
   for(;;) {
     yield c.startSequence(c.functionSequence(function* (c) {
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
+      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
       
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/2, 16));
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
+      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
     }));
     
     
@@ -63,7 +63,17 @@ function* mainSequence(c) {
       }));
     }
 
-    yield c.delay(8*TEMPO*4);
+    for(let x=0; x<4; x++) {
+      yield c.playSequence(c.functionSequence(function* (c) {
+        yield c.playNote("native", 2, 0, -3);
+        yield c.delay(3*TEMPO);
+        yield c.playNote("native", 2, 0, 0);
+        yield c.delay(3*TEMPO);
+        yield c.playNote("native", 2, 0, 4);
+        yield c.delay(2*TEMPO);
+      }));
+    }
+
   } 
 }
 `;
@@ -194,7 +204,7 @@ export class AppComponent implements OnInit {
           ));
 
           yield c.delay(9*TEMPO);
-          yield c.marker('dummy', 1);
+          yield c.cursor('dummy', 1);
         }
       }, aggSeqContext);
       

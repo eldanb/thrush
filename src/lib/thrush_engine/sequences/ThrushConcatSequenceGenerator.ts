@@ -1,4 +1,4 @@
-import { ThrushSequenceEndEvent, ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "./ThrushSequencer";
+import { ThrushSequenceEndEvent, ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "../ThrushSequencer";
 
 export class ThrushConcatSequenceGenerator extends ThrushSequenceGenerator {
   
@@ -39,5 +39,11 @@ export class ThrushConcatSequenceGenerator extends ThrushSequenceGenerator {
     }
 
     return new ThrushSequenceEndEvent(this._lastTime);
+  }
+
+  postEvent(time: number, eventType: string, eventTarget: string, value: any): void {
+    this._aggregatedContexts[this._currentAggIndex]?.postEvent(
+      time - this._timeOfs,
+      eventType, eventTarget, value);    
   }
 }
