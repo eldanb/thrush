@@ -224,20 +224,29 @@ export class AppComponent implements OnInit {
     reader.readAsArrayBuffer(sample_file);
     reader.onloadend = async () => {
       const instrumentSampleArray =  (reader.result as ArrayBuffer);
-      const wavFile = parseWav(instrumentSampleArray!);
-      
-      let instrumentId = await audioWorkletNode.createInstrument(
-        wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
-      let instrumentIdNative = sequencer.waveTableSynthesizer.registerInstrument(
-        wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
-
-      this.codeLoadedInsturments.push({
-        scriptId: instrumentId,
-        nativeId: instrumentIdNative,
-        name: fileName
-      })
+      await this.registerCodeSample(fileName, instrumentSampleArray);      
     };
+  }
 
+  async loadSampleFromUrl(url: string) {
+    const fetchResult = await fetch(url);
+    const sampleBuffer = await fetchResult.arrayBuffer();
+    await this.registerCodeSample(url.split('/').pop()!, sampleBuffer);
+  }
+
+  async registerCodeSample(sampleName: string,  instrumentSampleArray: ArrayBuffer) {
+    const wavFile = parseWav(instrumentSampleArray!);
+    
+    let instrumentId = await audioWorkletNode.createInstrument(
+      wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
+    let instrumentIdNative = sequencer.waveTableSynthesizer.registerInstrument(
+      wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
+
+    this.codeLoadedInsturments.push({
+      scriptId: instrumentId,
+      nativeId: instrumentIdNative,
+      name: sampleName
+    });
   }
   
   load_module2(eTarget: EventTarget | null) {
@@ -299,7 +308,14 @@ export class AppComponent implements OnInit {
 
       setInterval(() => {
         this.patternCursor = sequencer.cursorTracker.getCursor('pattern');
-      }, 50)
+      }, 50);
+
+      const sampleUrlsToLoad = ['./assets/example-songs/samples/piano.wav'];
+      (async () => {
+        for(let index=0; index<sampleUrlsToLoad.length; index++) {
+          await this.loadSampleFromUrl(sampleUrlsToLoad[index]);
+        }
+      })();
     })();
   }
 }
