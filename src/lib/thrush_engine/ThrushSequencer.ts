@@ -53,6 +53,7 @@ export class ThrushSequencer implements ThrushEventBus {
   private _startTime: number = -1;
   private _lastBufferedEvent = -1;
   private _cursorTracker: ThrushCursorTracker;
+  private _routing: boolean = false;
   
   constructor(private _audioContext: AudioContext,
               private _tsynthToneGenerator: ScriptSynthesizer,
@@ -103,7 +104,11 @@ export class ThrushSequencer implements ThrushEventBus {
   }
   
   postEvent(time: number, eventType: string, eventTarget: string, value: any): void {
-    this._sequence?.postEvent(time, eventType, eventTarget, value);
+    if(!this._routing) {
+      throw new Error('Events can only be posted when routing');
+    }    
+
+    this._sequence?.postEvent(time - this._startTime, eventType, eventTarget, value);
   }
 
   private async bufferEvents() {
@@ -112,9 +117,11 @@ export class ThrushSequencer implements ThrushEventBus {
       if(!nextEvent || nextEvent instanceof ThrushSequenceEndEvent) {
         break;
       }
-
-      nextEvent.time += this._startTime;
+      
+      nextEvent.time += this._startTime;      
+      this._routing = true;
       await nextEvent.route(this);
+      this._routing = false;
       this._lastBufferedEvent = nextEvent.time;
     }
   }

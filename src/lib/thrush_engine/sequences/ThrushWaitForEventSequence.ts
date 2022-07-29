@@ -14,7 +14,7 @@ export class ThrushWaitForEventSequence extends ThrushSequenceGenerator {
     if(time < this._since) {
       return;
     }
-    
+
     if(eventType === this._eventType && (!this._eventTarget || eventTarget === this._eventTarget)) {
       if(this._satisfiedTime === null || this._satisfiedTime > time) {
         this._satisfiedTime = time;
@@ -23,7 +23,7 @@ export class ThrushWaitForEventSequence extends ThrushSequenceGenerator {
   }
 
   nextEvent(): ThrushSequenceEvent | null {
-    if(!this._satisfiedTime) {
+    if(this._satisfiedTime === null) {
       return null;
     }
 
