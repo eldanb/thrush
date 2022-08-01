@@ -1,0 +1,43 @@
+<div style="height: 100%; display: flex; flex-direction: row;">
+  <div style="display: flex; flex-direction: column; width: 250px; padding: 1rem">
+    <div style="display: flex; flex-direction: row; align-items: baseline;">
+      <h3 style="flex: 1">Samples</h3>
+      <button mat-icon-button color="primary" (click)="handleCodeSampleLoadButtonClick()">
+        <mat-icon>add</mat-icon>
+      </button>
+      <input #codeSampleLoadCtl type="file" (change)="handleLoadCodeSample($event.target)" style="display:none"/>      
+    </div>
+    <mat-list style="flex: 1; overflow: scroll">
+        <mat-card *ngFor="let item of codeLoadedInsturments; index as i" class="sample-card">
+          <mat-card-title>
+            <div class="sample-id">
+              <h4>Native</h4>
+              <div>{{item.nativeId}}</div>
+            </div>
+            <div class="sample-id">
+              <h4>Soft</h4>
+              <div>{{item.scriptId}}</div>
+            </div>
+            <h4>
+              {{item.name}}
+            </h4>
+          </mat-card-title>
+        </mat-card>
+    </mat-list>
+  </div>
+
+  <mat-divider [vertical]="true"></mat-divider>
+
+  <app-monaco-editor #meditor style="flex: 1" [text]="sequenceCode"></app-monaco-editor>      
+
+  <div class="synth-control">
+    <button mat-mini-fab color="primary" (click)="handlePlayCode()">
+      <mat-icon>play_arrow</mat-icon>
+    </button>
+    
+    <button mat-mini-fab color="warn" (click)="handleStop()">
+      <mat-icon>stop</mat-icon>
+    </button>
+  </div>      
+
+</div>

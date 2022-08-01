@@ -26,13 +26,26 @@ module.exports = (config, options, targetOptions) => {
   const existingCssRule = config.module.rules.find((r) => 
     r.test.toString() == "/\\.(?:css)$/i"
   );
-  
+
   existingCssRule.exclude = existingCssRule.exclude || [];
   existingCssRule.exclude.push(/monaco/);
 
-  config.module.rules.push({
+  config.module.rules.push(
+  {
+    test: /\.ttf$/,
+    loader: 'file-loader',
+    include: [/monaco/]
+  });
+  
+  config.module.rules.push(
+  {
     test: /\.css$/,
-    use: ['style-loader', 'css-loader'],
+    use: ['style-loader', {
+      'loader': 'css-loader',
+      options: {
+        esModule: false
+      }
+  }],
     include: [/monaco/]
   });
   

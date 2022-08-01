@@ -1,45 +1,30 @@
-<div style="height: 100%">
-  <div style="display: flex; flex-direction: column; height: 100%">
-    <div>
-      Sample file: <input id="samplefile" type="file" (change)="load_sample($event.target)"/>
-      <hr/>
-    </div>
-    <div>
-      Module file indirect: 
-        <input id="modulefile2" type="file" (change)="load_module2($event.target)"/>
-        <input type="radio" id="script" name="method" value="script" [(ngModel)]="synthMode"> Script 
-        <input type="radio" id="script" name="method" value="native" [(ngModel)]="synthMode"> Native    
-      <hr/>
-    </div>
-    <div style="flex: 1; display: flex; flex-direction: row;">
-      <div style="display: flex; flex-direction: column; width: 200px; overflow: scroll">
-        <div style="display: flex; flex-direction: row; align-items: center">
-          <div style="flex: 1">Samples:</div>
-          <div>
-            <input id="codeSampleLoadCtl" type="file" (change)="load_code_sample($event.target)" style="display:none"/>
-            <label for="codeSampleLoadCtl">
-                <div style="border: solid 1px #aaaaff; border-radius: 7px; padding: 4px; ">Add...</div>
-            </label>
-          </div>
-        </div>
-        <div style="display: flex; flex: 1; align-items: flex-start; overflow: scroll">
-          <table>
-            <tr *ngFor="let item of codeLoadedInsturments; index as i">
-              <td>{{item.nativeId}} / {{item.scriptId}}</td>
-              <td>{{item.name}}</td>
-            </tr>
-          </table>
-        </div>
-        <div><button (click)="load_code()" [disabled]="!synthReady">Load</button></div>      
+  <mat-tab-group id="tab-group" class="full-body" style="height: 100%">
+    <mat-tab  label="CodeSynth">      
+      <app-code-synth-page></app-code-synth-page>
+    </mat-tab>
+
+    <mat-tab label="What is this?">
+    </mat-tab>
+  <mat-tab label="Here Be Dragons">
+    <div style="display: flex; flex-direction: column; height: 100%; padding: 2rem">
+      <div>
+        Hard coded code sequence sample file: <input id="samplefile" type="file" (change)="handleLoadSample($event.target)"/>
+        <hr/>
       </div>
-      <app-monaco-editor #meditor style="flex: 1" [text]="codeSynth"></app-monaco-editor>      
+      <div>
+        Module file: 
+          <input id="modulefile2" type="file" (change)="handleLoadModule($event.target)"/>
+          <input type="radio" id="script" name="method" value="script" [(ngModel)]="synthMode"> Script 
+          <input type="radio" id="script" name="method" value="native" [(ngModel)]="synthMode"> Native    
+        <hr/>
+      </div>
+      
+      <div>
+        <button (click)="handlePlayTest()" [disabled]="!seqContextToPlay || !synthReady">Play</button>
+        <button (click)="handleStop()" [disabled]="!seqContextToPlay || !synthReady">Stop</button>      
+        Pattern cursor: {{patternCursor}}
+      </div>
     </div>
-    <div>
-      <hr/>
-      <button (click)="play_sample()" [disabled]="!seqContextToPlay || !synthReady">Play</button>
-      <button (click)="stop()" [disabled]="!seqContextToPlay || !synthReady">Stop</button>      
-      Pattern cursor: {{patternCursor}}
-    </div>
-  </div>
-</div>
+  </mat-tab>
+</mat-tab-group>
 <router-outlet></router-outlet>
