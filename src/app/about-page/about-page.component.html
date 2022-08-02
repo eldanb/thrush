@@ -1,0 +1,86 @@
+<div style="padding: 2rem">
+  <h2>Nothing much right now, really.</h2>
+  <p>
+    This is a plot for a collaborative, web-based programmable, multi-engine synthesizer. 
+
+    <h3>In this Version</h3>
+    <ul>
+      <li> 
+        A software-based wavetable synthesizer. 
+        This is CPU intensive but will allow accuracy and flexibility in rendering different effects.  
+      </li>
+      <li> 
+        A WebAudio-native wavetable synthesizer. This is more CPU optimized (since a lot of the work is offloaded to WebAudio),
+        but as such it is somewhat restricted in flexibility. 
+      </li>
+      <li> 
+        Buffering sequencer. Capable of operating the synthesizers in a synchronized manner, and orchestrating multiple
+        synthesizer music event sequences.
+      </li>
+      <li> 
+        Buffering sequencer. Capable of operating the synthesizers in a synchronized manner, and orchestrating multiple
+        synthesizer event sequences. Sequences may be mixed, concatenated, and otherwise transformed. Sequcnes may operate
+        multiple synthesizers, and include markers / cues that can be observed and waited upon.
+        Event sequences are lazily evaluated, buffered and streamed into the synthesizers.
+      </li>
+      <li> 
+        Generator function based sequence. Generates an event sequence by evaluating a JavaScript generator function.
+        This is useful for creating generative / procedural musical content.
+      </li>
+      <li> 
+        Pattern base sequences. These are sequences that are based on fixed-time slots with commands.
+      </li>
+      <li> 
+        Rudimentary UI. You're looking at it.
+      </li>
+
+    </ul>
+
+    <h3>Also in POC mode (look under "Here Be Dragons"):</h3>          
+
+    <ul>
+      <li>
+        An Amiga .mod file loader, that loads an Amiga music module file, extracts its instruments to the wavetable synthesizers 
+        and generates a set of seqeuncer sequences that encode the music in the module.
+      </li>
+    </ul>
+
+    <h3>What's futher in the plan, roughly by current priority</h3>
+    
+    <ul>
+      <li>
+        Procedural sequences -- utility functions (concat, transpose, chords, ...)
+      </li>
+      <li> 
+        A complete song editor that allows loading instruments, and editing sequences of multiple types 
+        to compose a full 'song'. Also save / load projects.
+      </li>
+      <li>
+        A timeline editor (editing a timeline on which other sequences can be placed)
+      </li>
+      <li>
+        A pattern sequence editor.
+      </li>
+      <li>
+        A sample editor
+      </li>
+      <li>
+        More power to wavetable synthesizer engines: e.g effects and layers
+      </li>
+      <li>
+        Realtime event ingestion (MIDI, on-screen controllers)
+      </li>
+      <li>
+        Additional synthesizer engines: FM
+      </li>
+      <li>
+        Collaboration features: every asset in a tune becomes freely available for anyone to consume in their one project.
+        Maintain a pedigree of assets (which asset was derived from which asset) and allow consumers to browse by pedigree.              
+      </li>
+      <li>
+        An initial insturments bank, and perhaps patterns bank.
+      </li>
+    </ul>
+
+    Track my progress on <a href="https://www.imonlydoingthis.benhaim.net/">I Am Only Doing This So You Won't Have To</a>.
+</div>

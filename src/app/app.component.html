@@ -1,30 +1,26 @@
-  <mat-tab-group id="tab-group" class="full-body" style="height: 100%">
-    <mat-tab  label="CodeSynth">      
-      <app-code-synth-page></app-code-synth-page>
-    </mat-tab>
+<div>
 
-    <mat-tab label="What is this?">
-    </mat-tab>
-  <mat-tab label="Here Be Dragons">
-    <div style="display: flex; flex-direction: column; height: 100%; padding: 2rem">
-      <div>
-        Hard coded code sequence sample file: <input id="samplefile" type="file" (change)="handleLoadSample($event.target)"/>
-        <hr/>
-      </div>
-      <div>
-        Module file: 
-          <input id="modulefile2" type="file" (change)="handleLoadModule($event.target)"/>
-          <input type="radio" id="script" name="method" value="script" [(ngModel)]="synthMode"> Script 
-          <input type="radio" id="script" name="method" value="native" [(ngModel)]="synthMode"> Native    
-        <hr/>
-      </div>
-      
-      <div>
-        <button (click)="handlePlayTest()" [disabled]="!seqContextToPlay || !synthReady">Play</button>
-        <button (click)="handleStop()" [disabled]="!seqContextToPlay || !synthReady">Stop</button>      
-        Pattern cursor: {{patternCursor}}
-      </div>
-    </div>
-  </mat-tab>
-</mat-tab-group>
-<router-outlet></router-outlet>
+  <div class="thrush-header">
+    <h1>Thrush</h1>
+    <img src="../assets/images/thrush_logo.svg"/>
+
+    <div class="spacer">&nbsp;</div>
+
+    <nav mat-tab-nav-bar [tabPanel]="tabPanel" style="align-self: end">
+      <a mat-tab-link routerLink="/codesynth" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
+        CodeSynth
+      </a>      
+      <a mat-tab-link routerLink="/about" routerLinkActive #rla2="routerLinkActive" [active]="rla2.isActive">
+        What is This?
+      </a>      
+      <a mat-tab-link routerLink="/dragons" routerLinkActive #rla3="routerLinkActive" [active]="rla3.isActive">
+        Here Be Dragons
+      </a>            
+    </nav>    
+  </div>
+
+  <mat-tab-nav-panel #tabPanel>
+    <router-outlet></router-outlet>
+  </mat-tab-nav-panel>
+
+</div>  

@@ -26,6 +26,8 @@ div.sample-id {
 }
 
 mat-card.sample-card {
+  margin-bottom: 1rem;
+
   & mat-card-title {
     display: flex;
     gap: 6px;

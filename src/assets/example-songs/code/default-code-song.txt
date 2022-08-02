@@ -2,50 +2,91 @@
 /**
 * @param {ThrushSequenceGenerationCalls} c
 */
-function* mainSequence(c) { 
-  
+function* mainSequence(c) {
+
   const TEMPO = 0.2;
-  
-  const bells = (notes, instrumentId, tempo, count) => c.functionSequence(function* (c) {
+
+  const randomBells = (notes, instrumentId, tempo, count) => c.functionSequence(function* (c) {
     let channel = 0;
-    for(let x=0; x<count; x++) {
-      const noteStep = Math.round(Math.random() * (notes.length-1));     
-      yield c.playNote("soft", channel, instrumentId, notes[noteStep], { panning: Math.random() });
+    for (let x = 0; x < count; x++) {
+      const noteStep = Math.round(Math.random() * (notes.length - 1));
+      yield c.playNote("soft", channel, instrumentId, notes[noteStep], { panning: Math.random(), volume: 0.25 });
       yield c.delay(tempo);
-      channel ++;
-      if(channel>1) {
+      channel++;
+      if (channel > 1) {
         channel = 0;
       }
     }
   });
-  
-  yield c.startSequence(c.functionSequence(function* (c) {
-    for(;;) {
-      yield c.cursor('starting_bells');
 
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
-      yield c.playSequence(bells([12, 24, 12], 0, TEMPO/1.5, 12));
-      
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
-      yield c.playSequence(bells([9, 21, 9], 0, TEMPO/1.5, 12));
+  const repeat = (sequence, count) => c.functionSequence(function* (c) {
+    for (let i = 0; i < count; i++) {
+      yield c.playSequence(sequence);
     }
-  }));
-  
-  for(;;) {
-    yield c.waitFor('cursor', 'starting_bells');
-    for(let x=0; x<4; x++) {
-      yield c.playSequence(c.functionSequence(function* (c) {
-        yield c.playNote("native", 2, 0, 0);
-        yield c.delay(3*TEMPO);
-        yield c.playNote("native", 2, 0, 4);
-        yield c.delay(3*TEMPO);
-        yield c.playNote("native", 2, 0, 7);
-        yield c.delay(2*TEMPO);
-      }));
-    }
+  });
+
+  const accompaniment = (chord, measures) => c.functionSequence(function* (c) {
+    // Bells
+    yield c.startSequence(repeat(randomBells([chord[0] + 24, chord[0] + 24, chord[0] + 36], 2, TEMPO / 2, 16), measures));
+
+
+    const bassLine =
+      c.functionSequence(function* (c) {
+        switch (Math.round(Math.random() * 2)) {
+          case 0:
+            yield c.playNote("native", 2, 1, chord[0]);
+            yield c.delay(3 * TEMPO);
+            yield c.playNote("native", 2, 1, chord[1]);
+            yield c.delay(3 * TEMPO);
+            yield c.playNote("native", 2, 1, chord[2]);
+            yield c.delay(2 * TEMPO);
+            break;
+
+          case 1:
+            yield c.playNote("native", 2, 1, chord[0]);
+            yield c.delay(3 * TEMPO);
+            yield c.playNote("native", 2, 1, chord[1]);
+            yield c.delay(2 * TEMPO);
+            yield c.playNote("native", 2, 1, chord[2]);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2] + 2);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2]);
+            yield c.delay(TEMPO);
+            break;
+
+          case 2:
+            yield c.playNote("native", 2, 1, chord[2]);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2]);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2] - 2);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2] - 2);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2] - 3);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2] - 3);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2] - 5);
+            yield c.delay(TEMPO);
+            yield c.playNote("native", 2, 1, chord[2] - 5);
+            yield c.delay(TEMPO);
+            break;
+        }
+      });
+
+    yield c.playSequence(repeat(bassLine, measures));
+  });
+
+  for (; ;) {
+    yield c.playSequence(accompaniment([0, 4, 7], 4));
+    yield c.playSequence(accompaniment([-3, 0, 4], 4));
+    yield c.playSequence(accompaniment([0, 4, 7], 4));
+    yield c.playSequence(accompaniment([-3, 0, 4], 4));
+
+    yield c.playSequence(accompaniment([5, 9, 12], 1));
+    yield c.playSequence(accompaniment([2, 6, 9], 2));
+    yield c.playSequence(accompaniment([-5, -1, 2], 1));
   }
 }

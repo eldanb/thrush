@@ -1,0 +1,19 @@
+<div style="display: flex; flex-direction: column; height: 100%; padding: 2rem">
+  <div>
+    Hard coded code sequence sample file: <input id="samplefile" type="file" (change)="handleLoadSample($event.target)"/>
+    <hr/>
+  </div>
+  <div>
+    Amiga .MOD file: 
+      <input id="modulefile2" type="file" (change)="handleLoadModule($event.target)"/>
+      <input type="radio" id="script" name="method" value="script" [(ngModel)]="synthMode"> Script 
+      <input type="radio" id="script" name="method" value="native" [(ngModel)]="synthMode"> Native    
+    <hr/>
+  </div>
+  
+  <div>
+    <button (click)="handlePlayTest()" [disabled]="!seqContextToPlay || !synthReady">Play</button>
+    <button (click)="handleStop()" [disabled]="!seqContextToPlay || !synthReady">Stop</button>      
+    Pattern cursor: {{patternCursor}}
+  </div>
+</div>

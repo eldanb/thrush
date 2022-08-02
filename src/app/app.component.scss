@@ -1,0 +1,36 @@
+:host > div {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.thrush-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  
+  height: 5rem;
+  border-bottom: solid 1px silver;
+
+  flex-shrink: 0;
+
+  & h1 {
+    padding: 1rem 1rem;
+    font-size: 3rem;
+    margin: 0;
+    font-weight: 100;
+  }
+
+  & img {
+    height: 3rem;
+    opacity: 0.6;
+  }
+
+  & .spacer {
+    flex-grow: 1;
+  }
+}
+
+mat-tab-nav-panel { 
+  flex-grow: 1;
+}

@@ -13,11 +13,15 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MonacoEditorComponent } from './widget-lib/monaco-editor/monaco-editor.component';
 import { CodeSynthPageComponent } from './code-synth-page/code-synth-page.component';
+import { AboutPageComponent } from './about-page/about-page.component';
+import { TestPageComponent } from './test-page/test-page.component';
 @NgModule({
   declarations: [
     AppComponent,
     MonacoEditorComponent,
-    CodeSynthPageComponent
+    CodeSynthPageComponent,
+    AboutPageComponent,
+    TestPageComponent
   ],
   imports: [
     BrowserModule,

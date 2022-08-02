@@ -159,7 +159,9 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
   }
 
   functionSequence(generator: ThrushSequenceGenerationFunction): ThrushSequenceGeneratorHandle {
-    return new ThrushFunctionSequenceGenerator(generator, this._aggregator) as unknown as ThrushSequenceGeneratorHandle;
+    const childAggregator = new ThrushAggregatedSequenceGenerator();    
+    childAggregator.addInitialChild(new ThrushFunctionSequenceGenerator(generator, childAggregator));
+    return childAggregator as unknown as ThrushSequenceGeneratorHandle;
   }
     
   delay(time: number): ThrushSequenceGenerationDirective {

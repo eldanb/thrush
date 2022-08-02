@@ -32,7 +32,10 @@ export class CodeSynthPageComponent implements OnInit {
     (async () => {
       await this._thrushEngine.initialize();
 
-      const sampleUrlsToLoad = ['./assets/example-songs/samples/piano.wav'];
+      const sampleUrlsToLoad = [
+        './assets/example-songs/samples/piano.wav', 
+        './assets/example-songs/samples/bass.wav', 
+        './assets/example-songs/samples/strsynth.wav'];
       (async () => {
         for(let index=0; index<sampleUrlsToLoad.length; index++) {
           await this.loadSampleFromUrl(sampleUrlsToLoad[index]);
@@ -83,7 +86,7 @@ export class CodeSynthPageComponent implements OnInit {
     const aggregator = new ThrushAggregatedSequenceGenerator();
     const generatorFunction = new Function(`return (${this.codeEditor?.text!})`)();
     const generatorFunctionSeq = new ThrushFunctionSequenceGenerator(generatorFunction, aggregator);
-    aggregator.addChild(generatorFunctionSeq);    
+    aggregator.addInitialChild(generatorFunctionSeq);    
     this._thrushEngine.playSequence(aggregator);
   }
 

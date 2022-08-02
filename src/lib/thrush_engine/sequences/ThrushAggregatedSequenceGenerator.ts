@@ -5,23 +5,28 @@ export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {
 
   constructor(...sequences: ThrushSequenceGenerator[]) {
     super();
-    this._cachedNextEvent = [];
-    this._aggregatedSequences = sequences;
+    this._cachedNextEvent = [];    
+    this._initialChildSequences = sequences;
+    this._aggregatedSequences = [];
   }
 
-  private _aggregatedSequences: ThrushSequenceGenerator[];
+  private _initialChildSequences: ThrushSequenceGenerator[];
+  private _aggregatedSequences: ThrushSequenceGenerator[];  
   private _cachedNextEvent: (ThrushSequenceEvent | null)[];
-  private _lastTime: number = 0;
+  private _lastEndEventTime: number = 0;
+
+  addInitialChild(childSequence: ThrushSequenceGenerator) {
+    this._initialChildSequences.push(childSequence);
+  }
 
   addChild(childSequence: ThrushSequenceGenerator) {
     this._aggregatedSequences.push(childSequence);
-    if(this._sequencer) {
-      childSequence.start(this._sequencer);
-    }
+    childSequence.start(this._sequencer!);
   }
 
   start(sequencer: ThrushSequencer): void {
     this._sequencer = sequencer;
+    this._aggregatedSequences = this._initialChildSequences.concat();
     this._aggregatedSequences.forEach((c) => c.start(sequencer));
   }
 
@@ -31,7 +36,7 @@ export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {
     let selectedEventChildIndex: number | null = null;
 
     if(this._aggregatedSequences.length == 0) {
-      return new ThrushSequenceEndEvent(this._lastTime);
+      return new ThrushSequenceEndEvent(this._lastEndEventTime);
     }
 
     while(childIndex < this._aggregatedSequences.length) {
@@ -44,6 +49,10 @@ export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {
         if(nextEventForChild instanceof ThrushSequenceEndEvent) {          
           this._cachedNextEvent.splice(childIndex, 1);
           this._aggregatedSequences.splice(childIndex, 1);
+
+          if(nextEventForChild.time > this._lastEndEventTime) {
+            this._lastEndEventTime = nextEventForChild.time;
+          } 
           continue;
         }
 
@@ -61,8 +70,7 @@ export class ThrushAggregatedSequenceGenerator extends ThrushSequenceGenerator {
     }
     
     if(selectedEventChildIndex !== null) {
-      this._cachedNextEvent[selectedEventChildIndex] = null;
-      this._lastTime = selectedEvent!.time;
+      this._cachedNextEvent[selectedEventChildIndex] = null;      
     } 
 
     return selectedEvent;
