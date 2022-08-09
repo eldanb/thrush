@@ -4,6 +4,14 @@ import { ThrushSequencer, ThrushSequenceGenerator, ThrushSequenceEvent, ThrushSe
 import { ThrushCommonSynthesizerEvent } from "../ThrushSynthesizerInterface";
 import { ThrushTimeOffsetSequenceGenerator } from "../sequences/ThrushTimeOffsetSequenceGenerator";
 import { ThrushWaitForEventSequence } from "./ThrushWaitForEventSequence";
+import { parsePartSequence } from "./simple-part-notation/SimplePartNotationParser";
+import { NoteSequenceContext } from "./simple-part-notation/SimplePartNotationModel";
+import { ChannelAllocationManager } from "./simple-part-notation/ChannelAllocationManager";
+
+const ALL_CHANNELS = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8,
+  9, 10, 11, 12, 13, 14, 15  
+];
 
 export type ThrushSequenceGenerationDirectiveEvent = {
   type: 'event';
@@ -169,6 +177,12 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
       type: 'delay',
       delay: time
     });
+  }
+
+  partSequence(partSpecification: string): ThrushSequenceGeneratorHandle {
+    const sequencerContext = new NoteSequenceContext(new ChannelAllocationManager(ALL_CHANNELS));
+    sequencerContext.synth = this._sequencer.waveTableSynthesizer;
+    return parsePartSequence(partSpecification).compile(sequencerContext) as unknown as ThrushSequenceGeneratorHandle;    
   }
 
   waitFor(eventType: string, eventTarget?: string): ThrushSequenceGenerationDirective {

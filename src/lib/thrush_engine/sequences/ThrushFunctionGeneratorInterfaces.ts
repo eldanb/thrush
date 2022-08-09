@@ -1,12 +1,12 @@
-type ThrushSequenceGenerationDirective = typeof ThrushSequenceGenerationDirectivez;
+declare type ThrushSequenceGenerationDirective = typeof ThrushSequenceGenerationDirectivez;
 declare const ThrushSequenceGenerationDirectivez: unique symbol;
 
-type ThrushSequenceGeneratorHandle = typeof ThrushSequenceGeneratorHandlez;
+declare type ThrushSequenceGeneratorHandle = typeof ThrushSequenceGeneratorHandlez;
 declare const ThrushSequenceGeneratorHandlez: unique symbol;
 
-type SynthesizerSelection = 'native' | 'soft';
+declare type SynthesizerSelection = 'native' | 'soft';
 
-type NoteSettings = {
+declare type NoteSettings = {
   volume?: number;
   panning?: number;
 }
@@ -22,10 +22,11 @@ declare interface ThrushSequenceGenerationCalls {
   
   startSequence(generator: ThrushSequenceGeneratorHandle): ThrushSequenceGenerationDirective;
   playSequence(generator: ThrushSequenceGeneratorHandle): ThrushSequenceGenerationDirective;
+
   
   functionSequence(generator: ThrushSequenceGenerationFunction): ThrushSequenceGeneratorHandle;
-
+  partSequence(partSpecification: string): ThrushSequenceGeneratorHandle;
 }
 
-type ThrushSequenceGenerationFunction = (calls: ThrushSequenceGenerationCalls) => Generator<ThrushSequenceGenerationDirective>;
+declare type ThrushSequenceGenerationFunction = (calls: ThrushSequenceGenerationCalls) => Generator<ThrushSequenceGenerationDirective>;
 

@@ -106,3 +106,6 @@ dist
 .DS_Store
 .angular
 generated
+thrush
+scratch.txt
+thrush.tar

@@ -27,12 +27,13 @@ export class ThrushConcatSequenceGenerator extends ThrushSequenceGenerator {
     while(this._currentAggIndex < this._aggregatedContexts.length) {
       ret = this._aggregatedContexts[this._currentAggIndex].nextEvent()?.clone() || null;
       if(ret) {
+        ret.time += this._timeOfs;          
+        this._lastTime = ret.time;
+
         if(ret instanceof ThrushSequenceEndEvent) {
           this._timeOfs = this._lastTime;
           this._currentAggIndex ++;
-        } else {
-          ret.time += this._timeOfs;
-          this._lastTime = ret.time;        
+        } else {          
           return ret;
         }
       } 
