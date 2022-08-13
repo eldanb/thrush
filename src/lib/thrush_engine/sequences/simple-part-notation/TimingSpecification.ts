@@ -12,7 +12,7 @@ export class TempoRelativeTimingSpecification extends TimingSpecification {
     return (tempo / this.denom) * (this.andHalf ? 1.5 : 1);
   }
 
-  public static wholeNote: TempoRelativeTimingSpecification = new TempoRelativeTimingSpecification(1, false);
+  public static qNote: TempoRelativeTimingSpecification = new TempoRelativeTimingSpecification(4, false);
 }
 
 export class TempoAbsoluteTimingSpecification extends TimingSpecification {

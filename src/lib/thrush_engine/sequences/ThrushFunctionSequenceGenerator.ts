@@ -179,9 +179,22 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     });
   }
 
-  partSequence(partSpecification: string): ThrushSequenceGeneratorHandle {
+  partSequence(partSpecification: string, partSequenceOptions: PartSequenceOptions): ThrushSequenceGeneratorHandle {
     const sequencerContext = new NoteSequenceContext(new ChannelAllocationManager(ALL_CHANNELS));
-    sequencerContext.synth = this._sequencer.waveTableSynthesizer;
+    
+    sequencerContext.synth = partSequenceOptions.synth === 'soft' ? this._sequencer.tsynthToneGenerator : this._sequencer.waveTableSynthesizer;
+    sequencerContext.instrumentId = partSequenceOptions.instruments[0];
+    sequencerContext.instruments = partSequenceOptions.instruments.concat();
+    sequencerContext.tempo = partSequenceOptions.tempo;
+
+    if(partSequenceOptions.panning !== undefined) {
+      sequencerContext.notePanning = partSequenceOptions.panning;
+    }
+
+    if(partSequenceOptions.volume !== undefined) {
+      sequencerContext.noteVolume = partSequenceOptions.volume;
+    }
+
     return parsePartSequence(partSpecification).compile(sequencerContext) as unknown as ThrushSequenceGeneratorHandle;    
   }
 

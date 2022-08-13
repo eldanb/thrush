@@ -13,18 +13,25 @@ export class ParallelSequences extends CompilableSimplePart {
     const subAllocators: ChannelAllocationManager[] = [];
     const parallelGenerators: ThrushSequenceGenerator[] = [];
 
-    this._parallelParts.forEach((part) => {     
+    this._parallelParts.forEach((part, index) => {     
       const inheritedContext = sequenceContext.createInheritedContext();
+      if(!index) {
+        inheritedContext.currentSequenceCommandChannel = sequenceContext.currentSequenceCommandChannel;
+      }
       subAllocators.push(inheritedContext.channelAllocationManager)
 
-      parallelGenerators.push(part.compile(inheritedContext));
+      const compiledPart = part.compile(inheritedContext);
+      if(compiledPart) {
+        parallelGenerators.push(compiledPart);
+      }
+      
     });
 
     subAllocators.forEach((allocator) => allocator.returnToMaster());
-
-    return new ThrushAggregatedSequenceGenerator(
-      ...parallelGenerators
-    )
+    
+    return parallelGenerators.length > 1 
+      ? new ThrushAggregatedSequenceGenerator(...parallelGenerators)
+      : parallelGenerators[0];
   }
 
 }

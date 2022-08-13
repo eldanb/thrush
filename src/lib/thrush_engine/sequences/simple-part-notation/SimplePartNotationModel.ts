@@ -5,10 +5,15 @@ import { ChannelAllocationManager } from "./ChannelAllocationManager";
 export class NoteSequenceContext {
 
   tempo: number = 0.5;
+
   synth: ThrushCommonSynthesizerInterface | null = null;
+  instruments: number[] = [];
+
   instrumentId: number = 0;
+  noteVolume: number = 1;
+  notePanning: number = 0.5;    
     
-  currentSequenceCommandChannel: number = 0;
+  currentSequenceCommandChannel: number | null = null;
 
   constructor(public channelAllocationManager: ChannelAllocationManager) {
   }
@@ -20,7 +25,10 @@ export class NoteSequenceContext {
     Object.assign(ret, { 
       tempo: this.tempo, 
       synth: this.synth, 
-      instrumentId: this.instrumentId 
+      instrumentId: this.instrumentId,
+      notePanning: this.notePanning,
+      noteVolume: this.noteVolume,
+      instruments: this.instruments      
     });
 
     return ret;
@@ -28,6 +36,6 @@ export class NoteSequenceContext {
 }
 
 export abstract class CompilableSimplePart {
-  abstract compile(sequenceContext: NoteSequenceContext): ThrushSequenceGenerator;
+  abstract compile(sequenceContext: NoteSequenceContext): ThrushSequenceGenerator | null;
 }
 
