@@ -3,8 +3,9 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 @Component({
   selector: 'app-monaco-editor',  
+  styles: [':host { flex: 1; overflow: hidden; }'],
   template: '<div #container class="editor-container" style="position: relative; height: 100%; width: 100%; overflow:hidden"></div>',
-  encapsulation: ViewEncapsulation.None
+  
 })
 export class MonacoEditorComponent implements OnInit, AfterViewInit {
   @ViewChild('container', { read: ElementRef })
@@ -17,7 +18,8 @@ export class MonacoEditorComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {    
     this.editor = monaco.editor.create(this.editorContainer!.nativeElement, {
-      model: monaco.editor.createModel(this.textFromProperty, 'javascript')
+      model: monaco.editor.createModel(this.textFromProperty, 'javascript'),
+      automaticLayout: true
     });
 
     const thrushDts = require('!raw-loader!generated/ThrushFunctionGeneratorInterfaces.d.ts');
