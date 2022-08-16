@@ -1,0 +1,5 @@
+# Thrush CodeSynth API
+
+Thrush CodeSynth allows you to write JavaScript code that generates music through computation. To use CodeSynth, you create a CodeSynth Sequence Generator. The sequence generator is comprised of a [JavaScript generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/function*) that yields a series of CodeSybtg directives; Thrush will execute these directives and generate Thrush events based on them.
+
+When invoking the generator function, Thrush will pass it a [`ThrushSequenceGenerationCalls`](interfaces/ThrushSequenceGenerationCalls) object as an argument, which you can use to construct the events yielded from the function.  This section documents the API available to authors of CodeSynth sequence generators. To learn more about CodeSynth generators and how to use them, consult the [user guide](/td/docs/guide/sequence-generators/CodeSynth).

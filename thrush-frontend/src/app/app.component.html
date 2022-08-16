@@ -1,26 +1,35 @@
-<div>
+<div class="thrush-header">        
+  <button mat-button class="menu-button" (click)="drawer.toggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <h1>Thrush</h1>
+  <img src="../assets/images/thrush_logo.svg"/>
 
-  <div class="thrush-header">
-    <h1>Thrush</h1>
-    <img src="../assets/images/thrush_logo.svg"/>
+  <div class="spacer">&nbsp;</div>
 
-    <div class="spacer">&nbsp;</div>
+  <a href="/td" target="thrush-docs" style="text-decoration: none;">
+    <mat-icon style="vertical-align: middle">help_outline</mat-icon>
+    Thrush Docs
+  </a>
 
-    <nav mat-tab-nav-bar [tabPanel]="tabPanel" style="align-self: end">
-      <a mat-tab-link routerLink="/codesynth" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
-        CodeSynth
-      </a>      
-      <a mat-tab-link routerLink="/about" routerLinkActive #rla2="routerLinkActive" [active]="rla2.isActive">
-        What is This?
-      </a>      
-      <a mat-tab-link routerLink="/dragons" routerLinkActive #rla3="routerLinkActive" [active]="rla3.isActive">
-        Here Be Dragons
-      </a>            
-    </nav>    
-  </div>
+      
+</div>
 
-  <mat-tab-nav-panel #tabPanel>
-    <router-outlet></router-outlet>
-  </mat-tab-nav-panel>
+<mat-drawer-container [hasBackdrop]="false">
+    <mat-drawer #drawer mode="side">
+      <nav>
+        <a routerLink="/codesynth" routerLinkActive="active-link" >
+          CodeSynth
+        </a>              
+        <a routerLink="/dragons" routerLinkActive="active-link" >
+          Here Be Dragons
+        </a>            
+      </nav>          
+    </mat-drawer>
+    <mat-drawer-content>
+        <div class="thrush-main-content">
+          <router-outlet></router-outlet>      
+        </div>
+    </mat-drawer-content>
+  </mat-drawer-container>
 
-</div>  

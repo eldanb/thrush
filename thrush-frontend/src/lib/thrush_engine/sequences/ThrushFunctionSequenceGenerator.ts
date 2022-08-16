@@ -158,7 +158,7 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     });
   }
 
-  startSequence(sequence: ThrushSequenceGeneratorHandle): typeof ThrushSequenceGenerationDirectivez {
+  startSequence(sequence: ThrushSequenceGeneratorHandle): ThrushSequenceGenerationDirective {
     const typedSequence = sequence as unknown as ThrushSequenceGenerator;
     return this.internalEventToDirective({
       type: "start_generator",
@@ -187,12 +187,12 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     sequencerContext.instruments = partSequenceOptions.instruments.concat();
     sequencerContext.tempo = partSequenceOptions.tempo;
 
-    if(partSequenceOptions.panning !== undefined) {
-      sequencerContext.notePanning = partSequenceOptions.panning;
+    if(partSequenceOptions.defaultNoteSettings?.panning !== undefined) {
+      sequencerContext.notePanning = partSequenceOptions.defaultNoteSettings.panning;
     }
 
-    if(partSequenceOptions.volume !== undefined) {
-      sequencerContext.noteVolume = partSequenceOptions.volume;
+    if(partSequenceOptions.defaultNoteSettings?.volume !== undefined) {
+      sequencerContext.noteVolume = partSequenceOptions.defaultNoteSettings.volume;
     }
 
     return parsePartSequence(partSpecification).compile(sequencerContext) as unknown as ThrushSequenceGeneratorHandle;    
