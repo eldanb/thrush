@@ -18,6 +18,9 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
   private _channelState: NativeSynthesizerChannelState[] = [];
   private _instruments: NativeSynthesizerInstrument[] = [];
   private _flushTimer: any;
+  private _allScheduled = new Set<AudioNode>();
+
+  private _noteEndedHandler = (ev: Event) => this._allScheduled.delete(ev.target as AudioNode);
 
   constructor(private _audioContext: AudioContext, numChannels: number) {    
     for(let i=0; i<numChannels; i++) {
@@ -46,8 +49,12 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     this._channelState.forEach((channelState) => {      
       this.clearChannelNoteModulation(channelState, 0);
       channelState.lastScheduledNode?.disconnect();
-      channelState.lastScheduledNode = null;      
+      channelState.lastScheduledNode = null;
     })
+
+    this._allScheduled.forEach((n) => {
+      n.disconnect();
+    });
   }
   
   registerInstrument(
@@ -90,6 +97,9 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
         noteNode.loopStart = (instrument.sampleLoopStart / instrument.sampleRate);
         noteNode.loopEnd = (instrument.sampleLoopLen + instrument.sampleLoopStart) / instrument.sampleRate;
       }
+
+      this._allScheduled.add(noteNode);
+      noteNode.addEventListener("ended", this._noteEndedHandler);
 
       noteNode.start(synthEvent.time);
       noteNode.connect(channelState.channelInput);
