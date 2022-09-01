@@ -1,0 +1,26 @@
+<canvas #waveformCanvas 
+  (mousemove)="handleCanvasMouseMove($event)" 
+  (mousedown)="handleCanvasMouseDown($event)"
+  (mouseup)="handleCanvasMouseUp($event)"
+  (mouseleave)="handleCanvasMouseLeave()"
+  >
+</canvas>
+
+<div class="controls">
+  <button mat-stroked-button (click)="handleZoomOutClick()">
+    <mat-icon>zoom_out</mat-icon>      
+  </button>  
+  <button mat-stroked-button (click)="handleZoomInClick()">
+    <mat-icon>zoom_in</mat-icon>  
+  </button>
+  <button mat-stroked-button (click)="handleZoomToSelectionClick()">
+    <mat-icon>crop_free</mat-icon>  
+  </button>
+
+  <div class="spacer"></div>
+
+  <button mat-stroked-button (click)="handleSetLoopToSelection()">
+    <mat-icon>repeat</mat-icon>  
+  </button>
+
+</div>

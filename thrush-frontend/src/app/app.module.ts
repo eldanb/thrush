@@ -16,13 +16,17 @@ import { MonacoEditorComponent } from './widget-lib/monaco-editor/monaco-editor.
 import { CodeSynthPageComponent } from './code-synth-page/code-synth-page.component';
 import { AboutPageComponent } from './about-page/about-page.component';
 import { TestPageComponent } from './test-page/test-page.component';
+import { WaveformEditorComponent } from './widget-lib/waveform-editor/waveform-editor.component';
+import { WaveInstrumentEditorComponent } from './resource-editors/wave-instrument-editor/wave-instrument-editor.component';
 @NgModule({
   declarations: [
     AppComponent,
     MonacoEditorComponent,
     CodeSynthPageComponent,
     AboutPageComponent,
-    TestPageComponent
+    TestPageComponent,
+    WaveformEditorComponent,
+    WaveInstrumentEditorComponent
   ],
   imports: [
     BrowserModule,

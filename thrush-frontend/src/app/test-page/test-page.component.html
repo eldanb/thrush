@@ -3,6 +3,7 @@
     Hard coded code sequence sample file: <input id="samplefile" type="file" (change)="handleLoadSample($event.target)"/>
     <hr/>
   </div>
+
   <div>
     Amiga .MOD file: 
       <input id="modulefile2" type="file" (change)="handleLoadModule($event.target)"/>
@@ -15,5 +16,8 @@
     <button (click)="handlePlayTest()" [disabled]="!seqContextToPlay || !synthReady">Play</button>
     <button (click)="handleStop()" [disabled]="!seqContextToPlay || !synthReady">Stop</button>      
     Pattern cursor: {{patternCursor}}
+    <hr/>
   </div>
+
+  <app-waveform-editor [editedWaveform]="editedWaveform" ></app-waveform-editor>
 </div>

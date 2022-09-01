@@ -7,6 +7,7 @@ import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/sequences
 import { ThrushPatternSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushPatternSequenceGenerator';
 import { ThrushSequenceGenerator } from 'src/lib/thrush_engine/ThrushSequencer';
 import { ThrushEngineService } from '../services/thrush-engine.service';
+import { EditedWaveform } from '../widget-lib/waveform-editor/waveform-editor.component';
 
 const TEMPO = 0.2;
 
@@ -22,6 +23,8 @@ export class TestPageComponent implements OnInit {
   private _synthMode: string = 'script';
   private _parsedModule: AmigaModFile | null = null;
 
+  public editedWaveform: EditedWaveform | null = null;
+ 
   constructor(private _thrushEngine: ThrushEngineService) { }
 
   ngOnInit(): void {
@@ -62,6 +65,11 @@ export class TestPageComponent implements OnInit {
     reader.onloadend = async () => {
       const instrumentArray = (reader.result as ArrayBuffer);
       const wavFile = parseWav(instrumentArray!);
+
+      this.editedWaveform = { 
+        channelSamples: [wavFile.samples],
+        sampleRate: wavFile.sampleRate
+      };
 
       let instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
         wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
