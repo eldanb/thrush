@@ -46,11 +46,11 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
   private _displayEndTime: number = 0;
 
   private _allCursors = [
-    this._pointerCursor, 
     this._selectionStartCursor, 
     this._selectionEndCursor,
     this._loopStartCursor,
-    this._loopEndCursor
+    this._loopEndCursor,
+    this._pointerCursor, 
   ];
 
 
@@ -201,19 +201,11 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
     if(this._dragging) {
       this.moveCursorToCanvasX(this._dragging, event.clientX - clrect.left);  
     }
+
     this.moveCursorToCanvasX(this._pointerCursor, event.clientX - clrect.left);
   }
 
-  private moveCursorToCanvasX(cursor: DraggableCursor, canvasX: number) {  
-    const rcs = this.getRenderingCoordinateSpace()!;
-
-    const oldCursorTime = cursor.time || 0;
-    cursor.time = rcs.canvasXToTime(canvasX);
-
-    this.render(oldCursorTime, oldCursorTime + 1/rcs.timeToCanvasXFactor);
-    cursor.draw(0, rcs.width, rcs, this._canvas!.nativeElement.getContext("2d")!);    
-  }
-
+  
   public handleCanvasMouseDown(event: MouseEvent) {
     if(!this._editedWaveform) {
       return;
@@ -245,15 +237,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
   public handleCanvasMouseLeave() {
     this._dragging = null;
 
-    const oldTime = this._pointerCursor.time;
-    if(oldTime == null) {
-      return;
-    }
-
-    const rcs = this.getRenderingCoordinateSpace()!;
-    this._pointerCursor.time = null;
-
-    this.render(oldTime, oldTime + 1/rcs.timeToCanvasXFactor)
+    this.moveCursorToCanvasX(this._pointerCursor, null);
   }
 
   public handleZoomInClick() {
@@ -287,6 +271,25 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
     this.refresh();
   }
 
+  private moveCursorToCanvasX(cursor: DraggableCursor, canvasX: number | null) {  
+    const rcs = this.getRenderingCoordinateSpace()!;
+    const renderContext = this._canvas!.nativeElement.getContext("2d")!;
+
+    if(cursor.time != null) {    
+      const oldTime = cursor.time;
+      const oldWidth = cursor.getDisplayWidth(renderContext)/rcs.timeToCanvasXFactor;
+      cursor.time = null;
+
+      this.render(oldTime, oldTime + oldWidth);
+    }
+    
+    cursor.time = canvasX != null ? rcs.canvasXToTime(canvasX) : null;
+    if(cursor.time != null) {
+      const newWidth = cursor.getDisplayWidth(renderContext)/rcs.timeToCanvasXFactor;
+      this.render(cursor.time, cursor.time + newWidth);   
+    }
+  }
+
   private updateZoomByFactor(factor: number) {
     const rcs = this.getRenderingCoordinateSpace()!;
 
@@ -301,9 +304,9 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
     this.setZoomRange(start, end);
   }
   
-  private setZoomRange(start: number, end: number) {
-    this._displayStartTime = start;
-    this._displayEndTime = end;
+  private setZoomRange(startTime: number, endTime: number) {
+    this._displayStartTime = startTime;
+    this._displayEndTime = endTime;
     this._renderingCoordinateSpace = null;
     this.refresh();
   }
@@ -324,39 +327,51 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
     const renderingCoordinateSpace = this.getRenderingCoordinateSpace()!
     
     // Clear background
-    const renderingStartX = renderingCoordinateSpace.timeToCanvasX(startTime);
-    const renderingEndX = renderingCoordinateSpace.timeToCanvasX(endTime);
+    const renderingStartX = Math.floor(renderingCoordinateSpace.timeToCanvasX(startTime));
+    const renderingEndX = Math.ceil(renderingCoordinateSpace.timeToCanvasX(endTime));
+
+    renderContext.save();
+
+    const clipRect = new Path2D();
+    clipRect.rect(renderingStartX, 
+      0, 
+      renderingEndX-renderingStartX,
+      renderingCoordinateSpace.height);    
+    renderContext.clip(clipRect);
+
     renderContext.fillStyle = WAVETABLE_COLOR_BACKGROUND;
     renderContext.fillRect(
       renderingStartX, 
       0, 
-      renderingEndX-renderingStartX,
+      renderingEndX-renderingStartX+1,
       renderingCoordinateSpace.height);
 
     // Draw selection background
     if(this._selectionStartTime != null && this._selectionEndTime != null) {
-      const selectionBoundaryMin = renderingCoordinateSpace.timeToCanvasX(Math.max(startTime, this._selectionStartTime));
-      const selectionBoundaryMax = renderingCoordinateSpace.timeToCanvasX(Math.min(endTime, this._selectionEndTime));
+      const selectionBoundaryMin = Math.floor(renderingCoordinateSpace.timeToCanvasX(Math.max(startTime, this._selectionStartTime)));
+      const selectionBoundaryMax = Math.ceil(renderingCoordinateSpace.timeToCanvasX(Math.min(endTime, this._selectionEndTime)));
 
       if(selectionBoundaryMax > selectionBoundaryMin) {
         renderContext.fillStyle = WAVETABLE_COLOR_SELECTION_BACKGROUND;
         renderContext.fillRect(
           selectionBoundaryMin, 
           renderingCoordinateSpace.y, 
-          selectionBoundaryMax-selectionBoundaryMin,
+          selectionBoundaryMax-selectionBoundaryMin + 1,
           renderingCoordinateSpace.height);   
       }
     }
 
-    const selStart = this
-    this.renderWavetable(editedWaveform, renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);    
+    const selStart = this;
+    this.renderWaveform(editedWaveform, renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);    
     
     this._allCursors.forEach(cursor => {
       cursor.draw(renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);
     })    
+
+    renderContext.restore();
   }
 
-  private renderWavetable(
+  private renderWaveform(
     editedWaveform: EditedWaveform,
     renderingStartX: number,
     renderingEndX: number,
@@ -388,7 +403,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
 
         renderContext.fillRect(x, 
           channelTop + renderingCoordinateSpace.channelHeight/2 * (1-2*sampleMax),
-          1, renderingCoordinateSpace.channelHeight * (sampleMax-sampleMin));
+          1, (renderingCoordinateSpace.channelHeight * (sampleMax-sampleMin))+1);
       }
     });
   }
@@ -450,13 +465,35 @@ class DraggableCursor {
     }
 
     const timeX = rcs.timeToCanvasX(this._time);
-    if(timeX < clipStartX || timeX > clipEndX) {
+    const width = this.getDisplayWidth(renderContext);
+    if(timeX + width < clipStartX || timeX > clipEndX) {
       return;
     }
+
+    renderContext.fillStyle = WAVETABLE_COLOR_BACKGROUND;
+    renderContext.fillRect(timeX, 0, width, rcs.y);
+    renderContext.fillStyle = this._lineColor ?? 'white';
+    renderContext.fillText(this.getTimeLabel(), timeX + 3, rcs.y - 2);
     
     if(this._lineColor) {
       renderContext.fillStyle = this._lineColor;
-      renderContext.fillRect(timeX, rcs.y, 1, rcs.height);
-    }    
+      renderContext.fillRect(timeX, 0, 1, rcs.height);
+    }
+  }
+
+  getDisplayWidth(renderContext: CanvasRenderingContext2D): number {
+    return renderContext.measureText(this.getTimeLabel()).width + 6;    
+  }
+
+  getTimeLabel() {
+    return this._time?.toFixed(3) + "s";
   }
 }
+
+// TODO
+// Crop
+// Insert silence
+// Cut/Copy/Paste [overwrite/insert]
+// Effects (filter, apply envelope)
+// Time legends
+// Time edit boxes
