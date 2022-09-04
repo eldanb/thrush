@@ -50,6 +50,6 @@ export class NativeSynthesizerInstrument {
     const parsedWav = parseWav(instrumentBuff);
 
     return new NativeSynthesizerInstrument(
-      parsedWav.samples, parsedWav.sampleRate, 0, parsedWav.samples.length-1000);
+      parsedWav.samples[0], parsedWav.sampleRate, 0, parsedWav.samples.length-1000);
   }
 }

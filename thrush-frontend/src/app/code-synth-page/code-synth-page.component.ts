@@ -71,9 +71,9 @@ export class CodeSynthPageComponent implements OnInit {
     const wavFile = parseWav(instrumentSampleArray!);
     
     let instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
-      wavFile.samples.buffer, wavFile.sampleRate, 0, 0, 0, 1);
+      wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, 0, 1);
     let instrumentIdNative = this._thrushEngine.sequencer.waveTableSynthesizer.registerInstrument(
-      wavFile.samples.buffer, wavFile.sampleRate, 0, 0, 0, 1);
+      wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, 0, 1);
 
     this.codeLoadedInsturments.push({
       scriptId: instrumentId,

@@ -67,14 +67,14 @@ export class TestPageComponent implements OnInit {
       const wavFile = parseWav(instrumentArray!);
 
       this.editedWaveform = { 
-        channelSamples: [wavFile.samples],
+        channelSamples: wavFile.samples,
         sampleRate: wavFile.sampleRate
       };
 
       let instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
-        wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
+        wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
       let instrumentIdNative = this._thrushEngine.sequencer.waveTableSynthesizer.registerInstrument(
-        wavFile.samples.buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
+        wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
   
       const aggSeqContext = new ThrushAggregatedSequenceGenerator();
 

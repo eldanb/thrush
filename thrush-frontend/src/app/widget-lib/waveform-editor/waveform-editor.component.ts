@@ -144,7 +144,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
       const displayStartTime = this._displayStartTime;
       const displayEndTime = this._displayEndTime;
       const topPad = 16;
-      const channelHeight = height / (this._editedWaveform.channelSamples.length * (1 + CHANNEL_PAD_RATIO) - CHANNEL_PAD_RATIO);
+      const channelHeight = (height-topPad) / (this._editedWaveform.channelSamples.length * (1 + CHANNEL_PAD_RATIO) - CHANNEL_PAD_RATIO);
       const channelStride = channelHeight * (1 + CHANNEL_PAD_RATIO);
       const timeToCanvasXFactor = width / (displayEndTime - displayStartTime);
   
@@ -402,8 +402,8 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
         }
 
         renderContext.fillRect(x, 
-          channelTop + renderingCoordinateSpace.channelHeight/2 * (1-2*sampleMax),
-          1, (renderingCoordinateSpace.channelHeight * (sampleMax-sampleMin))+1);
+          channelTop + renderingCoordinateSpace.channelHeight/2 * (1-sampleMax),
+          1, (renderingCoordinateSpace.channelHeight/2 * (sampleMax-sampleMin))+1);
       }
     });
   }
