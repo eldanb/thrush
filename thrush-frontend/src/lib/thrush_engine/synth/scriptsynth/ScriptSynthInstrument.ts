@@ -1,5 +1,15 @@
 
 
+export type EnvelopeCurveCoordinate = { 
+  time: number;
+  value: number;
+}
+
+export type Envelopes = {
+  volume: EnvelopeCurveCoordinate[];
+}
+
+
 export interface ScriptSynthGeneratedToneParameters {
   sample: Float32Array | null;
   sampleRate: number;
@@ -9,8 +19,10 @@ export interface ScriptSynthGeneratedToneParameters {
   sampleLoopLen: number;
 
   samplePitch: number;
-
   volume: number;
+
+  enterEnvelopes: Envelopes | null;
+  exitEnvelopes: Envelopes | null;
 }
 
 export abstract class ScriptSynthInstrument {
@@ -29,12 +41,18 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
 
   private _volume: number;
 
+  private _enterEnvelopes: Envelopes | null;
+  private _exitEnvelopes: Envelopes | null;
+
+
   constructor(
     sample: Float32Array,
     sampleRate: number,
     sampleStart?: number,
     loopStart?: number, loopLen?: number,
-    volume: number = 1) {
+    volume: number = 1,
+    enterEnvelopes: Envelopes | null = null,
+    exitEnvelopes: Envelopes | null = null) {
     super();
     this._sample = sample;
     this._sampleRate = sampleRate;
@@ -43,6 +61,8 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     this._sampleLoopStart = loopStart || 0;
     this._sampleLoopLen = loopLen || 0;
     this._volume = volume;
+    this._enterEnvelopes = enterEnvelopes;
+    this._exitEnvelopes = exitEnvelopes;
   }
 
   configureToneGenerationParams(outputParams: ScriptSynthGeneratedToneParameters, note: number) {
@@ -53,8 +73,10 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     outputParams.sampleLoopLen = this.sampleLoopLen;
     outputParams.sampleRate = this._sampleRate;
     outputParams.volume = this._volume;
+    outputParams.enterEnvelopes = this._enterEnvelopes;
+    outputParams.exitEnvelopes = this._exitEnvelopes;
   }
-
+  
   get sample(): Float32Array {
     return this._sample;
   }
@@ -103,8 +125,10 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     sampleStart: number,
     loopStart: number,
     loopEnd: number,
-    volume: number): ScriptSynthWaveInstrument {
+    volume: number,
+    enterEnvelopes: Envelopes,
+    exitEnvelopes: Envelopes): ScriptSynthWaveInstrument {
     return new ScriptSynthWaveInstrument(
-      new Float32Array(sampleBuffer), sampleRate, sampleStart, loopStart, loopEnd, volume);
+      new Float32Array(sampleBuffer), sampleRate, sampleStart, loopStart, loopEnd, volume, enterEnvelopes, exitEnvelopes);
   }
 }

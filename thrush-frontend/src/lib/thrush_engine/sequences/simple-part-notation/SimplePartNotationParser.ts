@@ -1,4 +1,4 @@
-import { Parser, ParserBuilder, ParserOperators, WhitespaceParser, parse } from 'parzing';
+import { Parser, ParserBuilder, ParserOperators, WhitespaceParser, parse } from '@zigsterz/parzing';
 import { NoteSequence } from './NoteSequence';
 import { NoteSpecification } from './NoteSpecification';
 import { ParallelSequences } from './ParallelSequences';
@@ -13,7 +13,6 @@ import whitespace = ParserOperators.whitespace;
 
 const pb = new ParserBuilder();
 const nmws = new WhitespaceParser(false);
-
 
 const paramChangeCommand = pb.sequence(
   pb.token('[')._(omit()),

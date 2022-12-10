@@ -45,7 +45,30 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
         sampleRate,
         sampleStart,
         loopStart, loopLen,
-        volume
+        volume,
+        {
+          volume: [
+            {
+              time: 0.1,
+              value: 1
+            },
+            {
+              time: 0.2,
+              value: 0.5
+            },
+            {
+              time: 0.3,
+              value: 0.9
+            },
+          ]
+        },
+        {
+          volume: [
+            { time: 0,
+              value: 0
+            }
+          ]
+        }
         ));
   }
 
