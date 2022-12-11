@@ -12,6 +12,7 @@ export type ThrushCommonSynthesizerEventCommands = {
     instrumentId: number;
     note: number; 
   };
+  releaseNote?: boolean;
   volume?: number;
   panning?: number;
   vibrato?: ThrushCommonSynthesizerVibratoParameters;
@@ -22,14 +23,14 @@ export class ThrushCommonSynthesizerEvent extends ThrushSequenceEvent {
   constructor(
     public override time: number, 
     public targetSynth: ThrushCommonSynthesizerInterface,
-    public channel: number,
+    public channelOrNoteId: number | string,
     public commands: ThrushCommonSynthesizerEventCommands
   ) {
     super();
   }
 
   clone(): ThrushSequenceEvent {
-    return new ThrushCommonSynthesizerEvent(this.time, this.targetSynth, this.channel, this.commands);
+    return new ThrushCommonSynthesizerEvent(this.time, this.targetSynth, this.channelOrNoteId, this.commands);
   }
 
   route(sequencer: ThrushSequencer): Promise<void> {

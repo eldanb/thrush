@@ -1,6 +1,5 @@
 import { ThrushSequenceGenerator } from "../../ThrushSequencer";
 import { ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
-import { ChannelAllocationManager } from "./ChannelAllocationManager";
 
 export class NoteSequenceContext {
 
@@ -11,16 +10,22 @@ export class NoteSequenceContext {
 
   instrumentId: number = 0;
   noteVolume: number = 1;
-  notePanning: number = 0.5;    
-    
-  currentSequenceCommandChannel: number | null = null;
+  notePanning: number = 0.5;
 
-  constructor(public channelAllocationManager: ChannelAllocationManager) {
+  noteIdSeed: number = 0;
+  noteIdPrefix: string = "s.";
+    
+  latestNoteId: string | null = null;
+
+  constructor() {
   }
 
+  generateNoteId(): string {
+    return `${this.noteIdPrefix}${this.noteIdSeed++}`
+  }
+  
   createInheritedContext() {
-    const inheritedAllocation = new ChannelAllocationManager(this.channelAllocationManager);
-    const ret = new NoteSequenceContext(inheritedAllocation);
+    const ret = new NoteSequenceContext();
     
     Object.assign(ret, { 
       tempo: this.tempo, 
@@ -28,7 +33,8 @@ export class NoteSequenceContext {
       instrumentId: this.instrumentId,
       notePanning: this.notePanning,
       noteVolume: this.noteVolume,
-      instruments: this.instruments      
+      instruments: this.instruments,
+      noteIdPrefix: `${this.generateNoteId()}.`
     });
 
     return ret;

@@ -6,7 +6,6 @@ type NativeSynthesizerChannelState = {
   channelInput: AudioNode;
   gainNode: GainNode;
   panNode: StereoPannerNode;
-    
 
   lastScheduledNode: AudioBufferSourceNode | null;
   lastRenderedNoteModulationTime: number;
@@ -72,7 +71,11 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
   
   
   async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
-    const channelState = this._channelState[synthEvent.channel];
+    if(typeof(synthEvent.channelOrNoteId) != 'number') {
+      return;
+    }
+
+    const channelState = this._channelState[synthEvent.channelOrNoteId];
     const lastScheduled = channelState.lastScheduledNode;
     if(lastScheduled) {
       lastScheduled.stop(synthEvent.time);
@@ -81,7 +84,7 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     this.renderChannelNoteModulationEvents(channelState, synthEvent.time);
 
     let flushNoteModulationNeeded = false;
-    
+        
     if(synthEvent.commands.newNote) {
       const instrument = this._instruments[synthEvent.commands.newNote?.instrumentId]; 
       const playbackRate = Math.pow(2, (synthEvent.commands.newNote.note/12))     

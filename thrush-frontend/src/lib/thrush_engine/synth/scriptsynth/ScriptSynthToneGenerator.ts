@@ -88,7 +88,10 @@ type EnvelopeState = {
 class ChannelState implements ScriptSynthGeneratedToneParameters {
   toneGenerator: ScriptSynthToneGenerator;
 
+  playingNoteId: string | null = null;
+
   sample: Float32Array | null = null;
+  
   sampleStartOffset: number = 0;
   sampleLoopStart: number = 0;
   sampleLoopLen: number = 0;
@@ -137,7 +140,12 @@ class ChannelState implements ScriptSynthGeneratedToneParameters {
   }
 
   releaseNote(releaseSampleNumber: number) {
-    this.startEnvelope(this.exitEnvelopes, true, releaseSampleNumber);
+    if(this.exitEnvelopes) {
+      this.startEnvelope(this.exitEnvelopes, true, releaseSampleNumber);
+    } else {
+      this.sample = null;
+      this.playingNoteId = null;
+    }
   }
 }
 
@@ -161,28 +169,62 @@ export class ScriptSynthToneGenerator {
     }    
   }
 
-  public playNoteOnChannel(channel: number, instrument: ScriptSynthInstrument, note: number) {
-    const channelState = this._channelStates[channel];
+  public playNoteOnChannel(channelOrNoteId: number | string, instrument: ScriptSynthInstrument, note: number) {    
+    let channelState: ChannelState | undefined;
+    if(typeof(channelOrNoteId) == "string") {
+      channelState = this._channelStates.find(channelState => !channelState.sample);
+      if(!channelState) {
+        console.warn("No free channel!");
+        channelState = this._channelStates[0];
+      }
+      channelState.playingNoteId = channelOrNoteId;
+    } else {
+      channelState = this._channelStates[channelOrNoteId];
+      channelState.playingNoteId = null;
+    }
+      
     channelState.playNote(instrument, note, this._currentSample);
   }
 
-  public setVolumeOnChannel(channel: number, volume: number) {
-    const channelState = this._channelStates[channel];
+  public setVolumeOnChannel(channelOrNoteId: number | string, volume: number) {
+    const channelState = this._getChannelState(channelOrNoteId);
     channelState.volume = volume;
   }
 
-  public setPanningOnChannel(channel: number, panning: number) {
-    const channelState = this._channelStates[channel];
+  public setPanningOnChannel(channelOrNoteId: number | string, panning: number) {
+    const channelState = this._getChannelState(channelOrNoteId);
     channelState.panning = panning;
   }
 
-  public setVibratoOnChannel(channel: number, waveform: "none" | WaveFormType, frequency: number, amplitude: number) {
-    const channelState = this._channelStates[channel];
+  public setVibratoOnChannel(channelOrNoteId: number | string, waveform: "none" | WaveFormType, frequency: number, amplitude: number) {
+    const channelState = this._getChannelState(channelOrNoteId);
     channelState.vibratoGenerator = 
       waveform === "none"
         ? null
         : WaveFormGeneratorFactories[waveform](this._currentTime, amplitude, frequency);
     
+  }
+
+  public releaseNoteOnChannel(channelOrNoteId: number | string): void {
+    const channelState = this._getChannelStateOrNull(channelOrNoteId);
+    if(channelState) {
+      channelState.releaseNote(this._currentSample);
+    }
+  }
+
+  private _getChannelStateOrNull(channelOrNoteId: number | string): ChannelState | undefined {
+    return (typeof(channelOrNoteId) == 'number')
+      ? this._channelStates[channelOrNoteId]
+      : this._channelStates.find(cs => cs.playingNoteId == channelOrNoteId);
+  }
+  
+  private _getChannelState(channelOrNoteId: number | string): ChannelState {
+    const ret = this._getChannelStateOrNull(channelOrNoteId);
+    if(!ret) {
+      throw new Error(`Note ID not found: ${channelOrNoteId}`);
+    }
+
+    return ret;        
   }
 
   public readBuffer(destinationLeft: Float32Array, destinationRight: Float32Array, destOffset: number, destLength: number): void
@@ -240,6 +282,7 @@ export class ScriptSynthToneGenerator {
             channelState.sampleCursor = sampleIndex;
           } else {
             channelState.sample = null;
+            channelState.playingNoteId = null;
             console.log("End sample channel " + channelIndex);
           }
         }

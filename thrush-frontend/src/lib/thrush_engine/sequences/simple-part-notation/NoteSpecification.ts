@@ -35,9 +35,12 @@ export class NoteSpecification extends CompilableSimplePart {
   }
 
   compile(sequenceContext: NoteSequenceContext): ThrushSequenceGenerator {
+    const noteId = sequenceContext.generateNoteId();
+    const endTime = this._timing!.delay(sequenceContext.tempo);
+
     return new ThrushArraySequenceGenerator([
 
-      new ThrushCommonSynthesizerEvent(0, sequenceContext.synth!, sequenceContext.currentSequenceCommandChannel!, {
+      new ThrushCommonSynthesizerEvent(0, sequenceContext.synth!, noteId, {
         newNote: { 
           instrumentId: sequenceContext.instrumentId,
           note: this.noteNumber
@@ -46,7 +49,9 @@ export class NoteSpecification extends CompilableSimplePart {
         volume: Math.min(1, sequenceContext.noteVolume * this.volModifier)
       }),
 
-      new ThrushSequenceEndEvent(this._timing!.delay(sequenceContext.tempo))
+      new ThrushCommonSynthesizerEvent(endTime, sequenceContext.synth!, noteId, { releaseNote: true }),
+
+      new ThrushSequenceEndEvent(endTime)
     ]);    
   }
 }

@@ -74,7 +74,7 @@ export class ParameterChangeCommand extends CompilableSimplePart {
         new ThrushCommonSynthesizerEvent(
           0, 
           sequenceContext.synth!, 
-          sequenceContext.currentSequenceCommandChannel!, 
+          sequenceContext.latestNoteId!, 
           commands)
       ]);
     } else {

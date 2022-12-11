@@ -56,8 +56,9 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
   async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
     await this._workletNodeRpcProxy.enqueueEvent({
       time: synthEvent.time,
-      channel: synthEvent.channel,
+      channelOrNoteId: synthEvent.channelOrNoteId,
       newNote: synthEvent.commands.newNote,
+      releaseNote: synthEvent.commands.releaseNote,
       panning: synthEvent.commands.panning,
       volume: synthEvent.commands.volume,
       vibrato: synthEvent.commands.vibrato

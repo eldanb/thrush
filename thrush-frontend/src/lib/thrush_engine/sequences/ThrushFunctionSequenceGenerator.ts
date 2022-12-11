@@ -6,12 +6,6 @@ import { ThrushTimeOffsetSequenceGenerator } from "../sequences/ThrushTimeOffset
 import { ThrushWaitForEventSequence } from "./ThrushWaitForEventSequence";
 import { parsePartSequence } from "./simple-part-notation/SimplePartNotationParser";
 import { NoteSequenceContext } from "./simple-part-notation/SimplePartNotationModel";
-import { ChannelAllocationManager } from "./simple-part-notation/ChannelAllocationManager";
-
-const ALL_CHANNELS = [
-  0, 1, 2, 3, 4, 5, 6, 7, 8,
-  9, 10, 11, 12, 13, 14, 15  
-];
 
 export type ThrushSequenceGenerationDirectiveEvent = {
   type: 'event';
@@ -180,7 +174,7 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
   }
 
   partSequence(partSpecification: string, partSequenceOptions: PartSequenceOptions): ThrushSequenceGeneratorHandle {
-    const sequencerContext = new NoteSequenceContext(new ChannelAllocationManager(ALL_CHANNELS));
+    const sequencerContext = new NoteSequenceContext();
     
     sequencerContext.synth = partSequenceOptions.synth === 'soft' ? this._sequencer.tsynthToneGenerator : this._sequencer.waveTableSynthesizer;
     sequencerContext.instrumentId = partSequenceOptions.instruments[0];

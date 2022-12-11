@@ -12,12 +12,6 @@ export class NoteSequence extends CompilableSimplePart {
   }
 
   compile(sequenceContext: NoteSequenceContext): ThrushSequenceGenerator {
-    let selfAllocedChannel = null;
-    if(sequenceContext.currentSequenceCommandChannel == null) {
-      selfAllocedChannel = sequenceContext.channelAllocationManager.allocateChannel();
-      sequenceContext.currentSequenceCommandChannel = selfAllocedChannel;
-    }
-
     let accumulatedArraySequence: ThrushArraySequenceGenerator | null = null;
     let concatenatedSequences: ThrushSequenceGenerator[] = [];
     this._sequenceParts.forEach(command => {
@@ -42,10 +36,6 @@ export class NoteSequence extends CompilableSimplePart {
     concatenatedSequences.length > 1 
         ? new ThrushConcatSequenceGenerator(concatenatedSequences)
         : concatenatedSequences[0];
-
-    if(selfAllocedChannel) {
-      sequenceContext.channelAllocationManager.releaseChannel(selfAllocedChannel);
-    }
     
     return compiledResult;
   }

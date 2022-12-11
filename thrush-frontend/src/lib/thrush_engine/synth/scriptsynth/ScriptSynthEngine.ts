@@ -3,12 +3,14 @@ import { ScriptSynthToneGenerator } from "./ScriptSynthToneGenerator";
 
 export type ScriptSynthEngineEvent = {
   time: number;
-  channel: number;
+  channelOrNoteId: number | string;
 
   newNote?: {
     instrumentId: number;
     note: number;
   }
+
+  releaseNote?: boolean;
 
   volume?: number;
   panning?: number;
@@ -55,20 +57,23 @@ export class ScriptSynthEngine {
         const event = this._eventQueue.shift()!;
 
         if(event.newNote) {
-          console.debug(`Play note ${event.newNote.note} at ${currentTime}; instrument = ${event.newNote.instrumentId}; channel = ${event.channel}; latency=${currentTime-event.time}`);
-          this._toneGenerator.playNoteOnChannel(event.channel, this._instruments[event.newNote.instrumentId], event.newNote.note);
+          console.debug(`Play note ${event.newNote.note} at ${currentTime}; instrument = ${event.newNote.instrumentId}; channel = ${event.channelOrNoteId}; latency=${currentTime-event.time}`);
+          this._toneGenerator.playNoteOnChannel(event.channelOrNoteId, this._instruments[event.newNote.instrumentId], event.newNote.note);
+        } else 
+        if(event.releaseNote) {
+          this._toneGenerator.releaseNoteOnChannel(event.channelOrNoteId);
         }
 
         if(event.volume != null) {
-          this._toneGenerator.setVolumeOnChannel(event.channel, event.volume);
+          this._toneGenerator.setVolumeOnChannel(event.channelOrNoteId, event.volume);
         }
 
         if(event.panning != null) {
-          this._toneGenerator.setPanningOnChannel(event.channel, event.panning);
+          this._toneGenerator.setPanningOnChannel(event.channelOrNoteId, event.panning);
         }
 
         if(event.vibrato != null) {
-          this._toneGenerator.setVibratoOnChannel(event.channel, event.vibrato.waveform, event.vibrato.frequency, event.vibrato.amplitude);
+          this._toneGenerator.setVibratoOnChannel(event.channelOrNoteId, event.vibrato.waveform, event.vibrato.frequency, event.vibrato.amplitude);
         }
 
     }
