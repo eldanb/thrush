@@ -1,12 +1,14 @@
-import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
+import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerEventCommands, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
 import { WaveFormGenerator, WaveFormGeneratorFactories } from "../common/WaveFormGenerators";
 import { NativeSynthesizerInstrument } from "./NativeSynthesizerInstrument";
 
-type NativeSynthesizerChannelState = {
+type NativeSynthesizerChannelState = {  
   channelInput: AudioNode;
   gainNode: GainNode;
   panNode: StereoPannerNode;
 
+  lastScheduledNoteId: string | null;
+  channelBusyUntil: number;
   lastScheduledNode: AudioBufferSourceNode | null;
   lastRenderedNoteModulationTime: number;
   basePlaybackRate: number;
@@ -28,7 +30,9 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
       panNode.connect(_audioContext.destination);
       gainNode.connect(panNode);
       this._channelState[i] = {
+        lastScheduledNoteId: null,
         lastScheduledNode: null,
+        channelBusyUntil: 0,
         gainNode,
         panNode,
         channelInput: gainNode,
@@ -69,13 +73,37 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     ) - 1;
   }
   
-  
-  async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
-    if(typeof(synthEvent.channelOrNoteId) != 'number') {
-      return;
-    }
+  private resolveChannelStateForEvent(synthEvent: ThrushCommonSynthesizerEvent): NativeSynthesizerChannelState {
+    if(typeof(synthEvent.channelOrNoteId) === 'number') {
+      return this._channelState[synthEvent.channelOrNoteId];
+    } else {
+      let channelState = this._channelState.find(channelState => channelState.lastScheduledNoteId === synthEvent.channelOrNoteId);
+      if(channelState) {
+        return channelState;
+      }
 
-    const channelState = this._channelState[synthEvent.channelOrNoteId];
+      if(synthEvent.commands.newNote) {
+        channelState = this._channelState.find(channelState => 
+          channelState.channelBusyUntil == null ||
+          (channelState.channelBusyUntil != -1  && channelState.channelBusyUntil <= synthEvent.time));
+
+        if(!channelState) {
+          channelState = this._channelState[0];
+          console.warn("No free channel!");
+        }
+
+        channelState.lastScheduledNoteId = synthEvent.channelOrNoteId;
+
+        return channelState;
+      } else {
+        console.warn("Note ID not found");
+        return this._channelState[0];
+      }      
+    }
+  }
+  async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
+    const channelState = this.resolveChannelStateForEvent(synthEvent);
+
     const lastScheduled = channelState.lastScheduledNode;
     if(lastScheduled) {
       lastScheduled.stop(synthEvent.time);
@@ -110,7 +138,13 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
       channelState.lastScheduledNode = noteNode;
       channelState.lastRenderedNoteModulationTime = 0;
 
-      channelState.basePlaybackRate = playbackRate;      
+      channelState.basePlaybackRate = playbackRate;   
+      
+      channelState.channelBusyUntil = -1;
+    } else 
+    if(synthEvent.commands.releaseNote) {
+      channelState.channelBusyUntil = synthEvent.time;
+      channelState.lastScheduledNode?.stop(synthEvent.time);
     }
     
     if(synthEvent.commands.volume != null) {
