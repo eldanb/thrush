@@ -1,19 +1,50 @@
 import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerEventCommands, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
+import { EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator, WaveFormGeneratorFactories } from "../common/WaveFormGenerators";
-import { NativeSynthesizerInstrument } from "./NativeSynthesizerInstrument";
+import { Envelopes, NativeSynthesizerInstrument } from "./NativeSynthesizerInstrument";
 
-type NativeSynthesizerChannelState = {  
-  channelInput: AudioNode;
-  gainNode: GainNode;
-  panNode: StereoPannerNode;
+const ENVELOPE_SAMPLES_HZ = 200;
 
-  lastScheduledNoteId: string | null;
-  channelBusyUntil: number;
-  lastScheduledNode: AudioBufferSourceNode | null;
-  lastRenderedNoteModulationTime: number;
-  basePlaybackRate: number;
-  vibratoGenerator: WaveFormGenerator | null;  
+
+type EnvelopeState = {
+  [envelope in keyof Envelopes]: EnvelopeCurveState;
 }
+
+
+class NativeSynthesizerChannelState {
+  constructor( 
+    public channelInput: AudioNode,
+    public gainNode: GainNode,
+    public panNode: StereoPannerNode
+  ) {
+  
+  }
+
+  public startEnvelope(envelopes: Envelopes | undefined, startFromCurrent: boolean, epochTime: number) {
+    this.envelopeState = envelopes && {
+      volume: envelopes.volume && 
+        new EnvelopeCurveState(envelopes.volume, 
+          startFromCurrent ? this.envelopeState!.volume.currentValue : 0, 
+          epochTime * ENVELOPE_SAMPLES_HZ, ENVELOPE_SAMPLES_HZ)      
+    }
+
+    this.envelopeStateEpochTime = epochTime;
+  }
+  
+  lastScheduledNoteId: string | null = null;
+  channelBusyUntil: number = 0;
+  lastScheduledNode: AudioBufferSourceNode | null = null;
+  lastScheduledInstrment: NativeSynthesizerInstrument | undefined;
+  lastRenderedNoteModulationTime: number = 0;
+  basePlaybackRate: number = 0;
+  baseVolume: number = 1;
+
+  envelopeState: EnvelopeState | undefined;
+  envelopeStateEpochTime: number | undefined;
+
+  vibratoGenerator: WaveFormGenerator | null = null;  
+}
+
 
 export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
   private _channelState: NativeSynthesizerChannelState[] = [];
@@ -29,17 +60,7 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
       const panNode = new StereoPannerNode(_audioContext);
       panNode.connect(_audioContext.destination);
       gainNode.connect(panNode);
-      this._channelState[i] = {
-        lastScheduledNoteId: null,
-        lastScheduledNode: null,
-        channelBusyUntil: 0,
-        gainNode,
-        panNode,
-        channelInput: gainNode,
-        lastRenderedNoteModulationTime: 0, 
-        basePlaybackRate: 0,
-        vibratoGenerator: null
-      }
+      this._channelState[i] = new NativeSynthesizerChannelState(gainNode, gainNode, panNode);        
     }
 
     this._flushTimer = setInterval(() => {
@@ -53,6 +74,9 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
       this.clearChannelNoteModulation(channelState, 0);
       channelState.lastScheduledNode?.disconnect();
       channelState.lastScheduledNode = null;
+      channelState.envelopeState = undefined;
+      channelState.lastScheduledNoteId = null;
+      channelState.channelBusyUntil = 0;
     })
 
     this._allScheduled.forEach((n) => {
@@ -69,7 +93,31 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     volume: number): number {
 
     return this._instruments.push(
-      new NativeSynthesizerInstrument(new Float32Array(sampleBuff), sampleRate, loopStart, loopLen)
+      new NativeSynthesizerInstrument(new Float32Array(sampleBuff), sampleRate, loopStart, loopLen,
+      {
+        volume: [
+          {
+            time: 0.1,
+            value: 1
+          },
+          {
+            time: 0.2,
+            value: 0.5
+          },
+          {
+            time: 0.3,
+            value: 0.9
+          },
+        ]
+      },
+      {
+        volume: [
+          { 
+            time: 1,
+            value: 0
+          }
+        ]
+      })
     ) - 1;
   }
   
@@ -101,6 +149,7 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
       }      
     }
   }
+
   async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
     const channelState = this.resolveChannelStateForEvent(synthEvent);
 
@@ -129,6 +178,8 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
         noteNode.loopEnd = (instrument.sampleLoopLen + instrument.sampleLoopStart) / instrument.sampleRate;
       }
 
+      channelState.startEnvelope(instrument.enterEnvelopes, false, synthEvent.time);
+
       this._allScheduled.add(noteNode);
       noteNode.addEventListener("ended", this._noteEndedHandler);
 
@@ -136,18 +187,21 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
       noteNode.connect(channelState.channelInput);
 
       channelState.lastScheduledNode = noteNode;
-      channelState.lastRenderedNoteModulationTime = 0;
+      channelState.lastRenderedNoteModulationTime = synthEvent.time - 1/ENVELOPE_SAMPLES_HZ;
+      channelState.lastScheduledInstrment = instrument;
 
       channelState.basePlaybackRate = playbackRate;   
       
       channelState.channelBusyUntil = -1;
     } else 
     if(synthEvent.commands.releaseNote) {
-      channelState.channelBusyUntil = synthEvent.time;
-      channelState.lastScheduledNode?.stop(synthEvent.time);
+      channelState.startEnvelope(channelState.lastScheduledInstrment?.exitEnvelopes, true, synthEvent.time);
+      channelState.channelBusyUntil = channelState.lastScheduledInstrment?.exitEnvelopes ? synthEvent.time + 5 : synthEvent.time;
+      channelState.lastScheduledNode?.stop(channelState.channelBusyUntil);
     }
     
     if(synthEvent.commands.volume != null) {
+      channelState.baseVolume = synthEvent.commands.volume;
       channelState.gainNode.gain.setValueAtTime(synthEvent.commands.volume, synthEvent.time);
     }
 
@@ -172,7 +226,7 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
       this.clearChannelNoteModulation(channelState, synthEvent.time);
     }
 
-    this.renderChannelNoteModulationEvents(channelState, synthEvent.time + 100);
+    this.renderChannelNoteModulationEvents(channelState, synthEvent.time + 5);
   }  
   
   
@@ -180,21 +234,38 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     if(startingAtTime <= channelState.lastRenderedNoteModulationTime) {
       channelState.lastRenderedNoteModulationTime = startingAtTime;    
       channelState.lastScheduledNode?.playbackRate.cancelAndHoldAtTime(startingAtTime);
+      channelState.gainNode.gain.cancelAndHoldAtTime(startingAtTime);
+      
+      channelState.envelopeState?.volume?.rewind();
     }
   }
 
-  renderChannelNoteModulationEvents(channelState: NativeSynthesizerChannelState, targetTime: number) {    
-    while(channelState.lastRenderedNoteModulationTime < targetTime) {
-      channelState.lastRenderedNoteModulationTime += 1/50;      
+  renderChannelNoteModulationEvents(channelState: NativeSynthesizerChannelState, targetTime: number) {  
+    let currentRenderTime = channelState.lastRenderedNoteModulationTime;
+    let envelopeSample = channelState.lastRenderedNoteModulationTime * ENVELOPE_SAMPLES_HZ;
+    while(currentRenderTime < targetTime) {
+      currentRenderTime += 1/ENVELOPE_SAMPLES_HZ;
+      envelopeSample++;
+
+      const volumeEnvelope = channelState.envelopeState?.volume;
+      if(volumeEnvelope) {
+        volumeEnvelope.updateEnvelopeState(envelopeSample);
+        if(volumeEnvelope.running) { 
+          channelState.gainNode.gain.setValueAtTime(
+            volumeEnvelope.currentValue * channelState.baseVolume,
+            currentRenderTime);
+        }
+      }
+
       if(channelState.vibratoGenerator) {
         channelState.lastScheduledNode?.playbackRate.setValueAtTime(
-          (1 + channelState.vibratoGenerator(channelState.lastRenderedNoteModulationTime)) *
+          (1 + channelState.vibratoGenerator(currentRenderTime)) *
             channelState.basePlaybackRate,
-          channelState.lastRenderedNoteModulationTime);
+            currentRenderTime);
       }
     }
 
-    channelState.lastRenderedNoteModulationTime = targetTime;
+    channelState.lastRenderedNoteModulationTime = targetTime;    
   }
   
 }

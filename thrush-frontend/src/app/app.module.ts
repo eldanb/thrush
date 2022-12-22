@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatCardModule } from '@angular/material/card';
+import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
@@ -41,6 +42,7 @@ import { WaveInstrumentEditorComponent } from './resource-editors/wave-instrumen
     MatListModule,
     MatCardModule,
     MatSidenavModule,
+    MatSelectModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

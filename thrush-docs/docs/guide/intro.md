@@ -19,6 +19,10 @@ The Main Event in the current setup is CodeSynth -- allowing you to write JavaSc
 - Pattern based sequences. These are sequences that are based on fixed-time slots with commands.
 - Rudimentary UI to experiment with the thing.
 
+### News: December 2022
+- Support for volume envelopes for notes
+- Support for auto allocate channels
+
 ### Also in POC mode (look under "Here Be Dragons"):
 - An Amiga .mod file loader, that loads an Amiga music module file, extracts its instruments to the wavetable synthesizers and generates a set of seqeuncer sequences that encode the music in the module.
       

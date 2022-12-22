@@ -3,7 +3,6 @@ import { ScriptSynthWaveInstrument } from "../ScriptSynthInstrument";
 import { ScriptSynthWorkerRpcInterface } from "./ScriptSynthWorkerRpcInterface";
 import { MessagePortRpcDispatcher } from "../../../../util/MessagePortRpc";
 
-
 class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorkerRpcInterface {
   _rpcDispathcer: MessagePortRpcDispatcher<ScriptSynthWorkerRpcInterface>;
   _synthEngine: ScriptSynthEngine | null = null;
@@ -45,7 +44,7 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
         sampleRate,
         sampleStart,
         loopStart, loopLen,
-        volume,
+        volume, 
         {
           volume: [
             {
@@ -64,7 +63,8 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
         },
         {
           volume: [
-            { time: 0,
+            { 
+              time: 1,
               value: 0
             }
           ]

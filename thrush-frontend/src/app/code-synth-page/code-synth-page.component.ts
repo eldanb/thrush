@@ -1,9 +1,12 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { MatSelectChange } from '@angular/material/select';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { ThrushAggregatedSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushAggregatedSequenceGenerator';
 import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushFunctionSequenceGenerator';
 import { ThrushEngineService } from '../services/thrush-engine.service';
 import { MonacoEditorComponent } from '../widget-lib/monaco-editor/monaco-editor.component';
+
+
 
 @Component({
   selector: 'app-code-synth-page',
@@ -12,13 +15,18 @@ import { MonacoEditorComponent } from '../widget-lib/monaco-editor/monaco-editor
 })
 export class CodeSynthPageComponent implements OnInit {
 
+  readonly EXAMPLES_LIST: { title: string; content: string }[] = [
+    { title: 'Procedural Music Generation', content: require('!raw-loader!src/assets/example-songs/code/procedural-generation.txt').default },
+    { title: 'Part Notation Sequences', content: require('!raw-loader!src/assets/example-songs/code/part-notation.txt').default }
+  ];
+  
   @ViewChild('meditor', { read: MonacoEditorComponent })
   codeEditor: MonacoEditorComponent | null = null;
 
   @ViewChild('codeSampleLoadCtl', { read: ElementRef })
   codeSampleLoadCtl?: ElementRef<HTMLInputElement>;
-
-  sequenceCode = require('!raw-loader!src/assets/example-songs/code/default-code-song.txt').default;
+  
+  sequenceCode = require('!raw-loader!src/assets/example-songs/code/default-new-code.txt').default;
 
   public codeLoadedInsturments: Array<{
     nativeId: number;
@@ -96,5 +104,9 @@ export class CodeSynthPageComponent implements OnInit {
 
   get synthReady(): boolean {
     return this._thrushEngine.ready;
+  }
+
+  loadExample(selectionEvent: MatSelectChange) {
+    this.sequenceCode =  selectionEvent.value.content;
   }
 }

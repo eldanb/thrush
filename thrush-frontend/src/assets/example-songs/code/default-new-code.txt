@@ -1,0 +1,9 @@
+/**
+/**
+* @param {ThrushSequenceGenerationCalls} c
+*/
+function* mainSequence(c) {
+  
+
+}
+

@@ -1,88 +1,12 @@
+import { EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator, WaveFormGeneratorFactories, WaveFormType } from "../common/WaveFormGenerators";
-import { EnvelopeCurveCoordinate, Envelopes, ScriptSynthGeneratedToneParameters, ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { Envelopes, ScriptSynthGeneratedToneParameters, ScriptSynthInstrument } from "./ScriptSynthInstrument";
 
 
-class EnvelopeCurveState {
-  constructor(
-    private _envelope: EnvelopeCurveCoordinate[], 
-    private _startValue: number,    
-    private _epochSample: number, 
-    private _sampleRate: number,
-    ) {
-    this._endValue = _envelope[0].value;
-    this.currentValue = -1;
-    this._delta = this._endValue - this._startValue;
-    
-    this._startSample = _epochSample;
-    this._endSample = _epochSample + _envelope[0].time * _sampleRate;
-    this._durationSamples = this._endSample - this._startSample;
-  }
-
-
-  updateEnvelopeState(currentSample: number) {
-    // Page to next curve segment?
-    if(this.running && this._endSample <= currentSample) {
-      let running = true;
-      let currentEnvelopeCurveIndex = this._curveIndex;
-      let currentEndSample = this._endSample;
-      let currentEndValue = this._endValue;
-  
-      while(currentEndSample <= currentSample) {
-        if(currentEnvelopeCurveIndex >= this._envelope.length-1) {
-          running = false;
-          break;
-        }
-  
-        currentEnvelopeCurveIndex++;
-  
-        const currentCurve = this._envelope[currentEnvelopeCurveIndex];
-        currentEndSample = currentCurve.time * this._sampleRate + this._epochSample;
-        currentEndValue = currentCurve.value;
-      }
-  
-      if(running) {
-        const previousCurve = this._envelope[currentEnvelopeCurveIndex-1];
-  
-        this._startValue = previousCurve.value;
-        this._startSample = previousCurve.time * this._sampleRate 
-          + this._epochSample;
-  
-        this._endValue = this._envelope[currentEnvelopeCurveIndex].value;
-        this._endSample = currentEndSample;
-  
-        this._delta = this._endValue - this._startValue;
-        this._durationSamples = this._endSample - this._startSample;
-  
-        this._curveIndex = currentEnvelopeCurveIndex;
-      } else {
-        this.currentValue = currentEndValue;
-        this.running = false;
-      }
-    }
-  
-    if(this.running) {
-      this.currentValue = this._startValue + 
-      this._delta * 
-        (currentSample - this._startSample)/this._durationSamples;
-    }
-  }
-
-  public running: boolean = true;
-  public currentValue: number = 0;
-  
-  private _curveIndex: number = 0;  
-  private _endValue: number;
-  private _delta: number;
-
-  private _startSample: number;
-  private _endSample: number; 
-  private _durationSamples: number;
-};
 
 type EnvelopeState = {
   [envelope in keyof Envelopes]: EnvelopeCurveState;
 }
-
 
 
 class ChannelState implements ScriptSynthGeneratedToneParameters {

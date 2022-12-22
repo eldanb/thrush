@@ -1,9 +1,5 @@
+import { EnvelopeCurveCoordinate } from "../common/Envelopes";
 
-
-export type EnvelopeCurveCoordinate = { 
-  time: number;
-  value: number;
-}
 
 export type Envelopes = {
   volume: EnvelopeCurveCoordinate[];

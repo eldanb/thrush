@@ -1,0 +1,25 @@
+/**
+/**
+* @param {ThrushSequenceGenerationCalls} c
+*/
+function* mainSequence(c) {
+  const passage = c.functionSequence(function *(c) {
+      yield c.startSequence(c.partSequence(
+        "([i0]e1/4. e1/4.  c1/4 a1/4. e1/2 e1/4. c1/4 a1/2 -/4 e1/8. a2/8. b2/8. c2/8. b2/8. a2/8. b2/8. c2/4. c2/4. b2/4 a2/2" + 
+        "d#1/4. d#1/4. d1/4 c1/4. e1/2 e1/4. c1/4 a1/2 -/4 -/4     b2/8. c2/8.  b2/8. a2/8. b2/1, " +
+        
+        "[i1p10] a1/1.                  [p+15]  g#0/1.                 [p+15]  g0/1.               [p+15]  f#0/1. " + 
+        "[p+15] f0/1.                   [p+15] e0/1.                   [p+15] d0/1.               [p+15]  e0/1.)", {
+      instruments: [0,1],
+      tempo: 1.6,
+      volume: 0.6,
+      synth: "soft"
+    }));  
+
+  });
+
+  for(;;) {
+    yield c.playSequence(passage);
+  }  
+}
+

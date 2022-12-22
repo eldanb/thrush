@@ -1,4 +1,9 @@
 import { parseWav } from "src/lib/formats/WavParser";
+import { EnvelopeCurveCoordinate } from "../common/Envelopes";
+
+export type Envelopes = {
+  volume: EnvelopeCurveCoordinate[];
+}
 
 export class NativeSynthesizerInstrument {
   private _sample: Float32Array;
@@ -9,15 +14,28 @@ export class NativeSynthesizerInstrument {
   private _sampleLoopStart: number;
   private _sampleLoopLen: number;
 
-  constructor(sample: Float32Array, sampleRate: number, loopStart?: number, loopLen?: number) {
+  private _enterEnvelopes: Envelopes | undefined;
+  private _exitEnvelopes: Envelopes | undefined;
+
+  constructor(sample: Float32Array, sampleRate: number, loopStart?: number, loopLen?: number, enterEnvelopes?: Envelopes, exitEnvelopers?: Envelopes) {
 
     this._sample = sample;
     this._sampleRate = sampleRate;
 
     this._sampleLoopStart = loopStart || 0;
     this._sampleLoopLen = loopLen || 0;
+
+    this._enterEnvelopes = enterEnvelopes;
+    this._exitEnvelopes = exitEnvelopers;
   }
 
+  get enterEnvelopes(): Envelopes | undefined {
+    return this._enterEnvelopes;
+  }
+
+  get exitEnvelopes(): Envelopes | undefined {
+    return this._exitEnvelopes;
+  }
 
   get sample(): Float32Array {
     return this._sample;

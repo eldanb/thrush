@@ -1,5 +1,17 @@
 <div style="height: 100%; display: flex; flex-direction: row;">
   <div style="display: flex; flex-direction: column; width: 250px; padding: 1rem">
+    
+    <h3>Load example:</h3>
+    <div style="display: flex; flex-direction: row; align-items: baseline;">
+      <mat-select placeholder="Select example to load" (selectionChange)="loadExample($event)">
+        <mat-option *ngFor="let item of EXAMPLES_LIST" [value]="item">
+          {{item.title}}
+        </mat-option>
+      </mat-select>
+    </div>
+
+    <hr width="100%" style="margin-top: 3rem; margin-bottom: 3rem;"/>
+
     <div style="display: flex; flex-direction: row; align-items: baseline;">
       <h3 style="flex: 1">Samples</h3>
       <button mat-icon-button color="primary" (click)="handleCodeSampleLoadButtonClick()">
