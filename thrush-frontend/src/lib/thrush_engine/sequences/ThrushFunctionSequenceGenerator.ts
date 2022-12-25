@@ -97,9 +97,9 @@ export class ThrushFunctionSequenceGenerator extends ThrushSequenceGenerator {
   }
 
   postEvent(time: number, eventType: string, eventTarget: string, value: any): void {
-      if(this._calledGenerator) {
-        this._calledGenerator.postEvent(time, eventType, eventTarget, value);
-      }
+    if(this._calledGenerator) {
+      this._calledGenerator.postEvent(time, eventType, eventTarget, value);
+    }
   }
 }
 
@@ -109,7 +109,7 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
 
   }
 
-  playNote(synth: SynthesizerSelection, channel: number, instrumentId: number, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective {
+  playNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, instrumentId: number, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: 'event',
       event: new ThrushCommonSynthesizerEvent(
@@ -126,7 +126,7 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
     });
   }
 
-  changeNote(synth: SynthesizerSelection, channel: number, options: NoteSettings): ThrushSequenceGenerationDirective {
+  changeNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, options: NoteSettings): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: 'event',
       event: new ThrushCommonSynthesizerEvent(
@@ -134,6 +134,18 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
         synth === 'soft' ? this._sequencer.tsynthToneGenerator : this._sequencer.waveTableSynthesizer,  
         channel, 
         options)
+    });
+  }
+
+  releaseNote(synth: SynthesizerSelection, channel: ChannelOrNoteId): typeof ThrushSequenceGenerationDirective {
+    return this.internalEventToDirective({
+      type: 'event',
+      event: new ThrushCommonSynthesizerEvent(
+        0, 
+        synth === 'soft' ? this._sequencer.tsynthToneGenerator : this._sequencer.waveTableSynthesizer,  
+        channel, {
+          releaseNote: true
+        })
     });
   }
 

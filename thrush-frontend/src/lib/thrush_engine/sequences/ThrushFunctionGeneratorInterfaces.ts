@@ -57,8 +57,17 @@ declare type PartSequenceOptions = {
    * Initial default note settings.
    */
   defaultNoteSettings?: NoteSettings;
-
 };
+
+
+/**
+ * A ChannelOrNoteId is used to refer to a channel in a synthesizer. 
+ * If a number if specified, this is taken to be the channel number to operate on.
+ * If a string note ID is specified, then for note-playing commands a non-busy channel is allocated
+ * (or a busy one if there are no non-busy channels) and assigned the note ID; for other commands
+ * the channel currently assigned the specified note ID (if any) is taken.
+ */
+declare type ChannelOrNoteId = number | string;
 
 /**
  * CodeSynth generator functions are invoked with an instance of <code>ThrushSequenceGenerationCalls</code>,
@@ -81,7 +90,7 @@ declare interface ThrushSequenceGenerationCalls {
    * @param note Note to play. Expressed as the number of semitones from c0.
    * @param options Settings for played note. 
    */
-  playNote(synth: SynthesizerSelection, channel: number, instrumentId: number, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective;
+  playNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, instrumentId: number, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective;
 
   /**
    * Create a directive to change note settings for a note previously trigged by <code>playNote</code>. 
@@ -97,7 +106,20 @@ declare interface ThrushSequenceGenerationCalls {
    * @param channel Channel in the synthesizer playing the note to change.
    * @param options Updated settings for played note. 
    */
-  changeNote(synth: SynthesizerSelection, channel: number, options?: NoteSettings): ThrushSequenceGenerationDirective;
+  changeNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, options?: NoteSettings): ThrushSequenceGenerationDirective;
+
+  /**
+   * Create a directive to release a note.
+   * 
+   * The generator function should yield the returned directive for it to take effect.
+   * The note played in the idnetified channel will be released (no longer played.)
+   * 
+   * This directive does not advance the generator's current time.
+   * 
+   * @param synth Synthesizer to play the note on.
+   * @param channel Channel in the synthesizer playing the note to be released.
+   */
+   releaseNote(synth: SynthesizerSelection, channel: ChannelOrNoteId): ThrushSequenceGenerationDirective;
 
   /**
    * Create a directive to emit a cursor value change event. 
