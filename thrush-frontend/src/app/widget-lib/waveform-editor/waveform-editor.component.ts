@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { timeStamp } from 'console';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 
 const WAVETABLE_COLOR_BACKGROUND = '#101010';
 const WAVETABLE_COLOR_WAVE = 'green';
@@ -15,13 +14,12 @@ export interface EditedWaveform {
   sampleRate: number;
 } 
 
-
 @Component({
   selector: 'app-waveform-editor',
   templateUrl: './waveform-editor.component.html',
   styleUrls: ['./waveform-editor.component.scss']
 })
-export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
+export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChanges {
 
   @ViewChild('waveformCanvas', {read: ElementRef})
   private _canvas : ElementRef<HTMLCanvasElement> | null = null;
@@ -39,8 +37,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
 
   private _dragging: DraggableCursor | null = null;
   
-  private _selectionStartTime: number | null = null; 
-  private _selectionEndTime: number | null = null;
+  private _pointer: number | null = null;
   
   private _displayStartTime: number = 0;
   private _displayEndTime: number = 0;
@@ -52,44 +49,52 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
     this._loopEndCursor,
     this._pointerCursor, 
   ];
-
+  private _displayRangeDirty: boolean = false;
 
   constructor() {
     this._selectionStartCursor.onChange = (newValue) => {
-      if(newValue != null) {
-        this.selectionStartTime = Math.min(newValue, this._selectionEndCursor.time ?? newValue);
-        this.selectionEndTime = Math.max(newValue, this._selectionEndCursor.time ?? newValue);
+      this.selectionStartTimeChange.emit(newValue || undefined);
+      if(newValue != null && (this._selectionEndCursor.time ?? 0 < newValue)) {
+        this.selectionEndTimeChange.emit(null);
       }
     }
+    this._selectionStartCursor.timeGetter = () => this.selectionStartTime;
 
     this._selectionEndCursor.onChange = (newValue) => {
-      if(newValue != null) {
-        this.selectionStartTime = Math.min(newValue, this._selectionStartCursor.time ?? newValue);
-        this.selectionEndTime = Math.max(newValue, this._selectionStartCursor.time ?? newValue);
-      }
+        if(newValue == null || ((this._selectionStartCursor.time ?? 0) < newValue)) {
+          this.selectionEndTimeChange.emit(newValue || undefined);
+        } else 
+        if((this._selectionStartCursor.time ?? 0) > newValue) {
+          this.selectionEndTimeChange.emit(null);
+        }
     }
+    this._selectionEndCursor.timeGetter = () => this.selectionEndTime;
 
     this._loopEndCursor.onChange = (newValue) => {
       if(newValue != null && this._loopStartCursor.time != null &&
           newValue < this._loopStartCursor.time) {
-        this._loopStartCursor.time = null;
-        this._loopEndCursor.time = null;
-        this.refresh();
+        this._loopStartCursor.requestTimeChange(null);
+        this._loopEndCursor.requestTimeChange(null);
+      } else {
+        this.loopEndTimeChange.emit(newValue || undefined);
       }
     }
+
+    this._loopEndCursor.timeGetter = () => this.loopEndTime;
 
     this._loopStartCursor.onChange = (newValue) => {
       if(newValue != null && this._loopEndCursor.time != null &&
           newValue > this._loopEndCursor.time) {
-        this._loopStartCursor.time = null;
-        this._loopEndCursor.time = null;
-        this.refresh();
+        this._loopStartCursor.requestTimeChange(null);
+        this._loopEndCursor.requestTimeChange(null);        
+      } else {
+        this.loopStartTimeChange.emit(newValue || undefined);
       }
     }
+    this._loopStartCursor.timeGetter = () => this.loopStartTime;
 
-
-    this._loopStartCursor.time = 0;
-    this._loopEndCursor.time = 0;
+    this._pointerCursor.onChange = ((newValue) => this._pointer = newValue);
+    this._pointerCursor.timeGetter = (() => this._pointer);
   }
 
   @Input()
@@ -99,37 +104,32 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
 
   public set editedWaveform(v: EditedWaveform | null) {
     this._editedWaveform = v;
-    this._displayStartTime = 0;
-    this._displayEndTime = this.waveformDuration;
-    this.refresh();
+    this._displayRangeDirty = true;
   }
     
-  @Input()
-  public loopStart: number = 0;
+  @Output ()
+  public loopStartTimeChange = new EventEmitter<number>();
 
   @Input()
-  public loopEnd: number = 0;
+  public loopStartTime: number | null = null;
 
+  @Output ()
+  public loopEndTimeChange = new EventEmitter<number>();
 
-  public get selectionStartTime(): number | null {
-    return this._selectionStartTime;
-  }
+  @Input()
+  public loopEndTime: number | null = null;
 
-  public set selectionStartTime(v: number | null) {
-    const old = this._selectionStartTime || 0;
-    this._selectionStartTime = v;    
-    this.render(Math.min(old, this._selectionStartTime || 0), Math.max(old, this._selectionStartTime || 0));
-  }
+  @Output()
+  public selectionStartTimeChange = new EventEmitter<number>();
 
-  public get selectionEndTime(): number | null {
-    return this._selectionEndTime;
-  }
+  @Input()
+  public selectionStartTime: number | null = null;
 
-  public set selectionEndTime(v: number | null) {
-    const old = this._selectionEndTime || 0;
-    this._selectionEndTime = v;
-    this.render(Math.min(old, this._selectionEndTime ?? old), Math.max(old, this._selectionEndTime ?? old));
-  }
+  @Output()
+  public selectionEndTimeChange = new EventEmitter<number | null>();
+
+  @Input()
+  public selectionEndTime: number | null = null;
 
   public get waveformDuration(): number {
     return this._editedWaveform
@@ -137,41 +137,50 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
       : 0;
   }
 
-  public getRenderingCoordinateSpace() {
-    if(!this._renderingCoordinateSpace && this._editedWaveform) {
-      const width = this._canvas!.nativeElement!.clientWidth;
-      const height = this._canvas!.nativeElement!.clientHeight;
-      const displayStartTime = this._displayStartTime;
-      const displayEndTime = this._displayEndTime;
-      const topPad = 16;
-      const channelHeight = (height-topPad) / (this._editedWaveform.channelSamples.length * (1 + CHANNEL_PAD_RATIO) - CHANNEL_PAD_RATIO);
-      const channelStride = channelHeight * (1 + CHANNEL_PAD_RATIO);
-      const timeToCanvasXFactor = width / (displayEndTime - displayStartTime);
-  
-      this._renderingCoordinateSpace = {
-        x: 0,
-        y: topPad,
-        width,
-        height,
-  
-        timeToCanvasXFactor,
-  
-        channelHeight,
-        channelStride,
-  
-        displayStartTime,
-        displayEndTime,
-  
-        timeToCanvasX: (t: number) => 
-          (t - displayStartTime) * timeToCanvasXFactor + 0,   
-            
-        canvasXToTime: (cx: number) => 
-          (cx - 0) / timeToCanvasXFactor + displayStartTime
-  
-      };
+  ngOnChanges(changes: SimpleChanges): void {
+    let minTime = this.waveformDuration;
+    let maxTime = 0;
+
+    const rcs = this.getRenderingCoordinateSpace();
+    if(!rcs) {
+      return;
+    }
+    const renderContext = this._canvas!.nativeElement.getContext("2d")!;
+
+    if(this._displayRangeDirty) {
+      this._displayRangeDirty = false;
+      minTime = 0;
+      maxTime = this.waveformDuration;
+    }
+    else 
+    {
+      this._allCursors.forEach(cursor => {
+        const cursorDisplayWidth = cursor.getDisplayWidth(renderContext) / rcs.timeToCanvasXFactor;
+
+        if(cursor.drawnOnTime != null) {
+          if(cursor.drawnOnTime < minTime) {
+            minTime = cursor.drawnOnTime;
+          }
+
+          if(cursor.drawnOnTime + cursorDisplayWidth > maxTime) {
+            maxTime = cursor.drawnOnTime + cursorDisplayWidth;
+          }
+        }
+
+        if(cursor.time != null) {
+          if(cursor.time < minTime) {
+            minTime = cursor.time;
+          }
+          if(cursor.time + cursorDisplayWidth > maxTime) {
+            maxTime = cursor.time + cursorDisplayWidth;
+          }
+        }
+      });
     }
 
-    return this._renderingCoordinateSpace;
+    if(minTime<maxTime) {
+      this.render(minTime, maxTime);
+    }
   }
 
   ngOnDestroy(): void {
@@ -181,7 +190,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this._resizeObserver.observe(this._canvas!.nativeElement);
     this.handleResize();
-    this.refresh();    
+    this._displayRangeDirty = true;
   }
 
   private handleResize() {
@@ -189,6 +198,8 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
     
     renderContext.canvas.width = this._canvas!.nativeElement!.clientWidth;
     renderContext.canvas.height = this._canvas!.nativeElement!.clientHeight;
+
+    this.render(0, this.waveformDuration)
   }
 
   public handleCanvasMouseMove(event: MouseEvent) {
@@ -202,9 +213,8 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
       this.moveCursorToCanvasX(this._dragging, event.clientX - clrect.left);  
     }
 
-    this.moveCursorToCanvasX(this._pointerCursor, event.clientX - clrect.left);
+    this.moveCursorToCanvasX(this._pointerCursor, event.clientX - clrect.left, true);
   }
-
   
   public handleCanvasMouseDown(event: MouseEvent) {
     if(!this._editedWaveform) {
@@ -220,7 +230,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
       const clrect = (event.target as HTMLCanvasElement).getBoundingClientRect();
       
       this.moveCursorToCanvasX(this._selectionStartCursor, event.clientX - clrect.left);        
-      this.moveCursorToCanvasX(this._selectionEndCursor, event.clientX - clrect.left);
+      this.moveCursorToCanvasX(this._selectionEndCursor, null);
 
       this._dragging = this._selectionEndCursor;
     }
@@ -237,86 +247,31 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
   public handleCanvasMouseLeave() {
     this._dragging = null;
 
-    this.moveCursorToCanvasX(this._pointerCursor, null);
+    this.moveCursorToCanvasX(this._pointerCursor, null, true);
   }
 
-  public handleZoomInClick() {
-    this.updateZoomByFactor(1/1.5);
+  public get displayStartTime() {
+    return this._displayStartTime;
   }
 
-  public handleZoomOutClick() {
-    this.updateZoomByFactor(1.5);
+  @Input()
+  public set displayStartTime(value: number) {
+    this._displayStartTime = value;
+    this._renderingCoordinateSpace = null;
+    this._displayRangeDirty = true;
   }
 
-  public handleZoomToSelectionClick() {
-    if(this._selectionStartTime == null || this._selectionEndTime == null) {
-      this.setZoomRange(0, this.waveformDuration);
-    } else {
-      this.setZoomRange(this._selectionStartTime, this._selectionEndTime);
-    }
+  public get displayEndTime() {
+    return this._displayEndTime;    
   }
 
-  public handleSetLoopToSelection() {
-    if(this._selectionStartTime == null || this._selectionEndTime == null ||
-       (this._selectionStartTime == this._loopStartCursor.time && 
-        this._selectionEndTime == this._loopEndCursor.time)) {
-          this._loopStartCursor.time = null;
-          this._loopEndCursor.time = null;
-          
-    } else {
-      this._loopStartCursor.time = this._selectionStartTime;
-      this._loopEndCursor.time = this._selectionEndTime;      
-    }    
-
-    this.refresh();
-  }
-
-  private moveCursorToCanvasX(cursor: DraggableCursor, canvasX: number | null) {  
-    const rcs = this.getRenderingCoordinateSpace()!;
-    const renderContext = this._canvas!.nativeElement.getContext("2d")!;
-
-    if(cursor.time != null) {    
-      const oldTime = cursor.time;
-      const oldWidth = cursor.getDisplayWidth(renderContext)/rcs.timeToCanvasXFactor;
-      cursor.time = null;
-
-      this.render(oldTime, oldTime + oldWidth);
-    }
-    
-    cursor.time = canvasX != null ? rcs.canvasXToTime(canvasX) : null;
-    if(cursor.time != null) {
-      const newWidth = cursor.getDisplayWidth(renderContext)/rcs.timeToCanvasXFactor;
-      this.render(cursor.time, cursor.time + newWidth);   
-    }
-  }
-
-  private updateZoomByFactor(factor: number) {
-    const rcs = this.getRenderingCoordinateSpace()!;
-
-    let zoomFactor = (this._displayEndTime - this._displayStartTime) / rcs.width;
-    const midTime = (this._displayEndTime + this._displayStartTime) / 2;    
-    zoomFactor *= factor;
-    const newTimeRange = zoomFactor * rcs.width;
-    
-    let start = Math.max(midTime - newTimeRange / 2, 0);
-    let end = Math.min(midTime + newTimeRange / 2, this.waveformDuration);
-
-    this.setZoomRange(start, end);
+  @Input()
+  public set displayEndTime(value: number) {
+    this._displayEndTime = value;
+    this._renderingCoordinateSpace = null;
+    this._displayRangeDirty = true;
   }
   
-  private setZoomRange(startTime: number, endTime: number) {
-    this._displayStartTime = startTime;
-    this._displayEndTime = endTime;
-    this._renderingCoordinateSpace = null;
-    this.refresh();
-  }
-
-  private refresh() {
-    if(this._canvas) {
-      this.render(this._displayStartTime, this._displayEndTime);
-    }
-  }
-
   private render(startTime: number, endTime: number) {
     const editedWaveform = this._editedWaveform;
     if(!editedWaveform) {
@@ -347,9 +302,9 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
       renderingCoordinateSpace.height);
 
     // Draw selection background
-    if(this._selectionStartTime != null && this._selectionEndTime != null) {
-      const selectionBoundaryMin = Math.floor(renderingCoordinateSpace.timeToCanvasX(Math.max(startTime, this._selectionStartTime)));
-      const selectionBoundaryMax = Math.ceil(renderingCoordinateSpace.timeToCanvasX(Math.min(endTime, this._selectionEndTime)));
+    if(this.selectionStartTime != null && this.selectionEndTime != null) {
+      const selectionBoundaryMin = Math.floor(renderingCoordinateSpace.timeToCanvasX(Math.max(startTime, this.selectionStartTime)));
+      const selectionBoundaryMax = Math.ceil(renderingCoordinateSpace.timeToCanvasX(Math.min(endTime, this.selectionEndTime)));
 
       if(selectionBoundaryMax > selectionBoundaryMin) {
         renderContext.fillStyle = WAVETABLE_COLOR_SELECTION_BACKGROUND;
@@ -361,7 +316,6 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
       }
     }
 
-    const selStart = this;
     this.renderWaveform(editedWaveform, renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);    
     
     this._allCursors.forEach(cursor => {
@@ -408,6 +362,64 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+
+  private moveCursorToCanvasX(cursor: DraggableCursor, canvasX: number | null, immediateRender : boolean = false) {  
+    const rcs = this.getRenderingCoordinateSpace()!;
+
+    const oldTime = cursor.time;        
+    const newTime = canvasX != null ? rcs.canvasXToTime(canvasX) : null;
+
+    cursor.requestTimeChange(newTime);
+
+    if(immediateRender) {
+      const renderContext = this._canvas!.nativeElement.getContext("2d")!;
+      const newWidth = cursor.getDisplayWidth(renderContext)/rcs.timeToCanvasXFactor;
+      if(oldTime != null) {    
+        this.render(oldTime, oldTime + newWidth);
+      }
+
+      if(cursor.time != null) {
+        this.render(cursor.time, cursor.time + newWidth);   
+      }
+    }
+  }
+
+  private getRenderingCoordinateSpace() {
+    if(!this._renderingCoordinateSpace && this._editedWaveform) {
+      const width = this._canvas!.nativeElement!.clientWidth;
+      const height = this._canvas!.nativeElement!.clientHeight;
+      const displayStartTime = this._displayStartTime;
+      const displayEndTime = this._displayEndTime;
+      const topPad = 16;
+      const channelHeight = (height-topPad) / (this._editedWaveform.channelSamples.length * (1 + CHANNEL_PAD_RATIO) - CHANNEL_PAD_RATIO);
+      const channelStride = channelHeight * (1 + CHANNEL_PAD_RATIO);
+      const timeToCanvasXFactor = width / (displayEndTime - displayStartTime);
+  
+      this._renderingCoordinateSpace = {
+        x: 0,
+        y: topPad,
+        width,
+        height,
+  
+        timeToCanvasXFactor,
+  
+        channelHeight,
+        channelStride,
+  
+        displayStartTime,
+        displayEndTime,
+  
+        timeToCanvasX: (t: number) => 
+          (t - displayStartTime) * timeToCanvasXFactor + 0,   
+            
+        canvasXToTime: (cx: number) => 
+          (cx - 0) / timeToCanvasXFactor + displayStartTime
+  
+      };
+    }
+
+    return this._renderingCoordinateSpace;
+  }
 }
 
 interface RenderingCoordinateSpace {
@@ -429,11 +441,12 @@ interface RenderingCoordinateSpace {
 }
 
 class DraggableCursor {
-  private _time: number | null = null;
   private _lineColor: string | null;
+  private _drawnOn: number | null = null;
   
   public draggable: boolean;  
   public onChange: ((newValue: number | null) => void) | null = null;
+  public timeGetter: (() => number | null) | null = null;
 
   constructor(lineColor: string | null, draggable: boolean) {
     this._lineColor = lineColor;
@@ -441,30 +454,35 @@ class DraggableCursor {
   }
 
   public get time(): number | null {
-    return this._time;
+    return this.timeGetter ? this.timeGetter() : null;
   }
 
-  public set time(v: number | null) {
+  public get drawnOnTime(): number | null {
+    return this._drawnOn;
+  }
+
+  requestTimeChange(v: number | null) {
     if(this.onChange) {
       this.onChange.call(null, v);
     }
-    this._time = v;
   }
 
   hitTest(time: number, rcs: RenderingCoordinateSpace): boolean {
-    if(this._time == null) {
+    if(this.time == null) {
       return false;
     }
 
-    return Math.abs(time - this._time) * rcs.timeToCanvasXFactor < 5;
+    return Math.abs(time - this.time) * rcs.timeToCanvasXFactor < 5;
   } 
 
   draw(clipStartX: number, clipEndX: number, rcs: RenderingCoordinateSpace, renderContext: CanvasRenderingContext2D) {
-    if(this._time == null) {
+    this._drawnOn = this.time;
+
+    if(this.time == null) {
       return;
     }
 
-    const timeX = rcs.timeToCanvasX(this._time);
+    const timeX = rcs.timeToCanvasX(this.time);
     const width = this.getDisplayWidth(renderContext);
     if(timeX + width < clipStartX || timeX > clipEndX) {
       return;
@@ -486,7 +504,7 @@ class DraggableCursor {
   }
 
   getTimeLabel() {
-    return this._time?.toFixed(3) + "s";
+    return this.time?.toFixed(3) + "s";
   }
 }
 

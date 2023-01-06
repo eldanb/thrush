@@ -8,6 +8,7 @@ import { ThrushPatternSequenceGenerator } from 'src/lib/thrush_engine/sequences/
 import { ThrushSequenceGenerator } from 'src/lib/thrush_engine/ThrushSequencer';
 import { ThrushEngineService } from '../services/thrush-engine.service';
 import { EditedWaveform } from '../widget-lib/waveform-editor/waveform-editor.component';
+import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 
 const TEMPO = 0.2;
 
@@ -24,6 +25,10 @@ export class TestPageComponent implements OnInit {
   private _parsedModule: AmigaModFile | null = null;
 
   public editedWaveform: EditedWaveform | null = null;
+  public editedEnvelope: EnvelopeCurveCoordinate[] | null = [{
+    time: 0,
+    value: 1
+  }];
  
   constructor(private _thrushEngine: ThrushEngineService) { }
 

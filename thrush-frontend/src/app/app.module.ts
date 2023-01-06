@@ -19,6 +19,7 @@ import { AboutPageComponent } from './about-page/about-page.component';
 import { TestPageComponent } from './test-page/test-page.component';
 import { WaveformEditorComponent } from './widget-lib/waveform-editor/waveform-editor.component';
 import { WaveInstrumentEditorComponent } from './resource-editors/wave-instrument-editor/wave-instrument-editor.component';
+import { EnvelopeEditorComponent } from './widget-lib/envelope-editor/envelope-editor.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -27,6 +28,7 @@ import { WaveInstrumentEditorComponent } from './resource-editors/wave-instrumen
     AboutPageComponent,
     TestPageComponent,
     WaveformEditorComponent,
+    EnvelopeEditorComponent,
     WaveInstrumentEditorComponent
   ],
   imports: [

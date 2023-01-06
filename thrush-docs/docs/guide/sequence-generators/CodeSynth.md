@@ -109,7 +109,7 @@ function* mainSequence(c) {
 }
 ```
 
-## Creating Nested CodeSynth Sequencees
+## Creating Nested CodeSynth Sequences
 
 CodeSynth allows you to create local, or nested, CodeSynth sequences using the `functionSequence` call. This call receives a 
 CodeSynth generator function and returns a sequence handle that can be then used with `startSequence` or `playSequence`. This allows you to consturct complex passages from smaller managable CodeSynth generated sequenceas. The example below uses this technique to play a random passage several times:
