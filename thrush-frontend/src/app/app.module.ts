@@ -10,6 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -20,6 +21,10 @@ import { TestPageComponent } from './test-page/test-page.component';
 import { WaveformEditorComponent } from './widget-lib/waveform-editor/waveform-editor.component';
 import { WaveInstrumentEditorComponent } from './resource-editors/wave-instrument-editor/wave-instrument-editor.component';
 import { EnvelopeEditorComponent } from './widget-lib/envelope-editor/envelope-editor.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialogModule } from '@angular/material/dialog';
+import { ResourceEditorDialogService } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.service';
+import { ResourceEditorDialogComponent } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -29,7 +34,8 @@ import { EnvelopeEditorComponent } from './widget-lib/envelope-editor/envelope-e
     TestPageComponent,
     WaveformEditorComponent,
     EnvelopeEditorComponent,
-    WaveInstrumentEditorComponent
+    WaveInstrumentEditorComponent,
+    ResourceEditorDialogComponent,
   ],
   imports: [
     BrowserModule,
@@ -45,8 +51,11 @@ import { EnvelopeEditorComponent } from './widget-lib/envelope-editor/envelope-e
     MatCardModule,
     MatSidenavModule,
     MatSelectModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatDialogModule
   ],
-  providers: [],
+  providers: [ResourceEditorDialogService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

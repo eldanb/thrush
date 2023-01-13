@@ -134,7 +134,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   public get waveformDuration(): number {
     return this._editedWaveform
       ? this._editedWaveform.channelSamples[0].length / this._editedWaveform.sampleRate
-      : 0;
+      : 1;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -274,9 +274,6 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   
   private render(startTime: number, endTime: number) {
     const editedWaveform = this._editedWaveform;
-    if(!editedWaveform) {
-      return;
-    }
 
     const renderContext = this._canvas!.nativeElement.getContext("2d")!;    
     const renderingCoordinateSpace = this.getRenderingCoordinateSpace()!
@@ -301,26 +298,28 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
       renderingEndX-renderingStartX+1,
       renderingCoordinateSpace.height);
 
-    // Draw selection background
-    if(this.selectionStartTime != null && this.selectionEndTime != null) {
-      const selectionBoundaryMin = Math.floor(renderingCoordinateSpace.timeToCanvasX(Math.max(startTime, this.selectionStartTime)));
-      const selectionBoundaryMax = Math.ceil(renderingCoordinateSpace.timeToCanvasX(Math.min(endTime, this.selectionEndTime)));
+    if(editedWaveform) {
+      // Draw selection background
+      if(this.selectionStartTime != null && this.selectionEndTime != null) {
+        const selectionBoundaryMin = Math.floor(renderingCoordinateSpace.timeToCanvasX(Math.max(startTime, this.selectionStartTime)));
+        const selectionBoundaryMax = Math.ceil(renderingCoordinateSpace.timeToCanvasX(Math.min(endTime, this.selectionEndTime)));
 
-      if(selectionBoundaryMax > selectionBoundaryMin) {
-        renderContext.fillStyle = WAVETABLE_COLOR_SELECTION_BACKGROUND;
-        renderContext.fillRect(
-          selectionBoundaryMin, 
-          renderingCoordinateSpace.y, 
-          selectionBoundaryMax-selectionBoundaryMin + 1,
-          renderingCoordinateSpace.height);   
+        if(selectionBoundaryMax > selectionBoundaryMin) {
+          renderContext.fillStyle = WAVETABLE_COLOR_SELECTION_BACKGROUND;
+          renderContext.fillRect(
+            selectionBoundaryMin, 
+            renderingCoordinateSpace.y, 
+            selectionBoundaryMax-selectionBoundaryMin + 1,
+            renderingCoordinateSpace.height);   
+        }
       }
-    }
 
-    this.renderWaveform(editedWaveform, renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);    
-    
-    this._allCursors.forEach(cursor => {
-      cursor.draw(renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);
-    })    
+      this.renderWaveform(editedWaveform, renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);    
+      
+      this._allCursors.forEach(cursor => {
+        cursor.draw(renderingStartX, renderingEndX, renderingCoordinateSpace, renderContext);
+      })    
+    }
 
     renderContext.restore();
   }
@@ -362,7 +361,6 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
     });
   }
 
-
   private moveCursorToCanvasX(cursor: DraggableCursor, canvasX: number | null, immediateRender : boolean = false) {  
     const rcs = this.getRenderingCoordinateSpace()!;
 
@@ -385,13 +383,13 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   }
 
   private getRenderingCoordinateSpace() {
-    if(!this._renderingCoordinateSpace && this._editedWaveform) {
+    if(!this._renderingCoordinateSpace) {
       const width = this._canvas!.nativeElement!.clientWidth;
       const height = this._canvas!.nativeElement!.clientHeight;
-      const displayStartTime = this._displayStartTime;
-      const displayEndTime = this._displayEndTime;
+      const displayStartTime = this._editedWaveform ? this._displayStartTime : 0;
+      const displayEndTime = this._editedWaveform ? this._displayEndTime : 1;
       const topPad = 16;
-      const channelHeight = (height-topPad) / (this._editedWaveform.channelSamples.length * (1 + CHANNEL_PAD_RATIO) - CHANNEL_PAD_RATIO);
+      const channelHeight = (height-topPad) / ((this._editedWaveform?.channelSamples?.length ?? 1) * (1 + CHANNEL_PAD_RATIO) - CHANNEL_PAD_RATIO);
       const channelStride = channelHeight * (1 + CHANNEL_PAD_RATIO);
       const timeToCanvasXFactor = width / (displayEndTime - displayStartTime);
   
@@ -514,4 +512,3 @@ class DraggableCursor {
 // Cut/Copy/Paste [overwrite/insert]
 // Effects (filter, apply envelope)
 // Time legends
-// Time edit boxes

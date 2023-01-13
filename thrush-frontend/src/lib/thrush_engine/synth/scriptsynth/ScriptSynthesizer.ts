@@ -1,5 +1,6 @@
 import { createMessagePortRpcProxy } from "src/lib/util/MessagePortRpc";
 import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
+import { Envelopes } from "./ScriptSynthInstrument";
 import { ScriptSynthWorkerRpcInterface } from "./worklet/ScriptSynthWorkerRpcInterface";
 
 
@@ -39,18 +40,20 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
   }
 
   createInstrument(instrument: ArrayBuffer,
-    sampleRate: number,
-    sampleStart: number,
+    sampleRate: number,    
     loopStart: number, 
     loopLen: number,
-    volume: number): Promise<number> {
+    volume: number,
+    entryEnvelopes?: Envelopes,
+    exitEnvelopes?: Envelopes): Promise<number> {
       return this._workletNodeRpcProxy.createInstrument(
         instrument, 
-        sampleRate, 
-        sampleStart, 
+        sampleRate,
         loopStart,
         loopLen, 
-        volume);
+        volume,
+        entryEnvelopes,
+        exitEnvelopes);
   }
 
   async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {

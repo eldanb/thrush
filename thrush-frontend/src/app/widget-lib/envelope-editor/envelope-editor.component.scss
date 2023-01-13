@@ -5,20 +5,4 @@
     flex-grow: 1;
   }
 
-  .controls {
-    display: flex;
-    flex-direction: flex-row;
-    
-    margin-top: 6px;
-    gap: 6px;
-
-
-    button {
-      padding: 0;
-    }
-
-    .spacer {
-      width: 12px;
-    }
-  }
 }

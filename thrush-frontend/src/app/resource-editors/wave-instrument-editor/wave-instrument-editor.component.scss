@@ -1,0 +1,47 @@
+.waveform-editor-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    background: black;
+    color: lightgray;
+    text-transform: uppercase;
+    font-size: 12px;
+    padding: 12px 6px;
+
+    .tab {
+        padding: 4px 6px;
+
+        &.selected {
+            background-color: rgb(0, 40, 0);
+            border: solid 1px green;
+            border-radius: 2px;
+        }
+    }
+}
+
+
+.controls {
+    display: flex;
+    flex-direction: flex-row;
+    align-items: center;
+    
+    margin-top: 6px;
+    gap: 6px;
+
+    button {
+      padding: 0;
+    }
+
+    .spacer {
+      width: 12px;
+    }
+
+    .cursor-input {
+        width: 48px;
+    }
+  }
+
+  #fileLoadControl {
+    display: none;
+  }

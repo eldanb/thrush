@@ -1,5 +1,5 @@
 import { ScriptSynthEngine, ScriptSynthEngineEvent } from "../ScriptSynthEngine";
-import { ScriptSynthWaveInstrument } from "../ScriptSynthInstrument";
+import { Envelopes, ScriptSynthWaveInstrument } from "../ScriptSynthInstrument";
 import { ScriptSynthWorkerRpcInterface } from "./ScriptSynthWorkerRpcInterface";
 import { MessagePortRpcDispatcher } from "../../../../util/MessagePortRpc";
 
@@ -31,44 +31,22 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
   async createInstrument(
     instrumentBuff: ArrayBuffer,
     sampleRate: number,
-    sampleStart: number,
     loopStart: number, loopLen: number,
-    volume: number): Promise<number> {
+    volume: number,
+    entryEnvelopes?: Envelopes,
+    exitEnvelopes?: Envelopes): Promise<number> {
     if(!this._synthEngine) {
       throw Error("Node not conigured")
     }
 
     return this._synthEngine.registerInstrument(
-      ScriptSynthWaveInstrument.fromSampleBuffer(
-        instrumentBuff,
+      new ScriptSynthWaveInstrument(
+        new Float32Array(instrumentBuff),
         sampleRate,
-        sampleStart,
         loopStart, loopLen,
         volume, 
-        {
-          volume: [
-            {
-              time: 0.1,
-              value: 1
-            },
-            {
-              time: 0.2,
-              value: 0.5
-            },
-            {
-              time: 0.3,
-              value: 0.9
-            },
-          ]
-        },
-        {
-          volume: [
-            { 
-              time: 1,
-              value: 0
-            }
-          ]
-        }
+        entryEnvelopes,
+        exitEnvelopes
         ));
   }
 

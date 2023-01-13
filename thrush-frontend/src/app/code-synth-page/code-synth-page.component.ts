@@ -3,6 +3,8 @@ import { MatSelectChange } from '@angular/material/select';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { ThrushAggregatedSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushAggregatedSequenceGenerator';
 import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushFunctionSequenceGenerator';
+import { ResourceEditorDialogService } from '../resource-editors/resource-editor-dialog-service/resource-editor-dialog.service';
+import { WaveInstrumentEditorComponent } from '../resource-editors/wave-instrument-editor/wave-instrument-editor.component';
 import { ThrushEngineService } from '../services/thrush-engine.service';
 import { MonacoEditorComponent } from '../widget-lib/monaco-editor/monaco-editor.component';
 
@@ -34,7 +36,8 @@ export class CodeSynthPageComponent implements OnInit {
     name: string;
   }> = [];
 
-  constructor(private _thrushEngine: ThrushEngineService) { }
+  constructor(private _thrushEngine: ThrushEngineService,
+              private _resourceEditDialogSerice: ResourceEditorDialogService) { }
 
   ngOnInit(): void {
     (async () => {
@@ -52,21 +55,26 @@ export class CodeSynthPageComponent implements OnInit {
     })();
   }
 
-  handleCodeSampleLoadButtonClick() {
-    this.codeSampleLoadCtl!.nativeElement.click();
+  async handleCodeSampleLoadButtonClick() {
+    const instrument = await this._resourceEditDialogSerice.runResourceDialog(WaveInstrumentEditorComponent);
+    if(instrument) {
+      const instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
+        instrument.samples,
+        instrument.sampleRate,
+        instrument.loopStartTime * instrument.sampleRate,
+        instrument.loopEndTime * instrument.sampleRate,
+        1, 
+        instrument.entryEnvelopes);
+
+      this.codeLoadedInsturments.push({
+          scriptId: instrumentId,
+          nativeId: -1,
+          name: 'custom'
+        });
+    }
   }
 
-  handleLoadCodeSample(eTarget: EventTarget | null) {
-    const file_picker = eTarget as HTMLInputElement;
-    const fileName = file_picker!.value;
-    var sample_file = file_picker!.files![0];
-    var reader = new FileReader();
-
-    reader.readAsArrayBuffer(sample_file);
-    reader.onloadend = async () => {
-      const instrumentSampleArray =  (reader.result as ArrayBuffer);
-      await this.registerCodeSample(fileName, instrumentSampleArray);      
-    };
+  handleLoadCodeSample(eTarget: EventTarget | null) {    
   }
 
   private async loadSampleFromUrl(url: string) {
@@ -79,7 +87,7 @@ export class CodeSynthPageComponent implements OnInit {
     const wavFile = parseWav(instrumentSampleArray!);
     
     let instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
-      wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, 0, 1);
+      wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, 1);
     let instrumentIdNative = this._thrushEngine.sequencer.waveTableSynthesizer.registerInstrument(
       wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, 0, 1);
 

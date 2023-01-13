@@ -1,40 +1,78 @@
-<app-waveform-editor 
-  [editedWaveform]="editedWaveform" 
+<div class="controls">
+  <button mat-icon-button (click)="handleImportRequest()">
+    <mat-icon>upload</mat-icon>
+  </button>
+
+  <div class="spacer"></div>
+
+  <button mat-icon-button (click)="handleZoomOutClick()">
+    <mat-icon>zoom_out</mat-icon>
+  </button>
+  <button mat-icon-button (click)="handleZoomInClick()">
+    <mat-icon>zoom_in</mat-icon>
+  </button>
+  <button mat-icon-button (click)="handleZoomToSelectionClick()">
+    <mat-icon>crop_free</mat-icon>
+  </button>
+
+  <div class="spacer"></div>
+
+  <button mat-icon-button (click)="handleTrimRequest()" [disabled]="selectionStartTime == null || selectionEndTime == null">
+    <mat-icon>crop</mat-icon>
+  </button>
+
+  <div class="spacer"></div>
+  
+  <mat-icon>select</mat-icon>
+  <input type="number" class="cursor-input" [(ngModel)]="selectionStartTime" />s
+  - <input type="number" class="cursor-input" [(ngModel)]="selectionEndTime" />s
+
+  <div class="spacer"></div>
+
+  <button mat-icon-button (click)="handleSetLoopToSelection()">
+    <mat-icon>repeat</mat-icon>
+  </button>
+  <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />s -
+  <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />s
+</div>
+
+<div class="waveform-editor-heading">
+  <div class="tab">Waveform</div>
+</div>
+<app-waveform-editor
+  [editedWaveform]="editedWaveform"
   [displayStartTime]="displayStartTime"
   [displayEndTime]="displayEndTime"
   [(selectionStartTime)]="selectionStartTime"
   [(selectionEndTime)]="selectionEndTime"
   [(loopStartTime)]="loopStartTime"
-  [(loopEndTime)]="loopEndTime"  
-  ></app-waveform-editor>
+  [(loopEndTime)]="loopEndTime"
+></app-waveform-editor>
 
-  <app-envelope-editor 
-    [editedEnvelope]="editedEnvelope"
-    [displayStartTime]="displayStartTime"
-    [displayEndTime]="displayEndTime" 
-  ></app-envelope-editor>
+<div class="waveform-editor-heading">
+  <div>Attack:</div>
+  <div class="tab selected">Volume</div>
+  <div class="tab">Pan</div>
+</div>
+<app-envelope-editor
+  [(editedEnvelope)]="editedEntryEnvelope"
+  [displayStartTime]="displayStartTime"
+  [displayEndTime]="displayEndTime"
+></app-envelope-editor>
 
-  
-  <div class="controls">
-    <button mat-stroked-button (click)="handleZoomOutClick()">
-      <mat-icon>zoom_out</mat-icon>      
-    </button>  
-    <button mat-stroked-button (click)="handleZoomInClick()">
-      <mat-icon>zoom_in</mat-icon>  
-    </button>
-    <button mat-stroked-button (click)="handleZoomToSelectionClick()">
-      <mat-icon>crop_free</mat-icon>  
-    </button>
-  
-    <button mat-stroked-button (click)="handleSetLoopToSelection()">
-      <mat-icon>repeat</mat-icon>  
-    </button>
-  </div>
+<div class="waveform-editor-heading">
+  <div>Release:</div>
+  <div class="tab selected">Volume</div>
+  <div class="tab">Pan</div>
+</div>
+<app-envelope-editor
+  [(editedEnvelope)]="editedExitEnvelope"
+  [displayStartTime]="displayStartTime"
+  [displayEndTime]="displayEndTime"
+></app-envelope-editor>
 
-  <div>
-    Selection: <span>{{selectionStartTime}} -- {{selectionEndTime}}</span>
-  </div>
-  <div>
-    Loop: <span>{{loopStartTime}} -- {{loopEndTime}}</span>
-  </div>
-  
+<input
+  id="fileLoadControl"
+  type="file"
+  (change)="handleLoadSample($event.target!)"
+/>

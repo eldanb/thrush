@@ -17,7 +17,7 @@ export class NativeSynthesizerInstrument {
   private _enterEnvelopes: Envelopes | undefined;
   private _exitEnvelopes: Envelopes | undefined;
 
-  constructor(sample: Float32Array, sampleRate: number, loopStart?: number, loopLen?: number, enterEnvelopes?: Envelopes, exitEnvelopers?: Envelopes) {
+  constructor(sample: Float32Array, sampleRate: number, loopStart?: number, loopLen?: number, enterEnvelopes?: Envelopes, exitEnvelopes?: Envelopes) {
 
     this._sample = sample;
     this._sampleRate = sampleRate;
@@ -26,7 +26,7 @@ export class NativeSynthesizerInstrument {
     this._sampleLoopLen = loopLen || 0;
 
     this._enterEnvelopes = enterEnvelopes;
-    this._exitEnvelopes = exitEnvelopers;
+    this._exitEnvelopes = exitEnvelopes;
   }
 
   get enterEnvelopes(): Envelopes | undefined {
@@ -62,12 +62,5 @@ export class NativeSynthesizerInstrument {
     }
 
     return this._audioBuffer!;
-  }
-  
-  static fromWavFileContent(instrumentBuff: ArrayBuffer): NativeSynthesizerInstrument {
-    const parsedWav = parseWav(instrumentBuff);
-
-    return new NativeSynthesizerInstrument(
-      parsedWav.samples[0], parsedWav.sampleRate, 0, parsedWav.samples.length-1000);
   }
 }

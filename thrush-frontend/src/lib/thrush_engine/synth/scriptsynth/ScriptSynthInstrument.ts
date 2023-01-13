@@ -31,7 +31,6 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
 
   private _sampleRate: number;
 
-  private _sampleStartOffset: number;
   private _sampleLoopStart: number;
   private _sampleLoopLen: number;
 
@@ -44,7 +43,6 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
   constructor(
     sample: Float32Array,
     sampleRate: number,
-    sampleStart?: number,
     loopStart?: number, loopLen?: number,
     volume: number = 1,
     enterEnvelopes: Envelopes | null = null,
@@ -53,7 +51,6 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     this._sample = sample;
     this._sampleRate = sampleRate;
 
-    this._sampleStartOffset = sampleStart || 0;
     this._sampleLoopStart = loopStart || 0;
     this._sampleLoopLen = loopLen || 0;
     this._volume = volume;
@@ -65,7 +62,6 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     outputParams.samplePitch = Math.pow(2, note/12);
     outputParams.sample = this.sample;
     outputParams.sampleLoopStart = this._sampleLoopStart;
-    outputParams.sampleStartOffset = this._sampleStartOffset;
     outputParams.sampleLoopLen = this.sampleLoopLen;
     outputParams.sampleRate = this._sampleRate;
     outputParams.volume = this._volume;
@@ -96,35 +92,4 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     return this._audioBuffer!;
   }
 
-  static fromWavFileContent(instrumentBuff: ArrayBuffer): ScriptSynthWaveInstrument {
-    const blobArrayBuffer = instrumentBuff;
-
-    var hdr = new Uint32Array(blobArrayBuffer.slice(0,36));
-    var samples = new Uint8Array(blobArrayBuffer.slice(58,
-          blobArrayBuffer.byteLength-58));
-
-    const smp = [];
-
-    const smp_rate = hdr[6];
-    for(var i =0 ; i<samples.length; i++)
-    {
-        smp[i] = (samples[i]) / 256;
-    }
-
-    return new ScriptSynthWaveInstrument(
-      new Float32Array(smp), smp_rate, 0, (blobArrayBuffer).byteLength-1000);
-  }
-
-  static fromSampleBuffer(
-    sampleBuffer: ArrayBuffer,
-    sampleRate: number,
-    sampleStart: number,
-    loopStart: number,
-    loopEnd: number,
-    volume: number,
-    enterEnvelopes: Envelopes,
-    exitEnvelopes: Envelopes): ScriptSynthWaveInstrument {
-    return new ScriptSynthWaveInstrument(
-      new Float32Array(sampleBuffer), sampleRate, sampleStart, loopStart, loopEnd, volume, enterEnvelopes, exitEnvelopes);
-  }
 }

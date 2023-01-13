@@ -202,8 +202,7 @@ export class AmigaModScriptSynthImportSynthDriver implements AmigaModImportSynth
       ret.sampleInsturmentHandles[index] =
         await this.synth.createInstrument(
           new Float32Array(Array.from(new Int8Array(sample.content!)).map((s) => (s)/256)).buffer,
-          4143,
-          0,
+          4143,          
           sample.loopStart,
           sample.loopLen,
           (sample.volume/64)

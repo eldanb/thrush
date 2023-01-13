@@ -1,11 +1,11 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 
 const ENVELOPE_COLOR_BACKGROUND = '#101010';
 const ENVELOPE_COLOR_LINE = 'green';
 const ENVELOPE_COLOR_HANDLE = '#FFFFFFC0'
 
-const HANDLE_SIZE = 3;
+const HANDLE_SIZE = 4;
 
 export interface EditedWaveform {
   channelSamples: Float32Array[];
@@ -23,7 +23,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   @ViewChild('envelopeCanvas', {read: ElementRef})
   private _canvas : ElementRef<HTMLCanvasElement> | null = null;
   
-  private _editedEnvelope: EnvelopeCurveCoordinate[] | null = null;  
+  private _editedEnvelope: EnvelopeCurveCoordinate[] = [];  
 
   private _resizeObserver: ResizeObserver = new ResizeObserver(() => this.handleResize());
   private _draggingEnvelopeIndex: number | null = null;
@@ -35,19 +35,21 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   private _canvasHeight: number = 0;
   private _pixelsInTimeUnit: number = 0;
 
-
   constructor() {
   }
 
   @Input()
-  public get editedEnvelope(): EnvelopeCurveCoordinate[] | null {
+  public get editedEnvelope(): EnvelopeCurveCoordinate[] {
     return this._editedEnvelope;
   }
 
-  public set editedEnvelope(v: EnvelopeCurveCoordinate[] | null) {
-    this._editedEnvelope = v;
+  public set editedEnvelope(v: EnvelopeCurveCoordinate[]) {
+    this._editedEnvelope = v?.concat() || null;
     this.refresh();
   }
+
+  @Output()
+  public editedEnvelopeChange = new EventEmitter<EnvelopeCurveCoordinate[]>();
 
   @Input()
   public set displayStartTime(value: number) {
@@ -95,7 +97,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   public handleCanvasMouseMove(event: MouseEvent) {
-    if(this._editedEnvelope === null || this._draggingEnvelopeIndex === null) {
+    if(this._draggingEnvelopeIndex === null) {
       return;      
     }
 
@@ -106,49 +108,73 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
     const targetTime = this.xCoordToTime(targetX);
     const targetValue = this.yCoordToValue(targetY);
 
-    if(targetTime > 
-        (this._draggingEnvelopeIndex < (this._editedEnvelope?.length - 1) 
-          ? this._editedEnvelope[this._draggingEnvelopeIndex + 1].time
-          : this._displayEndTime)) {
+    if(this._draggingEnvelopeIndex < (this._editedEnvelope?.length - 1) &&
+        targetTime > this._editedEnvelope[this._draggingEnvelopeIndex + 1].time) {
+        this._editedEnvelope.splice(this._draggingEnvelopeIndex+1, 1);
+    } else
+    if((this._draggingEnvelopeIndex > 0 && 
+        targetTime < this._editedEnvelope[this._draggingEnvelopeIndex - 1].time)) {
+      this._editedEnvelope.splice(this._draggingEnvelopeIndex-1, 1);
+      this._draggingEnvelopeIndex --;
+    } else 
+    if(targetValue < 0 || targetValue > 1 || targetTime > this._displayEndTime || targetTime < this._displayStartTime) {
       return;
+    } else {    
+      this._editedEnvelope[this._draggingEnvelopeIndex].time = targetTime;
+      this._editedEnvelope[this._draggingEnvelopeIndex].value = targetValue;
     }
-
-    if(targetTime < 
-        (this._draggingEnvelopeIndex > 0
-          ? this._editedEnvelope[this._draggingEnvelopeIndex - 1].time
-          : this._displayStartTime)) {
-      return;    
-    }
-
-    if(targetValue < 0 || targetValue > 1) {
-      return;
-    }
-    
-    this._editedEnvelope[this._draggingEnvelopeIndex].time = targetTime;
-    this._editedEnvelope[this._draggingEnvelopeIndex].value = targetValue;
 
     this.refresh();
   }
 
   
   public handleCanvasMouseDown(event: MouseEvent) {
-    if(!this._editedEnvelope) {
-      return;
-    }
-
     const clrect = (event.target as HTMLCanvasElement).getBoundingClientRect();
     const targetX = event.clientX - clrect.left;
     const targetY = event.clientY - clrect.top;
+    const targetTime = this.xCoordToTime(targetX);
 
-    let hitTestIndex = this._editedEnvelope.findIndex(envelopCoordinate => 
-      Math.sqrt(
+    let lastSegmentStartTime = 0;
+    let lastSegmentStartValue = 0; // TODO startValue
+    let closeToLine = false;
+
+    let hitTestIndex = this._editedEnvelope.findIndex(envelopCoordinate =>  {
+      if(Math.sqrt(
         Math.pow(this.timeToXCoord(envelopCoordinate.time) - targetX, 2) +
-        Math.pow(this.valueToYCoord(envelopCoordinate.value) - targetY, 2)) < HANDLE_SIZE);
+        Math.pow(this.valueToYCoord(envelopCoordinate.value) - targetY, 2)) < HANDLE_SIZE) {
+          return true;
+      }
+
+      if(targetTime >= lastSegmentStartTime && targetTime <= envelopCoordinate.time) {
+        const lineValueAtTargetX = 
+          lastSegmentStartValue + 
+            (envelopCoordinate.value - lastSegmentStartValue) *
+            ((targetTime - lastSegmentStartTime) / (envelopCoordinate.time - lastSegmentStartTime));
+
+        if(Math.abs(targetY - this.valueToYCoord(lineValueAtTargetX)) <= 2*HANDLE_SIZE) {
+          closeToLine = true;
+        }
+      }
+
+      lastSegmentStartTime = envelopCoordinate.time;
+      lastSegmentStartValue = envelopCoordinate.value;
+      return false;
+    });
+
+    if(hitTestIndex<0 && 
+        !closeToLine &&
+        targetTime >= lastSegmentStartTime &&
+        Math.abs(targetY - this.valueToYCoord(lastSegmentStartValue)) <= 2*HANDLE_SIZE) {
+
+      closeToLine = true;
+      
+    }
 
     if(hitTestIndex >=0 ) {
       this._draggingEnvelopeIndex = hitTestIndex;
       return;
-    } else {
+    } else 
+    if(closeToLine) {
       const targetTime = this.xCoordToTime(targetX);
       const targetValue = this.yCoordToValue(targetY);
 
@@ -188,6 +214,9 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
 
   public handleCanvasMouseUp(event: MouseEvent) {
     this._draggingEnvelopeIndex = null;
+    this._editedEnvelope = this._editedEnvelope.concat();
+    this.editedEnvelopeChange.emit(this._editedEnvelope);
+    this.render();
   }
 
   private refresh() {
@@ -209,24 +238,37 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
       0, 
       this._canvasWidth, this._canvasHeight);
 
-    if(this._editedEnvelope) {      
+  
+    renderContext.beginPath();
+    
+    // TOOD Start value
+    let lastValue = 0;
+    renderContext.moveTo(this.timeToXCoord(0), this.valueToYCoord(lastValue));
+    this._editedEnvelope.forEach(envelopeCoordinate => {        
+      lastValue = envelopeCoordinate.value;
+      renderContext.lineTo(this.timeToXCoord(envelopeCoordinate.time), this.valueToYCoord(lastValue));
+    });
+
+    renderContext.lineTo(this._canvasWidth, this.valueToYCoord(lastValue));
+
+    renderContext.strokeStyle = ENVELOPE_COLOR_LINE;
+    renderContext.stroke();
+
+
+    this._editedEnvelope.forEach(envelopeCoordinate => {
       renderContext.beginPath();
-      // TOOD Start value
-      renderContext.moveTo(this.timeToXCoord(0), this.valueToYCoord(0));
-      this._editedEnvelope.forEach(envelopeCoordinate => {        
-        renderContext.lineTo(this.timeToXCoord(envelopeCoordinate.time), this.valueToYCoord(envelopeCoordinate.value));
-      });
-      renderContext.strokeStyle = ENVELOPE_COLOR_LINE;
+      renderContext.ellipse(this.timeToXCoord(envelopeCoordinate.time), this.valueToYCoord(envelopeCoordinate.value), HANDLE_SIZE, HANDLE_SIZE, 0, 0, Math.PI*2);
+      renderContext.strokeStyle = ENVELOPE_COLOR_HANDLE;
       renderContext.stroke();
-
-
-      this._editedEnvelope.forEach(envelopeCoordinate => {
-        renderContext.beginPath();
-        renderContext.ellipse(this.timeToXCoord(envelopeCoordinate.time), this.valueToYCoord(envelopeCoordinate.value), HANDLE_SIZE, HANDLE_SIZE, 0, 0, Math.PI*2);
-        renderContext.strokeStyle = ENVELOPE_COLOR_HANDLE;
-        renderContext.stroke();
-      });      
+    });   
+    
+    if(this._draggingEnvelopeIndex !== null) {
+      const draggingEnvelope = this._editedEnvelope[this._draggingEnvelopeIndex];
+      renderContext.fillStyle = ENVELOPE_COLOR_HANDLE;        
+      renderContext.fillText(`${Math.round(draggingEnvelope.value*1000)/1000}@${Math.round(draggingEnvelope.time*1000)/1000}s`, 
+        this.timeToXCoord(draggingEnvelope.time) + (1.5*HANDLE_SIZE), this.valueToYCoord(draggingEnvelope.value) - (1.5*HANDLE_SIZE));
     }
+  
 
     renderContext.restore();
   }
