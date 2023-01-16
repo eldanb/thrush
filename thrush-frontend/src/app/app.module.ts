@@ -25,6 +25,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDialogModule } from '@angular/material/dialog';
 import { ResourceEditorDialogService } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.service';
 import { ResourceEditorDialogComponent } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.component';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 @NgModule({
   declarations: [
     AppComponent,
@@ -53,7 +54,8 @@ import { ResourceEditorDialogComponent } from './resource-editors/resource-edito
     MatSelectModule,
     MatInputModule,
     MatFormFieldModule,
-    MatDialogModule
+    MatDialogModule,
+    MatButtonToggleModule
   ],
   providers: [ResourceEditorDialogService],
   bootstrap: [AppComponent]

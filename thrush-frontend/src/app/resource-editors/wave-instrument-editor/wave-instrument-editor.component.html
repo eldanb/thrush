@@ -49,10 +49,13 @@
   [(loopEndTime)]="loopEndTime"
 ></app-waveform-editor>
 
-<div class="waveform-editor-heading">
+<div class="waveform-editor-heading wavetable-editor-themed">
   <div>Attack:</div>
-  <div class="tab selected">Volume</div>
-  <div class="tab">Pan</div>
+
+  <mat-button-toggle-group>
+    <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
+    <mat-button-toggle value="italic">PAN</mat-button-toggle>    
+  </mat-button-toggle-group>
 </div>
 <app-envelope-editor
   [(editedEnvelope)]="editedEntryEnvelope"
@@ -60,11 +63,14 @@
   [displayEndTime]="displayEndTime"
 ></app-envelope-editor>
 
-<div class="waveform-editor-heading">
+<div class="waveform-editor-heading wavetable-editor-themed">
   <div>Release:</div>
-  <div class="tab selected">Volume</div>
-  <div class="tab">Pan</div>
+  <mat-button-toggle-group>
+    <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
+    <mat-button-toggle value="italic">PAN</mat-button-toggle>    
+  </mat-button-toggle-group>
 </div>
+
 <app-envelope-editor
   [(editedEnvelope)]="editedExitEnvelope"
   [displayStartTime]="displayStartTime"

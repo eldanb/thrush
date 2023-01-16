@@ -1,3 +1,18 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+app-waveform-editor {
+  flex-shrink: 1;
+  flex-grow: 1;
+}
+
+app-envelope-editor {
+  flex-shrink: 1;
+  flex-grow: 1;
+}
+
 .waveform-editor-heading {
     display: flex;
     align-items: center;
@@ -17,9 +32,8 @@
             border: solid 1px green;
             border-radius: 2px;
         }
-    }
+    }    
 }
-
 
 .controls {
     display: flex;

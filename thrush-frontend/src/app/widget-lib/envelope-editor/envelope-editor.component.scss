@@ -1,6 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   canvas {
     flex-grow: 1;
   }

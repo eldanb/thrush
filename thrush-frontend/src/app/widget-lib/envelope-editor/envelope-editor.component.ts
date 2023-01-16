@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 
 const ENVELOPE_COLOR_BACKGROUND = '#101010';
@@ -35,7 +35,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   private _canvasHeight: number = 0;
   private _pixelsInTimeUnit: number = 0;
 
-  constructor() {
+  constructor(private _vcr: ViewContainerRef) {
   }
 
   @Input()
@@ -78,7 +78,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this._resizeObserver.observe(this._canvas!.nativeElement);
+    this._resizeObserver.observe(this._vcr.element.nativeElement);
     this.handleResize();
     this.refresh();    
   }
@@ -86,8 +86,9 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   private handleResize() {
     const renderContext = this._canvas!.nativeElement.getContext("2d")!;
     
-    renderContext.canvas.width = this._canvas!.nativeElement!.clientWidth;
-    renderContext.canvas.height = this._canvas!.nativeElement!.clientHeight;
+    const sizedElement = this._vcr.element.nativeElement;
+    renderContext.canvas.width = sizedElement.clientWidth;
+    renderContext.canvas.height = sizedElement.clientHeight;
 
     this._canvasHeight = renderContext.canvas.height;
     this._canvasWidth = renderContext.canvas.width;

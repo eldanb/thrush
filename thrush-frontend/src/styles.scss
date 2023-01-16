@@ -1,10 +1,70 @@
+@use '@angular/material' as mat;
+@use 'sass:map';
+@include mat.core();
+
 /* You can add global styles to this file, and also import other style files */
 html, body { 
   height: 100%;
   margin: 0;
 }
 
+
 mat-tab-group.full-body .mat-tab-body-wrapper {
   flex-grow: 1;
 }
 
+$green-palette: (
+  50: #00ff00,
+  100: #00ff00,
+  200: #00ff00,
+  300: #00ff00,
+  400: #00ff00,
+  500: #00ff00,
+  600: #00ff00,
+  700: #00ff00,
+  800: #00ff00,
+  900: #00ff00,  
+  contrast: (
+    50: #00ff00,
+    100: #00ff00,
+    200: #00ff00,
+    300: #00ff00,
+    400: #00ff00,
+    500: #00ff00,
+    600: #00ff00,
+    700: #00ff00,
+    800: #00ff00,
+    900: #00ff00,  
+  )
+);
+
+$green-palette-foreground: (
+  text: white,
+  base: green,
+  divider: green,
+  dividers: green,
+  icons: green,
+  icon: green
+);
+
+$green-palette-background: (
+  selected-button: rgb(0, 40, 0),
+  card: black
+);
+
+$wavetable-editor-theme: (
+  density: -3,
+  color: (
+    primary: $green-palette,
+    accent: $green-palette,
+    warn: $green-palette,
+    background: map.merge(mat.$dark-theme-background-palette,
+      $green-palette-background), 
+    foreground: map.merge(mat.$dark-theme-foreground-palette, 
+      $green-palette-foreground),
+  ),
+);
+
+.wavetable-editor-themed {
+  @include mat.all-component-themes($wavetable-editor-theme);  
+}

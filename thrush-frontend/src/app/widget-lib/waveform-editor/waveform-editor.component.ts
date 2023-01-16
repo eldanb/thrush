@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 
 const WAVETABLE_COLOR_BACKGROUND = '#101010';
 const WAVETABLE_COLOR_WAVE = 'green';
@@ -51,7 +51,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   ];
   private _displayRangeDirty: boolean = false;
 
-  constructor() {
+  constructor(private _vcr: ViewContainerRef) {
     this._selectionStartCursor.onChange = (newValue) => {
       this.selectionStartTimeChange.emit(newValue || undefined);
       if(newValue != null && (this._selectionEndCursor.time ?? 0 < newValue)) {
@@ -188,7 +188,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   }
 
   ngAfterViewInit(): void {
-    this._resizeObserver.observe(this._canvas!.nativeElement);
+    this._resizeObserver.observe(this._vcr.element.nativeElement);
     this.handleResize();
     this._displayRangeDirty = true;
   }
@@ -196,9 +196,11 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   private handleResize() {
     const renderContext = this._canvas!.nativeElement.getContext("2d")!;
     
-    renderContext.canvas.width = this._canvas!.nativeElement!.clientWidth;
-    renderContext.canvas.height = this._canvas!.nativeElement!.clientHeight;
+    const sizedElement = this._vcr.element.nativeElement;
+    renderContext.canvas.width = sizedElement.clientWidth;
+    renderContext.canvas.height = sizedElement.clientHeight;
 
+    this._renderingCoordinateSpace = null;
     this.render(0, this.waveformDuration)
   }
 
