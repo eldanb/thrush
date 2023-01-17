@@ -21,6 +21,10 @@ export class ThrushEngineService {
     await this._sequencer!.stop();
   }
 
+  resumeAudioContext() {
+    this._audioContext.resume();
+  }
+  
   playSequence(seqContextToPlay: ThrushSequenceGenerator | null) {
     this._audioContext.resume();
     this._sequencer!.start(seqContextToPlay!);

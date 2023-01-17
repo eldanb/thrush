@@ -42,4 +42,5 @@ export interface ThrushCommonSynthesizerInterface {
   panic(): Promise<void>;
 
   enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void>;
+  executeImmediateCommand(immediateChannelCommand: ThrushCommonSynthesizerEventCommands): Promise<number>;
 }

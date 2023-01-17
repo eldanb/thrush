@@ -1,9 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { EditedWaveform } from 'src/app/widget-lib/waveform-editor/waveform-editor.component';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrument';
 import { ResourceEditor } from '../resource-editor-dialog-service/resource-editor-dialog.service';
+import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
 
 
 type AbstractWaveInstrument = {
@@ -20,7 +21,7 @@ type AbstractWaveInstrument = {
   templateUrl: './wave-instrument-editor.component.html',
   styleUrls: ['./wave-instrument-editor.component.scss']
 })
-export class WaveInstrumentEditorComponent implements OnInit, ResourceEditor<AbstractWaveInstrument, never> {
+export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, ResourceEditor<AbstractWaveInstrument, never> {
 
   public displayStartTime: number = 0;
   public displayEndTime: number = 0;
@@ -31,6 +32,8 @@ export class WaveInstrumentEditorComponent implements OnInit, ResourceEditor<Abs
   public selectionEndTime: number | null = null;
 
   private _editedWaveform: EditedWaveform | null = null;
+
+  private _registeredInstrument: number | null = null;
   
   private _editedEntryEnvelopes: Envelopes = {
     volume: []
@@ -62,9 +65,15 @@ export class WaveInstrumentEditorComponent implements OnInit, ResourceEditor<Abs
   }
 
 
-  constructor() { }
+  constructor(private _synthEngine: ThrushEngineService) { }
 
   ngOnInit(): void {
+  }
+
+  ngOnDestroy(): void {
+      if(this._registeredInstrument) {
+        this._synthEngine.sequencer.tsynthToneGenerator.deleteInstrument(this._registeredInstrument);
+      }      
   }
 
   @Input()
@@ -166,6 +175,10 @@ export class WaveInstrumentEditorComponent implements OnInit, ResourceEditor<Abs
           envelopes[envelopeKey]
             .filter(coord => coord.time >= startTime && coord.time <= endTime)
             .map(coord => ({ ...coord, time: coord.time - startTime }));
+
+        if(envelopes[envelopeKey].length == 0) {
+          envelopes[envelopeKey] = [ { time: 0, value: 1 }];
+        }
       });
     });    
   }
@@ -219,5 +232,51 @@ export class WaveInstrumentEditorComponent implements OnInit, ResourceEditor<Abs
 
   set editedResource(resource: AbstractWaveInstrument) {
 
+  }
+
+
+  async handlePreviewStart() { 
+    const abstInstrument = this.editedResource;
+    const synth = this._synthEngine.sequencer.tsynthToneGenerator;
+
+    this._synthEngine.resumeAudioContext();
+
+    if(!this._registeredInstrument) {
+      this._registeredInstrument = await synth.createInstrument(
+        abstInstrument.samples, abstInstrument.sampleRate, 
+        (abstInstrument.loopStartTime && abstInstrument.loopEndTime) 
+          ? abstInstrument.loopStartTime * abstInstrument.sampleRate
+          : 0, 
+        (abstInstrument.loopStartTime && abstInstrument.loopEndTime) 
+          ? (abstInstrument.loopEndTime - abstInstrument.loopStartTime) * abstInstrument.sampleRate
+          : 0,
+        1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes        
+      );
+    } else {
+      await synth.updateInstrument(
+        this._registeredInstrument,
+        abstInstrument.samples, abstInstrument.sampleRate, 
+        abstInstrument.loopStartTime * abstInstrument.sampleRate, 
+        (abstInstrument.loopEndTime - abstInstrument.loopStartTime) * abstInstrument.sampleRate,
+        1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes        
+      );
+    }
+
+    await synth.executeImmediateCommand({
+      newNote: {
+        instrumentId: this._registeredInstrument,
+        note: 24
+      },
+      volume: 1,
+      panning: 0      
+    });
+  }
+
+  async handlePreviewStop() {
+    const synth = this._synthEngine.sequencer.tsynthToneGenerator;
+
+    await synth.executeImmediateCommand({
+        releaseNote: true
+    });
   }
 }

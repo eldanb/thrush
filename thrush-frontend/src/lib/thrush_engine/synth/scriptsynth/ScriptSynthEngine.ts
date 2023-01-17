@@ -1,4 +1,4 @@
-import { ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { ScriptSynthInstrument, ScriptSynthWaveInstrument } from "./ScriptSynthInstrument";
 import { ScriptSynthToneGenerator } from "./ScriptSynthToneGenerator";
 
 export type ScriptSynthEngineEvent = {
@@ -84,7 +84,6 @@ export class ScriptSynthEngine {
     let remainingLen = len;
 
     while(remainingLen) {
-      //console.debug(`Num events ${this._eventQueue.length}`);
       this.pumpEvents(currentTime);
 
       const nextEventTime = this._eventQueue[0]?.time;
@@ -105,5 +104,26 @@ export class ScriptSynthEngine {
 
       currentTime += (fillSamples / this._sampleRate);
     }
+  }
+
+  updateInstrument(instrumentHandle: number, instrument: ScriptSynthWaveInstrument) {
+    if(this._instruments[instrumentHandle]) {
+      this._instruments[instrumentHandle] = instrument;
+    }
+  }
+
+  deleteInstrument(instrumentHandle: number) {
+    (<any>this._instruments[instrumentHandle]) = null;
+  }
+
+  enqueueRealtimeEvent(event: ScriptSynthEngineEvent): number {
+    const insertIndex = this._eventQueue.findIndex(existingEvent => existingEvent.time >= event.time);
+    if(insertIndex == -1) {
+      this._eventQueue.push(event);
+    } else {
+      this._eventQueue.splice(insertIndex, 0, event);
+    }
+
+    return event.time;
   }
 }

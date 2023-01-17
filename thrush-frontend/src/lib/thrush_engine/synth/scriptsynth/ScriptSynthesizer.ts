@@ -1,5 +1,5 @@
 import { createMessagePortRpcProxy } from "src/lib/util/MessagePortRpc";
-import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
+import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerEventCommands, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
 import { Envelopes } from "./ScriptSynthInstrument";
 import { ScriptSynthWorkerRpcInterface } from "./worklet/ScriptSynthWorkerRpcInterface";
 
@@ -56,6 +56,31 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
         exitEnvelopes);
   }
 
+  updateInstrument(instrumentHandle: number, 
+    instrument: ArrayBuffer,
+    sampleRate: number,    
+    loopStart: number, 
+    loopLen: number,
+    volume: number,
+    entryEnvelopes?: Envelopes,
+    exitEnvelopes?: Envelopes): Promise<void> {
+      return this._workletNodeRpcProxy.updateInstrument(
+        instrumentHandle,
+        instrument, 
+        sampleRate,
+        loopStart,
+        loopLen, 
+        volume,
+        entryEnvelopes,
+        exitEnvelopes);
+  }
+
+  deleteInstrument(instrumentHandle: number) {
+    this._workletNodeRpcProxy.deleteInstrument(
+      instrumentHandle);      
+  }
+
+
   async enqueueSynthEvent(synthEvent: ThrushCommonSynthesizerEvent): Promise<void> {
     await this._workletNodeRpcProxy.enqueueEvent({
       time: synthEvent.time,
@@ -66,6 +91,17 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
       volume: synthEvent.commands.volume,
       vibrato: synthEvent.commands.vibrato
     });
+  }
+
+  async executeImmediateCommand(immediateChannelCommand: ThrushCommonSynthesizerEventCommands): Promise<number> {
+    return await this._workletNodeRpcProxy.executeImmediateCommand(
+      {
+        newNote: immediateChannelCommand.newNote,
+        releaseNote: immediateChannelCommand.releaseNote,
+        panning: immediateChannelCommand.panning,
+        volume: immediateChannelCommand.volume,
+        vibrato: immediateChannelCommand.vibrato
+      })
   }
 
 

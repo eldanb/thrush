@@ -12,6 +12,30 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
     this._rpcDispathcer = new MessagePortRpcDispatcher<ScriptSynthWorkerRpcInterface>(this.port, this);
   }
 
+  async executeImmediateCommand(command: { newNote: any; releaseNote: any; panning: any; volume: any; vibrato: any; }): Promise<number> {
+    return this._synthEngine!.enqueueRealtimeEvent(Object.assign(
+      command,
+      {
+        time: currentTime + 0.05,
+        channelOrNoteId: '$$immediate'
+      }));
+  }
+
+  async deleteInstrument(instrumentHandle: number): Promise<void> {
+    this._synthEngine!.deleteInstrument(instrumentHandle);
+  }
+
+  async updateInstrument(instrumentHandle: number, instrumentBuff: ArrayBuffer, sampleRate: number, loopStart: number, loopLen: number, volume: number, entryEnvelopes: Envelopes | undefined, exitEnvelopes: Envelopes | undefined): Promise<void> {
+    this._synthEngine!.updateInstrument(instrumentHandle, new ScriptSynthWaveInstrument(
+      new Float32Array(instrumentBuff),
+      sampleRate,
+      loopStart, loopLen,
+      volume, 
+      entryEnvelopes,
+      exitEnvelopes
+      ));
+  }
+
   async enqueueEvent(event: ScriptSynthEngineEvent): Promise<void> {
     if(!this._synthEngine) {
       throw Error("Node not configured")

@@ -34,6 +34,16 @@
   </button>
   <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />s -
   <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />s
+
+  <div class="spacer"></div>
+
+  <button mat-icon-button (click)="handlePreviewStart()">
+    <mat-icon>play_arrow</mat-icon>
+  </button>
+
+  <button mat-icon-button (click)="handlePreviewStop()">
+    <mat-icon>stop</mat-icon>
+  </button>
 </div>
 
 <div class="waveform-editor-heading">

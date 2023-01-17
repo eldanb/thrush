@@ -268,4 +268,9 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     channelState.lastRenderedNoteModulationTime = targetTime;    
   }
   
+  async executeImmediateCommand(immediateChannelCommand: ThrushCommonSynthesizerEventCommands): Promise<number> {
+    const targetTime = this._audioContext.currentTime;
+    await this.enqueueSynthEvent(new ThrushCommonSynthesizerEvent(targetTime, this, '$$immediate', immediateChannelCommand));
+    return targetTime;
+  }
 }
