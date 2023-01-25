@@ -49,6 +49,7 @@
 <div class="waveform-editor-heading">
   <div class="tab">Waveform</div>
 </div>
+
 <app-waveform-editor
   [editedWaveform]="editedWaveform"
   [displayStartTime]="displayStartTime"
@@ -57,6 +58,7 @@
   [(selectionEndTime)]="selectionEndTime"
   [(loopStartTime)]="loopStartTime"
   [(loopEndTime)]="loopEndTime"
+  [playbackTime]="playbackTime"
 ></app-waveform-editor>
 
 <div class="waveform-editor-heading wavetable-editor-themed">

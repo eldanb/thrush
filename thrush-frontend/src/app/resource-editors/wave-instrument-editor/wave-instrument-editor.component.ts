@@ -32,9 +32,13 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
   public selectionEndTime: number | null = null;
 
   private _editedWaveform: EditedWaveform | null = null;
-
   private _registeredInstrument: number | null = null;
-  
+
+  private _playbackTime: number | null = null;
+  private _playbackStartTime: number | null = null;
+  private _playbackCursorUpdateTimer: any;
+
+
   private _editedEntryEnvelopes: Envelopes = {
     volume: []
   };
@@ -64,16 +68,28 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
     this._editedExitEnvelopes[this.editedExitEnvelopeName] = v;
   }
 
+  public get playbackTime() {
+    return this._playbackTime;
+  }
 
   constructor(private _synthEngine: ThrushEngineService) { }
 
   ngOnInit(): void {
+    this._playbackCursorUpdateTimer = setInterval(() => {
+      this._playbackTime = this._playbackStartTime 
+        ? (this._synthEngine.currentTime - this._playbackStartTime) * 2   // Note 24 = pitch 2
+        : null;
+    }, 50);
   }
 
   ngOnDestroy(): void {
       if(this._registeredInstrument) {
         this._synthEngine.sequencer.tsynthToneGenerator.deleteInstrument(this._registeredInstrument);
-      }      
+      }
+      
+      if(this._playbackCursorUpdateTimer) {
+        clearInterval(this._playbackCursorUpdateTimer);
+      }
   }
 
   @Input()
@@ -229,7 +245,6 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
     };
   }
 
-
   set editedResource(resource: AbstractWaveInstrument) {
 
   }
@@ -261,8 +276,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
         1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes        
       );
     }
-
-    await synth.executeImmediateCommand({
+  
+    this._playbackStartTime = await synth.executeImmediateCommand({
       newNote: {
         instrumentId: this._registeredInstrument,
         note: 24
@@ -278,5 +293,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
     await synth.executeImmediateCommand({
         releaseNote: true
     });
+
+    this._playbackStartTime = null;
   }
 }

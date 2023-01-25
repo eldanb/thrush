@@ -59,4 +59,8 @@ export class ThrushEngineService {
   get ready(): boolean {
     return this._synthReady;
   }  
+
+  get currentTime(): number {
+    return this._audioContext.currentTime;
+  }
 }

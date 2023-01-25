@@ -34,6 +34,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   private _selectionEndCursor = new DraggableCursor(WAVETABLE_COLOR_SELECTION, true);
   private _loopStartCursor = new DraggableCursor(WAVETABLE_COLOR_LOOP, true);
   private _loopEndCursor = new DraggableCursor(WAVETABLE_COLOR_LOOP, true);
+  private _currentTimeCursor = new DraggableCursor(WAVETABLE_COLOR_POINTER, false);
 
   private _dragging: DraggableCursor | null = null;
   
@@ -48,6 +49,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
     this._loopStartCursor,
     this._loopEndCursor,
     this._pointerCursor, 
+    this._currentTimeCursor
   ];
   private _displayRangeDirty: boolean = false;
 
@@ -95,6 +97,8 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
     this._pointerCursor.onChange = ((newValue) => this._pointer = newValue);
     this._pointerCursor.timeGetter = (() => this._pointer);
+
+    this._currentTimeCursor.timeGetter = (() => this.playbackTime);
   }
 
   @Input()
@@ -130,6 +134,9 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
 
   @Input()
   public selectionEndTime: number | null = null;
+
+  @Input()
+  public playbackTime: number | null = null;
 
   public get waveformDuration(): number {
     return this._editedWaveform
