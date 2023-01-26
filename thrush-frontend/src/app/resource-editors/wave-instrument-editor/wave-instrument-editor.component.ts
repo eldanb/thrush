@@ -75,11 +75,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
   constructor(private _synthEngine: ThrushEngineService) { }
 
   ngOnInit(): void {
-    this._playbackCursorUpdateTimer = setInterval(() => {
-      this._playbackTime = this._playbackStartTime 
-        ? (this._synthEngine.currentTime - this._playbackStartTime) * 2   // Note 24 = pitch 2
-        : null;
-    }, 50);
+    this._playbackCursorUpdateTimer = setInterval(() => this.updatePlaybackCursor(), 50);    
   }
 
   ngOnDestroy(): void {
@@ -90,6 +86,27 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
       if(this._playbackCursorUpdateTimer) {
         clearInterval(this._playbackCursorUpdateTimer);
       }
+  }
+
+  private updatePlaybackCursor(): void {
+    if(!this._playbackStartTime) {
+      this._playbackTime = null;  
+    } else {
+      let sampleAxisTime: number | null = (this._synthEngine.currentTime - this._playbackStartTime) * 4;   // Note 24 = pitch 4
+      if(sampleAxisTime > this.waveformDuration) {
+        if(this.loopEndTime) {
+          sampleAxisTime -= this.waveformDuration;
+          const loopDuration = (this.loopEndTime - (this.loopStartTime ?? 0));
+          sampleAxisTime -= Math.floor(sampleAxisTime / loopDuration) * loopDuration;
+          sampleAxisTime += (this.loopStartTime ?? 0);
+        } else {
+          this._playbackStartTime = null;
+          sampleAxisTime = null;
+        }        
+      }
+
+      this._playbackTime = sampleAxisTime;
+    }    
   }
 
   @Input()
@@ -277,13 +294,17 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
       );
     }
   
+    await synth.executeImmediateCommand({
+      releaseNote: true
+    });
+
     this._playbackStartTime = await synth.executeImmediateCommand({
       newNote: {
         instrumentId: this._registeredInstrument,
         note: 24
       },
       volume: 1,
-      panning: 0      
+      panning: 0.5      
     });
   }
 

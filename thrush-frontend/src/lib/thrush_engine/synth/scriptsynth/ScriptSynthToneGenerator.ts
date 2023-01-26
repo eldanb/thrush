@@ -36,6 +36,7 @@ class ChannelState implements ScriptSynthGeneratedToneParameters {
 
   envelopeState: EnvelopeState | null = null;
   envelopeStateEpochSample: number = 0;
+  releasing: boolean = false;
 
   constructor(toneGenerator: ScriptSynthToneGenerator) {
     this.toneGenerator = toneGenerator;
@@ -54,6 +55,7 @@ class ChannelState implements ScriptSynthGeneratedToneParameters {
 
   playNote(instrument: ScriptSynthInstrument, note: number, startSampleNumber: number) {
     this.inLoop = false;
+    this.releasing = false;
 
     instrument.configureToneGenerationParams(this, note);
 
@@ -64,12 +66,9 @@ class ChannelState implements ScriptSynthGeneratedToneParameters {
   }
 
   releaseNote(releaseSampleNumber: number) {
-    if(this.exitEnvelopes) {
-      this.startEnvelope(this.exitEnvelopes, true, releaseSampleNumber);
-    } else {
-      this.sample = null;
-      this.playingNoteId = null;
-    }
+    this.releasing = true;
+    this.playingNoteId = null;
+    this.startEnvelope(this.exitEnvelopes, true, releaseSampleNumber);
   }
 }
 
@@ -163,9 +162,14 @@ export class ScriptSynthToneGenerator {
         if(channelState.sample) {
           let sampleIndex = channelState.sampleCursor;
 
+          // Update envelopes
+          const envelopeState = channelState.envelopeState;
+
+          if(channelState.releasing && !envelopeState?.volume?.running) {
+            sampleIndex = channelState.sample.length;
+          }
+
           if(sampleIndex < channelState.sample.length-1) {
-            // Update envelopes
-            const envelopeState = channelState.envelopeState;
             if(envelopeState?.volume?.running) {
               envelopeState.volume.updateEnvelopeState(currentSample);
             }

@@ -117,7 +117,7 @@ export class ScriptSynthEngine {
   }
 
   enqueueRealtimeEvent(event: ScriptSynthEngineEvent): number {
-    const insertIndex = this._eventQueue.findIndex(existingEvent => existingEvent.time >= event.time);
+    const insertIndex = this._eventQueue.findIndex(existingEvent => existingEvent.time > event.time);
     if(insertIndex == -1) {
       this._eventQueue.push(event);
     } else {

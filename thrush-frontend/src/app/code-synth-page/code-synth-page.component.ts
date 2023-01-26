@@ -61,10 +61,15 @@ export class CodeSynthPageComponent implements OnInit {
       const instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
         instrument.samples,
         instrument.sampleRate,
-        instrument.loopStartTime * instrument.sampleRate,
-        instrument.loopEndTime * instrument.sampleRate,
+        instrument.loopStartTime && instrument.loopEndTime 
+          ? instrument.loopStartTime * instrument.sampleRate
+          : 0,
+        instrument.loopStartTime && instrument.loopEndTime 
+          ? (instrument.loopEndTime-instrument.loopStartTime) * instrument.sampleRate
+          : 0,
         1, 
-        instrument.entryEnvelopes);
+        instrument.entryEnvelopes,
+        instrument.exitEnvelopes);
 
       this.codeLoadedInsturments.push({
           scriptId: instrumentId,
