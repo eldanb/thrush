@@ -231,8 +231,9 @@ declare interface ThrushSequenceGenerationCalls {
    *   change command (see below) to change parameters only for the length of the sequence.
    * 
    * - A parameter change command of the form `'['[parameter][relative][value]...'!'?']'` 
-   *   where `[parameter]` is `v` for volume, `p` for panning, `i` for instrument and `t`
-   *   for tempo; relative can be absent to set a constant value for parameter or `+` to increase,
+   *   where `[parameter]` is `v` for volume, `p` for panning, `i` for instrument, `t`
+   *   for tempo, `d` for vibrato depth, and `f` for vibrato frequency; relative can be absent 
+   *   to set a constant value for parameter or `+` to increase,
    *   or `-` to increase (relative values not supported for instrument selection).
    *   Include an exclamation mark at the end of the command to indicate change should apply
    *   to currently playing note in sequence.

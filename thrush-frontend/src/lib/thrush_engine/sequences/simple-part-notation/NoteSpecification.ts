@@ -46,7 +46,8 @@ export class NoteSpecification extends CompilableSimplePart {
           note: this.noteNumber
         },
         panning: sequenceContext.notePanning,
-        volume: Math.min(1, sequenceContext.noteVolume * this.volModifier)
+        volume: Math.min(1, sequenceContext.noteVolume * this.volModifier),
+        vibrato: sequenceContext.noteVibrato
       }),
 
       new ThrushCommonSynthesizerEvent(endTime, sequenceContext.synth!, noteId, { releaseNote: true }),

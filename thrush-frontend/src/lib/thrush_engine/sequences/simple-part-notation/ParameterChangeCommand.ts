@@ -37,10 +37,20 @@ export class ParameterChangeRequest {
         break;
 
       case 'p':
-        context.notePanning = TargetValue(context.notePanning, this._relative, this._value, 100, 0 ,1);
+        context.notePanning = TargetValue(context.notePanning, this._relative, this._value, 100, 0, 1);
         commands.panning = context.notePanning;
         break;
 
+      case 'd':
+        context.noteVibratoDepth = TargetValue(context.noteVibratoDepth, this._relative, this._value, 1000, 0, 1);
+        commands.vibrato = context.noteVibrato;
+        break;
+
+      case 'f':
+        context.noteVibratoFrequency = TargetValue(context.noteVibratoFrequency, this._relative, this._value, 100, 0, 500);
+        commands.vibrato = context.noteVibrato;
+        break;
+  
       case 'i':
         if(this._relative) {
           throw new Error("Can't execute relative change for instrucment.");
@@ -50,7 +60,7 @@ export class ParameterChangeRequest {
 
       case 't':
         if(this._relative) {
-          throw new Error("Can't execute relative change for instrucment.");
+          throw new Error("Can't execute relative change for tempo.");
         }
         context.tempo = TargetValue(context.tempo, this._relative, this._value, 1, 20, 240);
         break;

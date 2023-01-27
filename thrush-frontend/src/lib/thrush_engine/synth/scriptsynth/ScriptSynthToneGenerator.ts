@@ -101,6 +101,7 @@ export class ScriptSynthToneGenerator {
         channelState = this._channelStates[0];
       }
       channelState.playingNoteId = channelOrNoteId;
+      channelState.vibratoGenerator = null;
     } else {
       channelState = this._channelStates[channelOrNoteId];
       channelState.playingNoteId = null;

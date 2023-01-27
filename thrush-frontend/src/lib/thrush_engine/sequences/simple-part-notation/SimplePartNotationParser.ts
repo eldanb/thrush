@@ -18,7 +18,7 @@ const paramChangeCommand = pb.sequence(
   pb.token('[')._(omit()),
   pb.many(
     pb.sequence(
-      pb.anyOf("vpit"),
+      pb.anyOf("vpitdf"),
       pb.optional(pb.anyOf("+-")),
       pb.anyOf("0123456789", 1, 10)._(map(parseInt))
     )._(build(ParameterChangeRequest))

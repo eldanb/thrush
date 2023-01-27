@@ -58,7 +58,7 @@ export class ScriptSynthEngine {
 
         if(event.newNote) {
           console.debug(`Play note ${event.newNote.note} at ${currentTime}; instrument = ${event.newNote.instrumentId}; channel = ${event.channelOrNoteId}; latency=${currentTime-event.time}`);
-          this._toneGenerator.playNoteOnChannel(event.channelOrNoteId, this._instruments[event.newNote.instrumentId], event.newNote.note);
+          this._toneGenerator.playNoteOnChannel(event.channelOrNoteId, this._instruments[event.newNote.instrumentId], event.newNote.note);          
         } else 
         if(event.releaseNote) {
           this._toneGenerator.releaseNoteOnChannel(event.channelOrNoteId);
