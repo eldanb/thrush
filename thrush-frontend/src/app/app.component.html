@@ -1,35 +1,37 @@
 <div class="thrush-header">        
-  <button mat-button class="menu-button" (click)="drawer.toggle()">
-    <mat-icon>menu</mat-icon>
-  </button>
   <h1>Thrush</h1>
   <img src="../assets/images/thrush_logo.svg"/>
 
-  <div class="spacer">&nbsp;</div>
 
-  <a href="/td" target="thrush-docs" style="text-decoration: none;">
-    <mat-icon style="vertical-align: middle">help_outline</mat-icon>
-    Thrush Docs
-  </a>
-
-      
+  <div class="thrush-menu-bar">
+    <button mat-button [matMenuTriggerFor]="fileMenu">File</button>  
+    <mat-menu #fileMenu>  
+      <button mat-menu-item>New</button>  
+      <button mat-menu-item>Open example...</button>      
+    </mat-menu>  
+    <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
+    <mat-menu #helpMenu>  
+      <a href="/td" target="thrush-docs" style="text-decoration: none" mat-menu-item>
+        <mat-icon style="vertical-align: middle">help_outline</mat-icon>
+        Thrush Docs
+      </a>    
+    </mat-menu>  
+  </div>
 </div>
 
-<mat-drawer-container [hasBackdrop]="false">
-    <mat-drawer #drawer mode="side">
-      <nav>
-        <a routerLink="/codesynth" routerLinkActive="active-link" >
-          CodeSynth
-        </a>              
-        <a routerLink="/dragons" routerLinkActive="active-link" >
-          Here Be Dragons
-        </a>            
-      </nav>          
-    </mat-drawer>
-    <mat-drawer-content>
-        <div class="thrush-main-content">
-          <router-outlet></router-outlet>      
-        </div>
-    </mat-drawer-content>
-  </mat-drawer-container>
 
+<mat-toolbar class="thrush-tool-bar">
+  <button mat-icon-button (click)="projectEditor.toggleResourceList()">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <app-ui-region region="toolbar"></app-ui-region>
+</mat-toolbar>
+
+<div class="thrush-main-content">
+  <app-project-editor #projectEditor></app-project-editor>
+</div>
+
+<div class="thrush-status-bar">
+  statusbar
+</div>

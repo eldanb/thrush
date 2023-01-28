@@ -1,9 +1,18 @@
-<div class="controls">
+<app-ui-region-content region="toolbar">
+  <button mat-icon-button (click)="handlePreviewStart()">
+    <mat-icon>play_arrow</mat-icon>
+  </button>
+
+  <button mat-icon-button (click)="handlePreviewStop()">
+    <mat-icon>stop</mat-icon>
+  </button>
+
+  <div class="spacer"></div>
+
   <button mat-icon-button (click)="handleImportRequest()">
     <mat-icon>upload</mat-icon>
   </button>
 
-  <div class="spacer"></div>
 
   <button mat-icon-button (click)="handleZoomOutClick()">
     <mat-icon>zoom_out</mat-icon>
@@ -37,14 +46,7 @@
 
   <div class="spacer"></div>
 
-  <button mat-icon-button (click)="handlePreviewStart()">
-    <mat-icon>play_arrow</mat-icon>
-  </button>
-
-  <button mat-icon-button (click)="handlePreviewStop()">
-    <mat-icon>stop</mat-icon>
-  </button>
-</div>
+</app-ui-region-content>
 
 <div class="waveform-editor-heading">
   <div class="tab">Waveform</div>

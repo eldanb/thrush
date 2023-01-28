@@ -9,9 +9,6 @@
   }
 }
 
-.thrush-main-content { 
-  height: 100%;
-}
 
 .thrush-header {
   display: flex;
@@ -19,19 +16,13 @@
   align-items: center;
   
   height: 4rem;
-  border-bottom: solid 1px silver;
+  border-bottom: solid 1px #dedede;
 
   flex-shrink: 0;
   flex-grow: 0;
 
-  & button {
-    min-width: 0;
-    padding: 0;
-    margin: 0 1rem;
-  }
-
   & h1 {
-    padding: 1rem 0;
+    padding: 1rem 1rem;
     font-size: 2.5rem;
     margin: 0;
     font-weight: 100;
@@ -45,11 +36,29 @@
   & .spacer {
     flex-grow: 1;
   }
+}
 
-  & a {
-    margin: 0 1rem;
-    color: silver;
+.thrush-menu-bar {
+  padding: 0 0rem;
+
+  button {
+    min-width: 0;
+    padding: 0 1rem;
+    font-size: 10pt;
   }
+}
+
+
+.thrush-main-content { 
+  height: 100%;
+  overflow-y: hidden;
+  app-project-editor {
+    height: 100%;
+  }
+}
+
+.thrush-status-bar {
+
 }
 
 nav {

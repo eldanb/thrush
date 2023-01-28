@@ -392,7 +392,7 @@ export class WaveformEditorComponent implements AfterViewInit, OnDestroy, OnChan
   }
 
   private getRenderingCoordinateSpace() {
-    if(!this._renderingCoordinateSpace) {
+    if(!this._renderingCoordinateSpace && this._canvas?.nativeElement) {
       const width = this._canvas!.nativeElement!.clientWidth;
       const height = this._canvas!.nativeElement!.clientHeight;
       const displayStartTime = this._editedWaveform ? this._displayStartTime : 0;

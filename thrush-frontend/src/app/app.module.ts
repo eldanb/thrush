@@ -26,6 +26,12 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { ResourceEditorDialogService } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.service';
 import { ResourceEditorDialogComponent } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.component';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { ProjectEditorComponent } from './project-editor/project-editor.component';
+import { SynthScriptEditorComponent } from './resource-editors/synth-script-editor/synth-script-editor.component';
+import { UiRegionContentComponent } from './widget-lib/ui-region-content/ui-region-content.component';
+import { UiRegionComponent } from './widget-lib/ui-region/ui-region.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -37,6 +43,10 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     EnvelopeEditorComponent,
     WaveInstrumentEditorComponent,
     ResourceEditorDialogComponent,
+    ProjectEditorComponent,
+    SynthScriptEditorComponent,
+    UiRegionContentComponent,
+    UiRegionComponent,
   ],
   imports: [
     BrowserModule,
@@ -55,7 +65,9 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     MatInputModule,
     MatFormFieldModule,
     MatDialogModule,
-    MatButtonToggleModule
+    MatButtonToggleModule,
+    MatMenuModule,
+    MatToolbarModule
   ],
   providers: [ResourceEditorDialogService],
   bootstrap: [AppComponent]

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 @Component({
@@ -14,11 +14,17 @@ export class MonacoEditorComponent implements OnInit, AfterViewInit {
   private editor: monaco.editor.IStandaloneCodeEditor | null = null;
   private textFromProperty: string = '';
 
+  @Output()
+  public editorTextChanged = new EventEmitter<string>();
+
   constructor() { }
 
   ngAfterViewInit(): void {    
+    const textModel = monaco.editor.createModel(this.textFromProperty, 'javascript');
+    textModel.onDidChangeContent((e) => this.editorTextChanged.next(textModel.getValue()));
+
     this.editor = monaco.editor.create(this.editorContainer!.nativeElement, {
-      model: monaco.editor.createModel(this.textFromProperty, 'javascript'),
+      model: textModel,
       automaticLayout: true
     });
 

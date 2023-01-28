@@ -59,7 +59,7 @@ export class CodeSynthPageComponent implements OnInit {
     const instrument = await this._resourceEditDialogSerice.runResourceDialog(WaveInstrumentEditorComponent);
     if(instrument) {
       const instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
-        instrument.samples,
+        new Float32Array(Buffer.from(instrument.samplesBase64, "base64")),
         instrument.sampleRate,
         instrument.loopStartTime && instrument.loopEndTime 
           ? instrument.loopStartTime * instrument.sampleRate

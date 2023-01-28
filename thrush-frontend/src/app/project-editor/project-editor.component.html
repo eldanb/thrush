@@ -1,0 +1,30 @@
+<mat-drawer-container [hasBackdrop]="false">
+  <mat-drawer #drawer mode="side">
+    <nav>
+      <a routerLink="/codesynth" routerLinkActive="active-link" >
+        CodeSynth
+      </a>              
+      <a routerLink="/dragons" routerLinkActive="active-link" >
+        Here Be Dragons
+      </a>            
+    </nav>          
+  </mat-drawer>
+  <mat-drawer-content>
+    <div class="tabs-and-editor-container">
+      <nav mat-tab-nav-bar [tabPanel]="tabPanel">
+        <a mat-tab-link *ngFor="let editor of openEditors"
+          (click)="activeEditor = editor"
+          [active]="activeEditor == editor"> {{editor.title}} {{editor.draftResourceDirty ? "*" :""}} </a>
+      </nav>
+      <mat-tab-nav-panel class="thrush-editor-tabs" #tabPanel></mat-tab-nav-panel>
+      
+      <div #editorHost class="editor-host"></div>
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>
+
+<app-ui-region-content region="toolbar">
+  <button mat-icon-button (click)="handleSaveClicked()" [disabled]="!activeEditor?.draftResourceDirty">
+    <mat-icon>save</mat-icon>
+  </button>
+</app-ui-region-content>

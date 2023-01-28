@@ -1,27 +1,20 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit } from '@angular/core';
 import { EditedWaveform } from 'src/app/widget-lib/waveform-editor/waveform-editor.component';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrument';
-import { ResourceEditor } from '../resource-editor-dialog-service/resource-editor-dialog.service';
 import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
+import { Base64ToFloat32ArrayLe, Float32ArrayToBase64Le, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
+import { ResourceEditor } from '../resource-editor';
 
-
-type AbstractWaveInstrument = {
-  samples: Float32Array,
-  sampleRate: number,
-  loopStartTime: number,
-  loopEndTime: number,
-  entryEnvelopes: Envelopes,
-  exitEnvelopes: Envelopes
-};
 
 @Component({
   selector: 'app-wave-instrument-editor',
   templateUrl: './wave-instrument-editor.component.html',
   styleUrls: ['./wave-instrument-editor.component.scss']
 })
-export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, ResourceEditor<AbstractWaveInstrument, never> {
+export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, 
+  ResourceEditor<ResourceTypeAbstractWaveInstrument, never> {
 
   public displayStartTime: number = 0;
   public displayEndTime: number = 0;
@@ -30,6 +23,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
   public loopEndTime: number | null = null;
   public selectionStartTime: number | null = null;
   public selectionEndTime: number | null = null;
+
+  public resourceEdited = new EventEmitter();
 
   private _editedWaveform: EditedWaveform | null = null;
   private _registeredInstrument: number | null = null;
@@ -251,9 +246,9 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
     reader.readAsArrayBuffer(sampleFile);
   }
 
-  get editedResource(): AbstractWaveInstrument {       
+  get editedResource(): ResourceTypeAbstractWaveInstrument {       
     return { 
-      samples: this.editedWaveform!.channelSamples[0], 
+      samplesBase64: Float32ArrayToBase64Le(this.editedWaveform!.channelSamples[0]),
       sampleRate: this.editedWaveform!.sampleRate,
       loopStartTime: this.loopStartTime!,
       loopEndTime: this.loopEndTime!,
@@ -262,8 +257,18 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
     };
   }
 
-  set editedResource(resource: AbstractWaveInstrument) {
+  set editedResource(resource: ResourceTypeAbstractWaveInstrument | null) {
+    if(resource) {
+      this.editedWaveform = {
+        channelSamples: [Base64ToFloat32ArrayLe(resource.samplesBase64)],
+        sampleRate: resource.sampleRate,            
+      }
 
+      this.loopStartTime = resource.loopStartTime;
+      this.loopEndTime = resource.loopEndTime;
+      this._editedEntryEnvelopes = resource.entryEnvelopes;
+      this._editedExitEnvelopes = resource.exitEnvelopes;
+    }
   }
 
 
@@ -275,7 +280,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
 
     if(!this._registeredInstrument) {
       this._registeredInstrument = await synth.createInstrument(
-        abstInstrument.samples, abstInstrument.sampleRate, 
+        Base64ToFloat32ArrayLe(abstInstrument.samplesBase64),  abstInstrument.sampleRate, 
         (abstInstrument.loopStartTime && abstInstrument.loopEndTime) 
           ? abstInstrument.loopStartTime * abstInstrument.sampleRate
           : 0, 
@@ -287,7 +292,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, Resourc
     } else {
       await synth.updateInstrument(
         this._registeredInstrument,
-        abstInstrument.samples, abstInstrument.sampleRate, 
+        Base64ToFloat32ArrayLe(abstInstrument.samplesBase64), abstInstrument.sampleRate, 
         abstInstrument.loopStartTime * abstInstrument.sampleRate, 
         (abstInstrument.loopEndTime - abstInstrument.loopStartTime) * abstInstrument.sampleRate,
         1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes        

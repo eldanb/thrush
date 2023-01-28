@@ -1,15 +1,18 @@
 :host {
   display: flex;
   flex-direction: column;
+  overflow-y: hidden;
+
+  flex-grow: 1;
 }
 
 app-waveform-editor {
-  flex-shrink: 1;
+  flex-basis: 10px;
   flex-grow: 1;
 }
 
 app-envelope-editor {
-  flex-shrink: 1;
+  flex-basis: 10px;
   flex-grow: 1;
 }
 

@@ -1,0 +1,16 @@
+:host {
+  .mat-tab-link {
+    min-width: 0;
+  }
+}
+
+mat-drawer-container {
+  height: 100%;
+}
+
+
+.tabs-and-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}

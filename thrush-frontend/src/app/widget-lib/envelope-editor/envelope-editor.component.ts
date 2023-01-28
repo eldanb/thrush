@@ -84,6 +84,10 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   private handleResize() {
+    if(!this._canvas?.nativeElement) {
+      return;
+    }
+
     const renderContext = this._canvas!.nativeElement.getContext("2d")!;
     
     const sizedElement = this._vcr.element.nativeElement;
