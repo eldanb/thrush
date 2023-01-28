@@ -1,7 +1,8 @@
 import { AfterViewInit, Component, Inject, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ScriptSynthInstrument } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrument';
-import { ResourceEditor, ResourceEditorDialogData } from '../resource-editor-dialog-service/resource-editor-dialog.service';
+import { ResourceEditorDialogData } from '../resource-editor-dialog-service/resource-editor-dialog.service';
+import { ResourceEditor } from '../resource-editor';
 
 
 export type WaveInstrumentEditorDialogData = {
