@@ -2,12 +2,9 @@ import { Injectable } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
 import { firstValueFrom } from "rxjs";
 import { ResourceEditorDialogComponent } from "./resource-editor-dialog.component";
+import { ResourceEditor } from "../resource-editor";
 
 
-export interface ResourceEditor<R, C = never> {
-    editedResource?: R;
-    editorConfig?: C;
-}
 
 export type ResourceEditorConstructor<R, C> = new(...args: any) => ResourceEditor<R, C>;
 
