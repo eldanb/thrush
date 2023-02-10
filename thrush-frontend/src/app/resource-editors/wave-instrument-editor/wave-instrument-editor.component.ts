@@ -25,7 +25,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   public resourceEdited = new EventEmitter();
 
   private _editedWaveform: EditedWaveform | null = null;
-  private _registeredInstrument: number | null = null;
+  private _registeredInstrument: string | null = null;
 
   private _playbackTime: number | null = null;
   private _playbackStartTime: number | null = null;
@@ -304,7 +304,9 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     this._synthEngine.resumeAudioContext();
 
     if(!this._registeredInstrument) {
-      this._registeredInstrument = await synth.createInstrument(
+      this._registeredInstrument = `$$WAVEDITOR${Math.random()}`;
+    }
+    await synth.createInstrument(this._registeredInstrument, 
         Base64ToFloat32ArrayLe(abstInstrument.samplesBase64),  abstInstrument.sampleRate, 
         (abstInstrument.loopStartTime && abstInstrument.loopEndTime) 
           ? abstInstrument.loopStartTime * abstInstrument.sampleRate
@@ -313,17 +315,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
           ? (abstInstrument.loopEndTime - abstInstrument.loopStartTime) * abstInstrument.sampleRate
           : 0,
         1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes        
-      );
-    } else {
-      await synth.updateInstrument(
-        this._registeredInstrument,
-        Base64ToFloat32ArrayLe(abstInstrument.samplesBase64), abstInstrument.sampleRate, 
-        abstInstrument.loopStartTime * abstInstrument.sampleRate, 
-        (abstInstrument.loopEndTime - abstInstrument.loopStartTime) * abstInstrument.sampleRate,
-        1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes        
-      );
-    }
-  
+    );
+
     await synth.executeImmediateCommand({
       releaseNote: true
     });

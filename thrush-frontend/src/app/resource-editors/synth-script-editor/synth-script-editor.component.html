@@ -1,8 +1,8 @@
 <app-ui-region-content region="toolbar">
-  <button mat-icon-button>
+  <button (click)="handlePlayCode()" mat-icon-button>
     <mat-icon>play_arrow</mat-icon>
   </button>
-  <button mat-icon-button>
+  <button (click)="handleStop()" mat-icon-button>
     <mat-icon>stop</mat-icon>
   </button>
 </app-ui-region-content>

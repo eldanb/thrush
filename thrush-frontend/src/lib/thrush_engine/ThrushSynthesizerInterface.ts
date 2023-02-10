@@ -9,7 +9,7 @@ export type ThrushCommonSynthesizerVibratoParameters = {
 
 export type ThrushCommonSynthesizerEventCommands = {
   newNote?: { 
-    instrumentId: number;
+    instrumentId: string;
     note: number; 
   };
   releaseNote?: boolean;

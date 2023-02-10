@@ -183,7 +183,7 @@ type ModChannelState = {
 
 
 export interface AmigaModImportSynthDriver {  
-  createPatternBindings(samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding>;
+  createPatternBindings(prefix: string, samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding>;
 }
 
 export class AmigaModScriptSynthImportSynthDriver implements AmigaModImportSynthDriver {
@@ -192,21 +192,22 @@ export class AmigaModScriptSynthImportSynthDriver implements AmigaModImportSynth
   }
 
 
-  async createPatternBindings(samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding> {
+  async createPatternBindings(prefix: string, samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding> {
     const ret: ThrushPatternBinding = {
-      sampleInsturmentHandles: [],
+      sampleInstrumentHandles: [],
       synth: this.synth
     }
 
     await Promise.all(samples.map(async (sample, index) => {
-      ret.sampleInsturmentHandles[index] =
-        await this.synth.createInstrument(
-          new Float32Array(Array.from(new Int8Array(sample.content!)).map((s) => (s)/256)).buffer,
-          4143,          
-          sample.loopStart,
-          sample.loopLen,
-          (sample.volume/64)
-        )
+      ret.sampleInstrumentHandles[index] = `${prefix}_${sample.sampleName}`;
+      await this.synth.createInstrument(
+        ret.sampleInstrumentHandles[index],
+        new Float32Array(Array.from(new Int8Array(sample.content!)).map((s) => (s)/256)).buffer,
+        4143,          
+        sample.loopStart,
+        sample.loopLen,
+        (sample.volume/64)
+      )
     }));
 
     return ret;
@@ -219,15 +220,16 @@ export class AmigaModNativeSynthImportSynthDriver implements AmigaModImportSynth
 
   }
 
-  async createPatternBindings(samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding> {
+  async createPatternBindings(prefix: string, samples: AmigaModSampleInfo[]): Promise<ThrushPatternBinding> {
     const ret: ThrushPatternBinding = {
-      sampleInsturmentHandles: [],
+      sampleInstrumentHandles: [],
       synth: this.synth
     }
 
     await Promise.all(samples.map(async (sample, index) => {
-      ret.sampleInsturmentHandles[index] =
+      ret.sampleInstrumentHandles[index] = `${prefix}_${sample.sampleName}`;
         await this.synth.registerInstrument(
+          ret.sampleInstrumentHandles[index],
           new Float32Array(Array.from(new Int8Array(sample.content!)).map((s) => (s)/256)).buffer,
           4143,
           0,
@@ -250,7 +252,7 @@ export class AmigaModPlayer2 {
   }
 
   public createPatternBinding(): Promise<ThrushPatternBinding> {
-    return this._driver.createPatternBindings(this._modFile.samples)
+    return this._driver.createPatternBindings(this._modFile.songName, this._modFile.samples)
   }
 
   private compilePattern(pattern: AmigaModPattern): { 

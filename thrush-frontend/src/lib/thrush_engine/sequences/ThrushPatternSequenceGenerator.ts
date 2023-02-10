@@ -58,7 +58,7 @@ export type ThrushPattern = {
 
 export type ThrushPatternBinding = {
   synth: ThrushCommonSynthesizerInterface;
-  sampleInsturmentHandles: number[];  
+  sampleInstrumentHandles: string[];  
 }
 
 type ThrushPatternChannelState = {
@@ -158,7 +158,7 @@ export class ThrushPatternSequenceGenerator extends ThrushArraySequenceGenerator
             channelIndex,
             {
               newNote: channelCommand.note ? { 
-                instrumentId: binding.sampleInsturmentHandles[currentChannelState.sample],
+                instrumentId: binding.sampleInstrumentHandles[currentChannelState.sample],
                 note: channelCommand.note
               } : undefined,
               panning: currentChannelState.panning,

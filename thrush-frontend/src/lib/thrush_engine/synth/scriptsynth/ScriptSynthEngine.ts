@@ -6,7 +6,7 @@ export type ScriptSynthEngineEvent = {
   channelOrNoteId: number | string;
 
   newNote?: {
-    instrumentId: number;
+    instrumentId: string;
     note: number;
   }
 
@@ -24,7 +24,7 @@ export type ScriptSynthEngineEvent = {
 
 export class ScriptSynthEngine {
   private _eventQueue: ScriptSynthEngineEvent[] = [];
-  private _instruments: ScriptSynthInstrument[] = [];
+  private _instruments: { [id: string]: ScriptSynthInstrument } = {};
 
   private _sampleRate: number;
   private _toneGenerator: ScriptSynthToneGenerator;
@@ -43,8 +43,8 @@ export class ScriptSynthEngine {
     this._eventQueue.push(event);
   }
 
-  registerInstrument(instrument: ScriptSynthInstrument): number {
-    return this._instruments.push(instrument) - 1;
+  registerInstrument(instrumentId: string, instrument: ScriptSynthInstrument): void {
+    this._instruments[instrumentId] = instrument;
   }
 
   get toneGenerator(): ScriptSynthToneGenerator {
@@ -106,14 +106,8 @@ export class ScriptSynthEngine {
     }
   }
 
-  updateInstrument(instrumentHandle: number, instrument: ScriptSynthWaveInstrument) {
-    if(this._instruments[instrumentHandle]) {
-      this._instruments[instrumentHandle] = instrument;
-    }
-  }
-
-  deleteInstrument(instrumentHandle: number) {
-    (<any>this._instruments[instrumentHandle]) = null;
+  deleteInstrument(instrumentId: string) {
+    delete this._instruments[instrumentId];
   }
 
   enqueueRealtimeEvent(event: ScriptSynthEngineEvent): number {

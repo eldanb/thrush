@@ -6,9 +6,9 @@ export class NoteSequenceContext {
   tempo: number = 0.5;
 
   synth: ThrushCommonSynthesizerInterface | null = null;
-  instruments: number[] = [];
+  instruments: string[] = [];
 
-  instrumentId: number = 0;
+  instrumentId: string = '';
   noteVolume: number = 1;
   notePanning: number = 0.5;
 

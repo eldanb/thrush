@@ -31,8 +31,8 @@ export class CodeSynthPageComponent implements OnInit {
   sequenceCode = require('!raw-loader!src/assets/example-songs/code/default-new-code.txt').default;
 
   public codeLoadedInsturments: Array<{
-    nativeId: number;
-    scriptId: number;
+    nativeId: string;
+    scriptId: string;
     name: string;
   }> = [];
 
@@ -58,7 +58,9 @@ export class CodeSynthPageComponent implements OnInit {
   async handleCodeSampleLoadButtonClick() {
     const instrument = await this._resourceEditDialogSerice.runResourceDialog(WaveInstrumentEditorComponent);
     if(instrument) {
-      const instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
+      const instrumenId = `instrument${this.codeLoadedInsturments.length+1}`;
+      await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
+        instrumenId,
         new Float32Array(Buffer.from(instrument.samplesBase64, "base64")),
         instrument.sampleRate,
         instrument.loopStartTime && instrument.loopEndTime 
@@ -72,8 +74,8 @@ export class CodeSynthPageComponent implements OnInit {
         instrument.exitEnvelopes);
 
       this.codeLoadedInsturments.push({
-          scriptId: instrumentId,
-          nativeId: -1,
+          scriptId: instrumenId,
+          nativeId: '',
           name: 'custom'
         });
     }
@@ -90,15 +92,15 @@ export class CodeSynthPageComponent implements OnInit {
 
   private async registerCodeSample(sampleName: string,  instrumentSampleArray: ArrayBuffer) {
     const wavFile = parseWav(instrumentSampleArray!);
-    
-    let instrumentId = await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(
+    const instrumenId = sampleName;
+    await this._thrushEngine.sequencer.tsynthToneGenerator.createInstrument(instrumenId,
       wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, 1);
-    let instrumentIdNative = this._thrushEngine.sequencer.waveTableSynthesizer.registerInstrument(
+    this._thrushEngine.sequencer.waveTableSynthesizer.registerInstrument(instrumenId, 
       wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, 0, 1);
 
     this.codeLoadedInsturments.push({
-      scriptId: instrumentId,
-      nativeId: instrumentIdNative,
+      scriptId: instrumenId,
+      nativeId: instrumenId,
       name: sampleName
     });
   }

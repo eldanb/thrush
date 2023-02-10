@@ -33,35 +33,20 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
   async update_abst_wave_instrument(name: string, resource: ResourceTypeAbstractWaveInstrument) {
     const hasLoop = resource.loopStartTime && resource.loopEndTime;
 
-    if(this._registeredInstrumentIds[name] === undefined) {
-      const instrumentId = await this._sequencer.tsynthToneGenerator.createInstrument(
-        new Float32Array(Base64ToFloat32ArrayLe(resource.samplesBase64)),
-        resource.sampleRate,
-        hasLoop
-          ? resource.loopStartTime * resource.sampleRate
-          : 0,
-        hasLoop
-          ? (resource.loopEndTime-resource.loopStartTime) * resource.sampleRate
-          : 0,
-        1, 
-        resource.entryEnvelopes,
-        resource.exitEnvelopes);
-      this._registeredInstrumentIds[name] = instrumentId;
-    } else {
-      await this._sequencer.tsynthToneGenerator.updateInstrument(
-        this._registeredInstrumentIds[name],
-        new Float32Array(Base64ToFloat32ArrayLe(resource.samplesBase64)),
-        resource.sampleRate,
-        hasLoop
-          ? resource.loopStartTime * resource.sampleRate
-          : 0,
-        hasLoop
-          ? (resource.loopEndTime-resource.loopStartTime) * resource.sampleRate
-          : 0,
-        1, 
-        resource.entryEnvelopes,
-        resource.exitEnvelopes);      
-    }
+    
+    await this._sequencer.tsynthToneGenerator.createInstrument(
+      name,
+      new Float32Array(Base64ToFloat32ArrayLe(resource.samplesBase64)),
+      resource.sampleRate,
+      hasLoop
+        ? resource.loopStartTime * resource.sampleRate
+        : 0,
+      hasLoop
+        ? (resource.loopEndTime-resource.loopStartTime) * resource.sampleRate
+        : 0,
+      1, 
+      resource.entryEnvelopes,
+      resource.exitEnvelopes);
   }
   
   async create_script(): Promise<ThrushProjectResourceWithType<'script'>> {

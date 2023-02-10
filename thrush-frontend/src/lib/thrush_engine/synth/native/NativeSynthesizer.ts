@@ -48,7 +48,7 @@ class NativeSynthesizerChannelState {
 
 export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
   private _channelState: NativeSynthesizerChannelState[] = [];
-  private _instruments: NativeSynthesizerInstrument[] = [];
+  private _instruments: { [instrumentId: string]: NativeSynthesizerInstrument } = {};
   private _flushTimer: any;
   private _allScheduled = new Set<AudioNode>();
 
@@ -85,14 +85,15 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
   }
   
   registerInstrument(
+    instrumentId: string,
     sampleBuff: ArrayBuffer, 
     sampleRate: number, 
     sampleStart: number, 
     loopStart: number, 
     loopLen: number, 
-    volume: number): number {
+    volume: number): void {
 
-    return this._instruments.push(
+    this._instruments[instrumentId] = 
       new NativeSynthesizerInstrument(new Float32Array(sampleBuff), sampleRate, loopStart, loopLen,
       {
         volume: [
@@ -117,8 +118,7 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
             value: 0
           }
         ]
-      })
-    ) - 1;
+      });
   }
   
   private resolveChannelStateForEvent(synthEvent: ThrushCommonSynthesizerEvent): NativeSynthesizerChannelState {

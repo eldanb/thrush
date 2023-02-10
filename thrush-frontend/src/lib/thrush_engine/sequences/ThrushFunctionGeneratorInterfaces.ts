@@ -46,7 +46,7 @@ declare type PartSequenceOptions = {
    * An array of instruments. Part instructions that refer to an insturment, such as `[i...]`, refer to an 
    * index into this array to identify the insturment.
    */
-  instruments: number[];  
+  instruments: string[];  
 
   /**
    * Tempo -- the length of a beat in seconds for timing.
@@ -90,7 +90,7 @@ declare interface ThrushSequenceGenerationCalls {
    * @param note Note to play. Expressed as the number of semitones from c0.
    * @param options Settings for played note. 
    */
-  playNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, instrumentId: number, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective;
+  playNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, instrumentId: string, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective;
 
   /**
    * Create a directive to change note settings for a note previously trigged by <code>playNote</code>. 

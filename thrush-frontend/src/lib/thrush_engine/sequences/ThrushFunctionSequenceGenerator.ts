@@ -109,7 +109,7 @@ class ThrushSequenceGenerationCallsImpl implements ThrushSequenceGenerationCalls
 
   }
 
-  playNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, instrumentId: number, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective {
+  playNote(synth: SynthesizerSelection, channel: ChannelOrNoteId, instrumentId: string, note: number, options?: NoteSettings): ThrushSequenceGenerationDirective {
     return this.internalEventToDirective({
       type: 'event',
       event: new ThrushCommonSynthesizerEvent(

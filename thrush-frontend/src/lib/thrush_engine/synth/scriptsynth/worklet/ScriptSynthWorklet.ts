@@ -21,20 +21,10 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
       }));
   }
 
-  async deleteInstrument(instrumentHandle: number): Promise<void> {
+  async deleteInstrument(instrumentHandle: string): Promise<void> {
     this._synthEngine!.deleteInstrument(instrumentHandle);
   }
 
-  async updateInstrument(instrumentHandle: number, instrumentBuff: ArrayBuffer, sampleRate: number, loopStart: number, loopLen: number, volume: number, entryEnvelopes: Envelopes | undefined, exitEnvelopes: Envelopes | undefined): Promise<void> {
-    this._synthEngine!.updateInstrument(instrumentHandle, new ScriptSynthWaveInstrument(
-      new Float32Array(instrumentBuff),
-      sampleRate,
-      loopStart, loopLen,
-      volume, 
-      entryEnvelopes,
-      exitEnvelopes
-      ));
-  }
 
   async enqueueEvent(event: ScriptSynthEngineEvent): Promise<void> {
     if(!this._synthEngine) {
@@ -53,17 +43,19 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
   }
 
   async createInstrument(
+    instrumentId: string,
     instrumentBuff: ArrayBuffer,
     sampleRate: number,
     loopStart: number, loopLen: number,
     volume: number,
     entryEnvelopes?: Envelopes,
-    exitEnvelopes?: Envelopes): Promise<number> {
+    exitEnvelopes?: Envelopes): Promise<void> {
     if(!this._synthEngine) {
       throw Error("Node not conigured")
     }
 
     return this._synthEngine.registerInstrument(
+      instrumentId,
       new ScriptSynthWaveInstrument(
         new Float32Array(instrumentBuff),
         sampleRate,

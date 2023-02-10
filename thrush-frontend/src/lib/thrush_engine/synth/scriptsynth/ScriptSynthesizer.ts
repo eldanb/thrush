@@ -39,24 +39,7 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
     return this._workletNodeRpcProxy.configure(this._audioContext.sampleRate);
   }
 
-  createInstrument(instrument: ArrayBuffer,
-    sampleRate: number,    
-    loopStart: number, 
-    loopLen: number,
-    volume: number,
-    entryEnvelopes?: Envelopes,
-    exitEnvelopes?: Envelopes): Promise<number> {
-      return this._workletNodeRpcProxy.createInstrument(
-        instrument, 
-        sampleRate,
-        loopStart,
-        loopLen, 
-        volume,
-        entryEnvelopes,
-        exitEnvelopes);
-  }
-
-  updateInstrument(instrumentHandle: number, 
+  createInstrument(instrumentId: string,
     instrument: ArrayBuffer,
     sampleRate: number,    
     loopStart: number, 
@@ -64,20 +47,21 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
     volume: number,
     entryEnvelopes?: Envelopes,
     exitEnvelopes?: Envelopes): Promise<void> {
-      return this._workletNodeRpcProxy.updateInstrument(
-        instrumentHandle,
+      return this._workletNodeRpcProxy.createInstrument(
+        instrumentId,
         instrument, 
         sampleRate,
-        loopStart,
+        loopStart,        
         loopLen, 
         volume,
         entryEnvelopes,
         exitEnvelopes);
   }
 
-  deleteInstrument(instrumentHandle: number) {
+
+  deleteInstrument(instrumentId: string) {
     this._workletNodeRpcProxy.deleteInstrument(
-      instrumentHandle);      
+      instrumentId);      
   }
 
 

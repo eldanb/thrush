@@ -68,3 +68,13 @@ $wavetable-editor-theme: (
 .wavetable-editor-themed {
   @include mat.all-component-themes($wavetable-editor-theme);  
 }
+
+.horizontal-stack {
+  display: flex;
+  flex-direction: row;
+}
+
+.vertical-stack {
+  display: flex;
+  flex-direction: column;
+}

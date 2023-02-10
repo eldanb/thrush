@@ -29,8 +29,10 @@ export class EnvelopeCurveState {
   }
 
   updateEnvelopeState(currentSample: number) {
+    if(!this.running) return;
+
     // Page to next curve segment?
-    if(this.running && this._endSample <= currentSample) {
+    if(this._endSample <= currentSample) {
       let running = true;
       let currentEnvelopeCurveIndex = this._curveIndex;
       let currentEndSample = this._endSample;
