@@ -23,7 +23,7 @@ export type ResourceTypeAbstractWaveInstrument = {
   exitEnvelopes: Envelopes
 }
 
-type ThrushProjectResourceWithType<K> = 
+export type ThrushProjectResourceWithType<K> = 
   K extends keyof ResourceTypes ? ({ type: K } & ResourceTypes[K]) : never;
 
 export type ThrushProjectTypedResource = ThrushProjectResourceWithType<keyof ResourceTypes>;

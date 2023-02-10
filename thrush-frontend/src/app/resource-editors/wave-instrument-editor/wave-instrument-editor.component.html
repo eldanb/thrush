@@ -30,66 +30,75 @@
     <mat-icon>crop</mat-icon>
   </button>
 
-  <div class="spacer"></div>
   
-  <mat-icon>select</mat-icon>
-  <input type="number" class="cursor-input" [(ngModel)]="selectionStartTime" />s
-  - <input type="number" class="cursor-input" [(ngModel)]="selectionEndTime" />s
-
-  <div class="spacer"></div>
-
   <button mat-icon-button (click)="handleSetLoopToSelection()">
     <mat-icon>repeat</mat-icon>
   </button>
-  <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />s -
-  <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />s
-
+  
   <div class="spacer"></div>
-
+  
 </app-ui-region-content>
 
-<div class="waveform-editor-heading">
-  <div class="tab">Waveform</div>
-</div>
+  <div class="waveform-editor-main">
+    <div class="waveform-editor-heading">
+      <div class="tab">Waveform</div>
+    </div>
+    
+    <app-waveform-editor
+      [editedWaveform]="editedWaveform"
+      [displayStartTime]="displayStartTime"
+      [displayEndTime]="displayEndTime"
+      [(selectionStartTime)]="selectionStartTime"
+      [(selectionEndTime)]="selectionEndTime"
+      [(loopStartTime)]="loopStartTime"
+      [(loopEndTime)]="loopEndTime"
+      [playbackTime]="playbackTime"
+    ></app-waveform-editor>
+    
+    <div class="waveform-editor-heading wavetable-editor-themed">
+      <div>Attack:</div>
+    
+      <mat-button-toggle-group>
+        <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
+        <mat-button-toggle value="italic">PAN</mat-button-toggle>    
+      </mat-button-toggle-group>
+    </div>
+    <app-envelope-editor
+      [(editedEnvelope)]="editedEntryEnvelope"
+      [displayStartTime]="displayStartTime"
+      [displayEndTime]="displayEndTime"
+    ></app-envelope-editor>
+    
+    <div class="waveform-editor-heading wavetable-editor-themed">
+      <div>Release:</div>
+      <mat-button-toggle-group>
+        <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
+        <mat-button-toggle value="italic">PAN</mat-button-toggle>    
+      </mat-button-toggle-group>
+    </div>
+    
+    <app-envelope-editor
+      [(editedEnvelope)]="editedExitEnvelope"
+      [displayStartTime]="displayStartTime"
+      [displayEndTime]="displayEndTime"
+    ></app-envelope-editor>
+  </div>
+  
+  <div class="vertical-stack">
+    <mat-icon>select</mat-icon>
+    <input type="number" class="cursor-input" [(ngModel)]="selectionStartTime" />s
+    <input type="number" class="cursor-input" [(ngModel)]="selectionEndTime" />s
 
-<app-waveform-editor
-  [editedWaveform]="editedWaveform"
-  [displayStartTime]="displayStartTime"
-  [displayEndTime]="displayEndTime"
-  [(selectionStartTime)]="selectionStartTime"
-  [(selectionEndTime)]="selectionEndTime"
-  [(loopStartTime)]="loopStartTime"
-  [(loopEndTime)]="loopEndTime"
-  [playbackTime]="playbackTime"
-></app-waveform-editor>
 
-<div class="waveform-editor-heading wavetable-editor-themed">
-  <div>Attack:</div>
+    <button mat-icon-button (click)="handleSetLoopToSelection()">
+      <mat-icon>repeat</mat-icon>
+    </button>
+    <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />s -
+    <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />s
 
-  <mat-button-toggle-group>
-    <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
-    <mat-button-toggle value="italic">PAN</mat-button-toggle>    
-  </mat-button-toggle-group>
-</div>
-<app-envelope-editor
-  [(editedEnvelope)]="editedEntryEnvelope"
-  [displayStartTime]="displayStartTime"
-  [displayEndTime]="displayEndTime"
-></app-envelope-editor>
+  </div>
 
-<div class="waveform-editor-heading wavetable-editor-themed">
-  <div>Release:</div>
-  <mat-button-toggle-group>
-    <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
-    <mat-button-toggle value="italic">PAN</mat-button-toggle>    
-  </mat-button-toggle-group>
-</div>
 
-<app-envelope-editor
-  [(editedEnvelope)]="editedExitEnvelope"
-  [displayStartTime]="displayStartTime"
-  [displayEndTime]="displayEndTime"
-></app-envelope-editor>
 
 <input
   id="fileLoadControl"

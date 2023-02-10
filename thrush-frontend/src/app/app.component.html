@@ -7,7 +7,8 @@
     <button mat-button [matMenuTriggerFor]="fileMenu">File</button>  
     <mat-menu #fileMenu>  
       <button mat-menu-item>New</button>  
-      <button mat-menu-item>Open example...</button>      
+      <button mat-menu-item>Open example...</button>
+      <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
     </mat-menu>  
     <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
     <mat-menu #helpMenu>  
@@ -21,15 +22,12 @@
 
 
 <mat-toolbar class="thrush-tool-bar">
-  <button mat-icon-button (click)="projectEditor.toggleResourceList()">
-    <mat-icon>menu</mat-icon>
-  </button>
-
   <app-ui-region region="toolbar"></app-ui-region>
 </mat-toolbar>
 
 <div class="thrush-main-content">
-  <app-project-editor #projectEditor></app-project-editor>
+  <app-project-editor *ngIf="currentProjectController" 
+    [editedProjectController]="currentProjectController"></app-project-editor>
 </div>
 
 <div class="thrush-status-bar">

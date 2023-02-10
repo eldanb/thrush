@@ -1,0 +1,9 @@
+{
+  "title": "project",
+  "resources": {
+    "main": { 
+      "type": "script",
+      "code": "/**\n * @param {ThrushSequenceGenerationCalls} c\n */\nfunction* mainSequence(c) {\n\n\n}\n"
+    }
+  } 
+}

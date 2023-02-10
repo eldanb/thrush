@@ -1,8 +1,12 @@
 import { ThrushSequencer } from "../thrush_engine/ThrushSequencer";
-import { Base64ToFloat32ArrayLe, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectTypedResource } from "./project-datamodel";
+import { Base64ToFloat32ArrayLe, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectResourceWithType, ThrushProjectTypedResource } from "./project-datamodel";
 
 type ResourceUpdateHandler = {
   [resourceType in ResourceType as `update_${resourceType}`]: (name: string, resource: ResourceTypes[resourceType]) => Promise<void>;
+}
+
+type ResourceCreationHandler = {
+  [resourceType in ResourceType as `create_${resourceType}`]: () => Promise<ThrushProjectResourceWithType<resourceType>>;
 }
 
 const EMPTY_PROJECT = {
@@ -10,7 +14,7 @@ const EMPTY_PROJECT = {
   resources: {}
 };
 
-class ThrushProjectController implements ResourceUpdateHandler {
+export class ThrushProjectController implements ResourceUpdateHandler, ResourceCreationHandler {
   private _registeredInstrumentIds: Record<string, number> = {};
   
   constructor(
@@ -19,6 +23,9 @@ class ThrushProjectController implements ResourceUpdateHandler {
     ) {
   }
   
+  public get project(): ThrushProject {
+    return this._dataModel;
+  }
   
   async update_script(name: string, resource: ResourceTypeScript) {    
   }
@@ -56,9 +63,46 @@ class ThrushProjectController implements ResourceUpdateHandler {
         resource.exitEnvelopes);      
     }
   }
+  
+  async create_script(): Promise<ThrushProjectResourceWithType<'script'>> {
+    return {
+      type: 'script',
+      code: '',
+    };    
+  }
 
-  async saveResource(resourceName: ResourceType, resource: ThrushProjectTypedResource) {
+  async create_abst_wave_instrument(): Promise<ThrushProjectResourceWithType<'abst_wave_instrument'>> {
+    return {
+      type: 'abst_wave_instrument',
+      entryEnvelopes: {
+        volume: []
+      },
+      exitEnvelopes: {
+        volume: []
+      },
+      sampleRate: 8000,
+      samplesBase64: "",
+      loopStartTime: 0,
+      loopEndTime: 0
+    }
+  }
+
+  async createResource(resourceType: ResourceType) {
+    let suggestedName;
+    let untitledIndex = 1;
+    do {
+      suggestedName = `${resourceType}${untitledIndex}`;
+      untitledIndex++;
+    } while(this._dataModel.resources[suggestedName]);
+
+
+    this._dataModel.resources[suggestedName] = await this[`create_${resourceType}`]();
+
+    return suggestedName;
+  }
+
+  async saveResource(resourceName: string, resource: ThrushProjectTypedResource) {
     this._dataModel.resources[resourceName] = resource;
-    await this[`update_${resourceName}`](resourceName, <any>resource);
+    await this[`update_${resource.type}`](resourceName, <any>resource);
   }
 }

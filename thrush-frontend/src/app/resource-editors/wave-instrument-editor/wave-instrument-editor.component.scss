@@ -1,9 +1,23 @@
 :host {
   display: flex;
+  flex-direction: row;
+  overflow: hidden;
+
+  flex-grow: 1;
+}
+
+.waveform-editor-main {
+  display: flex;
   flex-direction: column;
   overflow-y: hidden;
 
   flex-grow: 1;
+}
+
+.waveform-editor-props {
+  display: flex;
+  flex-direction: column;
+  width: 20rem;
 }
 
 app-waveform-editor {

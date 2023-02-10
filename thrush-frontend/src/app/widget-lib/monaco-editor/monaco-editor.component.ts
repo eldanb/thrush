@@ -9,10 +9,9 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 })
 export class MonacoEditorComponent implements OnInit, AfterViewInit {
   @ViewChild('container', { read: ElementRef })
-  private editorContainer: ElementRef | null = null;
-
-  private editor: monaco.editor.IStandaloneCodeEditor | null = null;
-  private textFromProperty: string = '';
+  private _editorContainer: ElementRef | null = null;
+  private _editor: monaco.editor.IStandaloneCodeEditor | null = null;  
+  private _textFromProperty: string = "";
 
   @Output()
   public editorTextChanged = new EventEmitter<string>();
@@ -20,10 +19,10 @@ export class MonacoEditorComponent implements OnInit, AfterViewInit {
   constructor() { }
 
   ngAfterViewInit(): void {    
-    const textModel = monaco.editor.createModel(this.textFromProperty, 'javascript');
+    const textModel = monaco.editor.createModel(this._textFromProperty, 'javascript');
     textModel.onDidChangeContent((e) => this.editorTextChanged.next(textModel.getValue()));
 
-    this.editor = monaco.editor.create(this.editorContainer!.nativeElement, {
+    this._editor = monaco.editor.create(this._editorContainer!.nativeElement, {
       model: textModel,
       automaticLayout: true
     });
@@ -37,13 +36,14 @@ export class MonacoEditorComponent implements OnInit, AfterViewInit {
 
   @Input()
   get text(): string {
-    return this.editor?.getModel()?.getValue()!;
+    return this._editor?.getModel()?.getValue()!;
   }
 
   set text(t: string) {
-    this.textFromProperty = t;
-    if(this.editor?.getModel()) {
-      this.editor?.getModel()?.setValue(t);
-    }
+    this._textFromProperty = t;
+    let model = this._editor?.getModel();
+    if(model && model.getValue() != t) {
+      this._editor?.getModel()?.setValue(t);
+    }    
   }
 }

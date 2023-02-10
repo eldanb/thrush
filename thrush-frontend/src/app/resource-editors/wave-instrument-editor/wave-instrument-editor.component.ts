@@ -19,8 +19,6 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   public displayStartTime: number = 0;
   public displayEndTime: number = 0;
   
-  public loopStartTime: number | null = null;
-  public loopEndTime: number | null = null;
   public selectionStartTime: number | null = null;
   public selectionEndTime: number | null = null;
 
@@ -32,6 +30,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   private _playbackTime: number | null = null;
   private _playbackStartTime: number | null = null;
   private _playbackCursorUpdateTimer: any;
+  private _loopStartTime: number | null = null;
+  private _loopEndTime: number | null = null;
 
 
   private _editedEntryEnvelopes: Envelopes = {
@@ -46,6 +46,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
 
   public set editedEntryEnvelope(v: EnvelopeCurveCoordinate[]) {
     this._editedEntryEnvelopes[this.editedEntryEnvelopeName] = v;
+    this.resourceEdited.emit(true);
   }
 
 
@@ -61,7 +62,27 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
 
   public set editedExitEnvelope(v: EnvelopeCurveCoordinate[]) {
     this._editedExitEnvelopes[this.editedExitEnvelopeName] = v;
+    this.resourceEdited.emit(true);
   }
+
+
+  public get loopStartTime(): number | null {
+    return this._loopStartTime;
+  }
+
+  public set loopStartTime(value: number | null) {
+    this._loopStartTime = value;
+    this.resourceEdited.emit(true);
+  }
+
+  public get loopEndTime(): number | null {
+    return this._loopEndTime;
+  }
+
+  public set loopEndTime(value: number | null) {
+    this._loopEndTime = value;
+    this.resourceEdited.emit(true);
+  } 
 
   public get playbackTime() {
     return this._playbackTime;
@@ -208,7 +229,9 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
           envelopes[envelopeKey] = [ { time: 0, value: 1 }];
         }
       });
-    });    
+    });  
+    
+    this.resourceEdited.emit(true);
   }
 
   public handleLoadSample(eTarget: EventTarget) {
@@ -240,8 +263,10 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
             time: 0, 
             value: 0
           }]
-          };
         };
+
+        this.resourceEdited.emit(this.editedResource);
+    };
 
     reader.readAsArrayBuffer(sampleFile);
   }
