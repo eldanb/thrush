@@ -8,7 +8,6 @@
     <mat-menu #fileMenu>  
       <button mat-menu-item>New</button>  
       <button mat-menu-item (click)="handleLoadProject()">Open...</button>  
-      <button mat-menu-item>Open example...</button>
       <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
     </mat-menu>  
     <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
@@ -34,11 +33,3 @@
 <!--<div class="thrush-status-bar">
   statusbar
 </div>-->
-
-
-
-<input
-  id="fileLoadControl"
-  type="file"
-  (change)="handleLoadedProjectSelected($event.target!)"
-/>

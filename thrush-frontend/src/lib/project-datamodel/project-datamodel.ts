@@ -30,7 +30,7 @@ export type ThrushProjectTypedResource = ThrushProjectResourceWithType<keyof Res
 
 export type ResourceType = keyof ResourceTypes;
 
-export function Base64ToFloat32ArrayLe(b64: string) {
+function Base64ToFloat32ArrayLe(b64: string) {
   const binaryContent = atob(b64);
   const uintBuffer = new Uint8Array(binaryContent.length);
   for(let index = 0; index < binaryContent.length; index++) {
@@ -45,8 +45,8 @@ export function Base64ToFloat32ArrayLe(b64: string) {
   
   return result;
 }
-
-export function Float32ArrayToBase64Le(arr: Float32Array) {
+  
+function Float32ArrayToBase64Le(arr: Float32Array) {
   const binaryBuffer = new ArrayBuffer(arr.length * Float32Array.BYTES_PER_ELEMENT);
   const dataView = new DataView(binaryBuffer);
   arr.forEach((value, index) => {
@@ -55,4 +55,13 @@ export function Float32ArrayToBase64Le(arr: Float32Array) {
 
   const binaryString = Array.from(new Uint8Array(binaryBuffer)).map(b => String.fromCharCode(b)).join('');
   return btoa(binaryString);
+}
+
+export function WaveformToJson(waveform: Float32Array) {
+  return Float32ArrayToBase64Le(waveform);
+}
+  
+
+export function JsonToWaveform(json: any) {
+  return Base64ToFloat32ArrayLe(json);
 }

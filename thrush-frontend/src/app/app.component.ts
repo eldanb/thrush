@@ -3,9 +3,38 @@ import { ThrushProject } from 'src/lib/project-datamodel/project-datamodel';
 import { ThrushProjectController } from 'src/lib/project-datamodel/thrush-project-controller';
 import { ThrushEngineService } from './services/thrush-engine.service';
 import { AppUiFrameworkService } from './widget-lib/ui-region-content/app-ui-framework.service';
+import { ResourceOpenDialogService } from './widget-lib/resource-open-dialog/resource-open-dialog-service';
+import { FileBrowserFileDetails, IFileOpenBrowseSource } from './widget-lib/resource-open-dialog/resource-open-dialog.component';
 
 
 const BLANK_PROJECT: ThrushProject = require('src/assets/example-projects/blank.thrush.json');
+
+
+class SampleProjectsBrowser implements IFileOpenBrowseSource {
+  
+  async getFilesInFolder(folderId?: string | undefined): Promise<FileBrowserFileDetails[]> {
+    return [
+      './assets/example-projects/part-notation.thrush.json',
+    ].map((url) => {
+      const urlParts = url.split('/');
+      const filename = urlParts[urlParts.length-1];
+      const basename = filename.split('.')[0]
+      return {
+        isFolder: false,
+        id: url,
+        name: basename
+      };
+    });
+  }
+
+  async getFileContent(fileId: string): Promise<ArrayBuffer> {
+    const result = await fetch(fileId);
+    return await result.arrayBuffer();    
+  }
+  
+  public readonly displayName: string = "Examples";
+}
+
 
 @Component({
   selector: 'app-root',
@@ -18,7 +47,9 @@ export class AppComponent implements AfterViewInit {
 
   public currentProjectController: ThrushProjectController | null = null;
 
-  constructor(private _thrushEngine: ThrushEngineService) {    
+  constructor(
+    private _thrushEngine: ThrushEngineService,
+    private _fileOpenDlg: ResourceOpenDialogService) {    
   }
 
   ngAfterViewInit(): void {
@@ -30,20 +61,15 @@ export class AppComponent implements AfterViewInit {
     await this.loadProject(Object.assign({}, BLANK_PROJECT));
   }
 
-  handleLoadProject() {
-    document.getElementById('fileLoadControl')?.click();
-  }
-  
-  handleLoadedProjectSelected(eventTarget: EventTarget) {
-    const filePicker = eventTarget as HTMLInputElement;
-    const sampleFile = filePicker!.files![0];    
-    const reader = new FileReader();
+  async handleLoadProject() {
+    const fileArrayBuffer = await this._fileOpenDlg.open({
+      title: 'Select Project to Open',
+      allowLocal: true,
+      browseSources: [new SampleProjectsBrowser()]
+    });
 
-    reader.onloadend = () => { 
-      this.loadProject(JSON.parse(reader.result as string));
-    };
-
-    reader.readAsText(sampleFile);  
+    const projectJson = JSON.parse(new TextDecoder().decode(fileArrayBuffer));
+    this.loadProject(projectJson);    
   }
   
 

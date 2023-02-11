@@ -32,6 +32,8 @@ import { ProjectEditorComponent } from './project-editor/project-editor.componen
 import { SynthScriptEditorComponent } from './resource-editors/synth-script-editor/synth-script-editor.component';
 import { UiRegionContentComponent } from './widget-lib/ui-region-content/ui-region-content.component';
 import { UiRegionComponent } from './widget-lib/ui-region/ui-region.component';
+import { ResourceOpenDialogComponent } from './widget-lib/resource-open-dialog/resource-open-dialog.component';
+import { ResourceOpenDialogService } from './widget-lib/resource-open-dialog/resource-open-dialog-service';
 @NgModule({
   declarations: [
     AppComponent,
@@ -47,6 +49,7 @@ import { UiRegionComponent } from './widget-lib/ui-region/ui-region.component';
     SynthScriptEditorComponent,
     UiRegionContentComponent,
     UiRegionComponent,
+    ResourceOpenDialogComponent,
   ],
   imports: [
     BrowserModule,
@@ -69,7 +72,9 @@ import { UiRegionComponent } from './widget-lib/ui-region/ui-region.component';
     MatMenuModule,
     MatToolbarModule
   ],
-  providers: [ResourceEditorDialogService],
+  providers: [
+    ResourceEditorDialogService, 
+    ResourceOpenDialogService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

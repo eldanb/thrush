@@ -1,0 +1,30 @@
+:host {
+  display: flex;
+  flex-direction: column;
+
+  .browse-area {
+    flex-grow: 1;
+    min-height: 20rem;
+    margin-top: 1rem;
+  }
+
+  .browser-sidebar {
+    background: rgb(250, 250, 250);
+  }
+  
+  .browser-items {
+    flex-grow: 1;
+    
+    display: flex;
+    flex-direction: column;
+    
+    overflow: scroll;
+    padding: 0.5rem;
+
+    align-items: stretch;
+  }
+}
+
+#fileLoadControl {
+  display: none;
+}

@@ -1,13 +1,13 @@
 <mat-drawer-container [hasBackdrop]="false">
   <mat-drawer mode="side" [opened]="showDrawer">
     <div class="vertical-stack full">
-      <div class="resource-list">
+      <div class="resource-list selectable-list">
         <h3>
           Resources
           <button mat-icon-button><mat-icon>plus</mat-icon></button>
         </h3>
 
-        <div class="resource-list-item" [attr.data-active]="activeEditor?.resourceName == resource" *ngFor="let resource of editedProjectResourceNames">
+        <div class="list-item" [attr.data-active]="activeEditor?.resourceName == resource" *ngFor="let resource of editedProjectResourceNames">
             <a (click)="handleOpenResource(resource)">{{resource}}</a>
         </div>
 

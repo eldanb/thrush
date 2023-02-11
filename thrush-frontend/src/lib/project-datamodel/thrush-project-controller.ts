@@ -1,5 +1,5 @@
 import { ThrushSequencer } from "../thrush_engine/ThrushSequencer";
-import { Base64ToFloat32ArrayLe, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectResourceWithType, ThrushProjectTypedResource } from "./project-datamodel";
+import { JsonToWaveform, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectResourceWithType, ThrushProjectTypedResource } from "./project-datamodel";
 
 type ResourceUpdateHandler = {
   [resourceType in ResourceType as `update_${resourceType}`]: (name: string, resource: ResourceTypes[resourceType]) => Promise<void>;
@@ -36,7 +36,7 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     
     await this._sequencer.tsynthToneGenerator.createInstrument(
       name,
-      new Float32Array(Base64ToFloat32ArrayLe(resource.samplesBase64)),
+      new Float32Array(JsonToWaveform(resource.samplesBase64)),
       resource.sampleRate,
       hasLoop
         ? resource.loopStartTime * resource.sampleRate

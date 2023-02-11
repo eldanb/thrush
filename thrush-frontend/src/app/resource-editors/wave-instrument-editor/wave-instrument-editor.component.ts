@@ -4,7 +4,7 @@ import { parseWav } from 'src/lib/formats/WavParser';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrument';
 import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
-import {  Base64ToFloat32ArrayLe, Float32ArrayToBase64Le, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
+import {  JsonToWaveform, WaveformToJson, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
 import { ResourceEditor } from '../resource-editor';
 
 
@@ -275,7 +275,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   get editedResource(): ResourceTypeAbstractWaveInstrument {   
     if(this._cachedEditedResource == null) {
       this._cachedEditedResource = { 
-        samplesBase64: Float32ArrayToBase64Le(this.editedWaveform!.channelSamples[0]),
+        samplesBase64: WaveformToJson(this.editedWaveform!.channelSamples[0]),
         sampleRate: this.editedWaveform!.sampleRate,
         loopStartTime: this.loopStartTime!,
         loopEndTime: this.loopEndTime!,
@@ -289,7 +289,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   set editedResource(resource: ResourceTypeAbstractWaveInstrument | null) {
     if(resource) {
       this.editedWaveform = {
-        channelSamples: [Base64ToFloat32ArrayLe(resource.samplesBase64)],
+        channelSamples: [JsonToWaveform(resource.samplesBase64)],
         sampleRate: resource.sampleRate,            
       }
 
@@ -311,7 +311,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
       this._registeredInstrument = `$$WAVEDITOR${Math.random()}`;
     }
     await synth.createInstrument(this._registeredInstrument, 
-      Base64ToFloat32ArrayLe(abstInstrument.samplesBase64),  abstInstrument.sampleRate, 
+      JsonToWaveform(abstInstrument.samplesBase64),  abstInstrument.sampleRate, 
         (abstInstrument.loopStartTime && abstInstrument.loopEndTime) 
           ? abstInstrument.loopStartTime * abstInstrument.sampleRate
           : 0, 
