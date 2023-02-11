@@ -90,4 +90,9 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     this._dataModel.resources[resourceName] = resource;
     await this[`update_${resource.type}`](resourceName, <any>resource);
   }
+
+  async loadAllToSynthEngine() {
+    await Promise.all(Object.entries(this._dataModel.resources).map(([resourceName, resource]) => 
+      this[`update_${resource.type}`](resourceName, <any>resource)));      
+  }
 }

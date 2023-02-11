@@ -36,7 +36,7 @@
   </button>
   
   <div class="spacer"></div>
-  
+  <button mat-button (click)="createEncodedStream()">meh</button>
 </app-ui-region-content>
 
   <div class="waveform-editor-main">
@@ -97,11 +97,3 @@
     <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />s
 
   </div>
-
-
-
-<input
-  id="fileLoadControl"
-  type="file"
-  (change)="handleLoadSample($event.target!)"
-/>

@@ -7,6 +7,7 @@
     <button mat-button [matMenuTriggerFor]="fileMenu">File</button>  
     <mat-menu #fileMenu>  
       <button mat-menu-item>New</button>  
+      <button mat-menu-item (click)="handleLoadProject()">Open...</button>  
       <button mat-menu-item>Open example...</button>
       <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
     </mat-menu>  
@@ -30,6 +31,14 @@
     [editedProjectController]="currentProjectController"></app-project-editor>
 </div>
 
-<div class="thrush-status-bar">
+<!--<div class="thrush-status-bar">
   statusbar
-</div>
+</div>-->
+
+
+
+<input
+  id="fileLoadControl"
+  type="file"
+  (change)="handleLoadedProjectSelected($event.target!)"
+/>

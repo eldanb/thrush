@@ -1,12 +1,11 @@
 import { ComponentType } from '@angular/cdk/portal';
-import { Component, ComponentRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
-import { MatDrawer } from '@angular/material/sidenav';
-import { ResourceType, ThrushProject, ThrushProjectTypedResource } from 'src/lib/project-datamodel/project-datamodel';
-import { WaveInstrumentEditorComponent } from '../resource-editors/wave-instrument-editor/wave-instrument-editor.component';
-import { SynthScriptEditorComponent } from '../resource-editors/synth-script-editor/synth-script-editor.component';
-import { ResourceEditor } from '../resource-editors/resource-editor';
+import { AfterViewInit, Component, ComponentRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { ResourceType } from 'src/lib/project-datamodel/project-datamodel';
 import { ThrushProjectController } from 'src/lib/project-datamodel/thrush-project-controller';
+import { ResourceEditor } from '../resource-editors/resource-editor';
+import { SynthScriptEditorComponent } from '../resource-editors/synth-script-editor/synth-script-editor.component';
+import { WaveInstrumentEditorComponent } from '../resource-editors/wave-instrument-editor/wave-instrument-editor.component';
 
 
 type ResourceEditorDescriptor = {
@@ -29,22 +28,48 @@ const ResourceEditorTypes: Record<ResourceType, ComponentType<ResourceEditor<any
   templateUrl: './project-editor.component.html',
   styleUrls: ['./project-editor.component.scss']
 })
-export class ProjectEditorComponent implements OnInit {
+export class ProjectEditorComponent implements OnInit, AfterViewInit {
 
   @ViewChild("editorHost", { read: ViewContainerRef })
   private _editorHost: ViewContainerRef | null = null;
+  private _editedProjectController: ThrushProjectController | null = null;
 
-  @ViewChild('drawer')
-  private _drawer: MatDrawer | null = null;
+  public showDrawer: boolean = true;
 
   @Input()
-  public editedProjectController: ThrushProjectController | null = null;
-
+  public set editedProjectController(editedProjectController: ThrushProjectController | null) {
+    this.closeAllEditors();
+    this._editedProjectController = editedProjectController;  
+    
+    if(this._editedProjectController?.project.resources['main']) {
+      this.openResource('main');
+    }
+  }
+  
+  public get editedProjectController(): ThrushProjectController | null {
+    return this._editedProjectController;
+  }
 
   openEditors: ResourceEditorDescriptor[] = [ 
   ];
 
   private _activeEditor: ResourceEditorDescriptor | null = null;
+
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+  ngAfterViewInit(): void {
+      if(this._activeEditor) {
+        this.materializeCachedEditor(this._activeEditor);
+      }
+  }
+
+  toggleResourceList() {
+    this.showDrawer = !this.showDrawer;
+  }
+
 
   get activeEditor(): ResourceEditorDescriptor | null {
     return this._activeEditor;
@@ -52,34 +77,50 @@ export class ProjectEditorComponent implements OnInit {
 
   set activeEditor(newActiveEditor: ResourceEditorDescriptor | null) {
     if(this._activeEditor?.cachedComponent) {      
-      this._activeEditor.draftResource = this._activeEditor.cachedComponent.instance.editedResource;
-      this._activeEditor.cachedComponent.destroy();
-      this._activeEditor.cachedComponent = undefined;
-      this._activeEditor.dirtySubscription?.unsubscribe();
+      this.destroyCachedEditor(this._activeEditor);
     }
 
     this._activeEditor = newActiveEditor;
-    if(newActiveEditor) {
-      if(!newActiveEditor.cachedComponent) {
-        newActiveEditor.cachedComponent = this.createEditorComponentForResource(
-          newActiveEditor.resourceType,
-          newActiveEditor.draftResource);
+    if(newActiveEditor && this._editorHost) {
+      this.materializeCachedEditor(newActiveEditor);
+    }    
+  }
 
-        newActiveEditor.dirtySubscription = newActiveEditor.cachedComponent!.instance.resourceEdited.subscribe((r) => {
-          newActiveEditor.draftResourceDirty = true;
-          newActiveEditor.draftResource = r;
-        });
-      }
+  private materializeCachedEditor(editor: ResourceEditorDescriptor) {
+    if(!editor.cachedComponent) {
+      editor.cachedComponent = this.createEditorComponentForResource(
+        editor.resourceType,
+        editor.draftResource);
+
+      editor.dirtySubscription = editor.cachedComponent!.instance.resourceEdited.subscribe((r) => {
+        editor.draftResourceDirty = true;
+        editor.draftResource = r;
+      });
     }
   }
 
-  constructor() { }
+  private destroyCachedEditor(editor: ResourceEditorDescriptor) {
+    if(editor.cachedComponent) {
+      editor.draftResource = editor.cachedComponent.instance.editedResource;
+      editor.cachedComponent.destroy();
+    }
 
-  ngOnInit(): void {
+    editor.cachedComponent = undefined;
+    editor.dirtySubscription?.unsubscribe();
   }
 
-  toggleResourceList() {
-    this._drawer?.toggle();
+  private closeEditor(editor: ResourceEditorDescriptor) {
+    this.destroyCachedEditor(editor);
+    const index = this.openEditors.indexOf(editor);
+    if(index >= 0) {
+      this.openEditors.splice(index, 1);
+    }
+  }
+
+  private closeAllEditors() {
+    while(this.openEditors.length) {
+      this.closeEditor(this.openEditors[0]);
+    }
   }
 
   private createEditorComponentForResource(resourceType: ResourceType, resource: any): ComponentRef<ResourceEditor<any, never>> | undefined {
@@ -109,17 +150,17 @@ export class ProjectEditorComponent implements OnInit {
   }
 
   public handleOpenResource(resourceName: string) {
-    this.activeEditor = this.getResourceEditor(resourceName);
+    this.openResource(resourceName);
   }
 
   public async handleNewWavestrument() {
     const newResourceName = await this.editedProjectController!.createResource('abst_wave_instrument');
-    this.handleOpenResource(newResourceName);
+    this.openResource(newResourceName);
   }
 
   public async handleNewScript() {
     const newResourceName = await this.editedProjectController!.createResource('script');
-    this.handleOpenResource(newResourceName);
+    this.openResource(newResourceName);
     
   }
 
@@ -132,4 +173,9 @@ export class ProjectEditorComponent implements OnInit {
   public get editedProjectResourceNames(): string[] {
     return Object.keys(this.editedProjectController!.project.resources);
   }
+
+  private openResource(resourceName: string) {
+    this.activeEditor = this.getResourceEditor(resourceName);
+  }
+
 }

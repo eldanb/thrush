@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit } from '@angular/core';
 import { EditedWaveform } from 'src/app/widget-lib/waveform-editor/waveform-editor.component';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrument';
 import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
-import { Base64ToFloat32ArrayLe, Float32ArrayToBase64Le, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
+import {  Base64ToFloat32ArrayLe, Float32ArrayToBase64Le, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
 import { ResourceEditor } from '../resource-editor';
 
 
@@ -38,6 +38,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     volume: []
   };
 
+  private _cachedEditedResource : ResourceTypeAbstractWaveInstrument | null = null;
+
   public editedEntryEnvelopeName: keyof Envelopes = "volume";
 
   public get editedEntryEnvelope(): EnvelopeCurveCoordinate[] {
@@ -46,7 +48,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
 
   public set editedEntryEnvelope(v: EnvelopeCurveCoordinate[]) {
     this._editedEntryEnvelopes[this.editedEntryEnvelopeName] = v;
-    this.resourceEdited.emit(true);
+    this.resourceDirty();
   }
 
 
@@ -62,7 +64,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
 
   public set editedExitEnvelope(v: EnvelopeCurveCoordinate[]) {
     this._editedExitEnvelopes[this.editedExitEnvelopeName] = v;
-    this.resourceEdited.emit(true);
+    this.resourceDirty();
   }
 
 
@@ -72,7 +74,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
 
   public set loopStartTime(value: number | null) {
     this._loopStartTime = value;
-    this.resourceEdited.emit(true);
+    this.resourceDirty();
   }
 
   public get loopEndTime(): number | null {
@@ -81,7 +83,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
 
   public set loopEndTime(value: number | null) {
     this._loopEndTime = value;
-    this.resourceEdited.emit(true);
+    this.resourceDirty();
   } 
 
   public get playbackTime() {
@@ -125,8 +127,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     }    
   }
 
-  @Input()
-  public set editedWaveform(value: EditedWaveform | null) {
+  set editedWaveform(value: EditedWaveform | null) {
     this._editedWaveform = value;
     this.displayStartTime = 0;
     this.displayEndTime = this.waveformDuration;  
@@ -231,7 +232,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
       });
     });  
     
-    this.resourceEdited.emit(true);
+    this.resourceDirty();
   }
 
   public handleLoadSample(eTarget: EventTarget) {
@@ -239,7 +240,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     const sampleFile = filePicker!.files![0];    
     const reader = new FileReader();
 
-    reader.onloadend = () => {        
+    reader.onloadend = () => {  
         const wavFile = parseWav((reader.result as ArrayBuffer)!);
 
         this.editedWaveform = { 
@@ -265,21 +266,24 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
           }]
         };
 
-        this.resourceEdited.emit(this.editedResource);
+        this.resourceDirty();
     };
 
     reader.readAsArrayBuffer(sampleFile);
   }
 
-  get editedResource(): ResourceTypeAbstractWaveInstrument {       
-    return { 
-      samplesBase64: Float32ArrayToBase64Le(this.editedWaveform!.channelSamples[0]),
-      sampleRate: this.editedWaveform!.sampleRate,
-      loopStartTime: this.loopStartTime!,
-      loopEndTime: this.loopEndTime!,
-      entryEnvelopes: this._editedEntryEnvelopes,
-      exitEnvelopes: this._editedExitEnvelopes,
-    };
+  get editedResource(): ResourceTypeAbstractWaveInstrument {   
+    if(this._cachedEditedResource == null) {
+      this._cachedEditedResource = { 
+        samplesBase64: Float32ArrayToBase64Le(this.editedWaveform!.channelSamples[0]),
+        sampleRate: this.editedWaveform!.sampleRate,
+        loopStartTime: this.loopStartTime!,
+        loopEndTime: this.loopEndTime!,
+        entryEnvelopes: this._editedEntryEnvelopes,
+        exitEnvelopes: this._editedExitEnvelopes,
+      };
+    }    
+    return this._cachedEditedResource;
   }
 
   set editedResource(resource: ResourceTypeAbstractWaveInstrument | null) {
@@ -307,7 +311,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
       this._registeredInstrument = `$$WAVEDITOR${Math.random()}`;
     }
     await synth.createInstrument(this._registeredInstrument, 
-        Base64ToFloat32ArrayLe(abstInstrument.samplesBase64),  abstInstrument.sampleRate, 
+      Base64ToFloat32ArrayLe(abstInstrument.samplesBase64),  abstInstrument.sampleRate, 
         (abstInstrument.loopStartTime && abstInstrument.loopEndTime) 
           ? abstInstrument.loopStartTime * abstInstrument.sampleRate
           : 0, 
@@ -339,5 +343,52 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     });
 
     this._playbackStartTime = null;
+  }
+
+  private resourceDirty() {
+    this._cachedEditedResource = null;
+    this.resourceEdited.emit(true);
+  }
+
+  async createEncodedStream() {
+    const ac = new AudioContext();
+    const mediaStreamDestination = ac.createMediaStreamDestination();
+    const mediaSrc = ac.createBufferSource();
+    const wavAudioBuffer = new AudioBuffer({ 
+      sampleRate: this._editedWaveform!.sampleRate, 
+      numberOfChannels: this._editedWaveform!.channelSamples.length,
+      length: this._editedWaveform!.channelSamples[0].length  
+    });
+    this._editedWaveform!.channelSamples.forEach( (channelBuffer, channelIndex) => 
+    wavAudioBuffer.copyToChannel(channelBuffer, channelIndex) );    
+    mediaSrc.buffer = wavAudioBuffer;
+    mediaSrc.connect(mediaStreamDestination);
+
+    const recordedMediaChunks: Blob[] = [];
+    const mediaRecorder = new MediaRecorder(mediaStreamDestination.stream);
+    mediaRecorder.ondataavailable = (event) => {
+      recordedMediaChunks.push(event.data);
+    }
+
+    mediaRecorder.onstop = () => {
+      const file = new Blob(recordedMediaChunks, {type: mediaRecorder.mimeType});
+
+      const url = URL.createObjectURL(file);
+  
+      const dlanchor = document.createElement("a");
+      dlanchor.href = url;
+      dlanchor.download = `downloaded-media.bin`;
+      document.body.appendChild(dlanchor);
+      dlanchor.click();
+      setTimeout(function() {
+          document.body.removeChild(dlanchor);
+          window.URL.revokeObjectURL(url);  
+      }, 0); 
+    }    
+
+    mediaSrc.onended = () => mediaRecorder.stop();
+
+    mediaSrc.start();
+    
   }
 }

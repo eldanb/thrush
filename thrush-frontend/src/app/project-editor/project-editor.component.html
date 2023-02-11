@@ -1,17 +1,22 @@
 <mat-drawer-container [hasBackdrop]="false">
-  <mat-drawer #drawer mode="side">
-    <div class="resource-list">
-      <h3>
-        Resources
-        <button mat-icon-button><mat-icon>plus</mat-icon></button>
-      </h3>
-      <div class="resource-list-item" [attr.data-selected]="true" *ngFor="let resource of editedProjectResourceNames">
-           <a (click)="handleOpenResource(resource)">{{resource}}</a>
-      </div>
+  <mat-drawer mode="side" [opened]="showDrawer">
+    <div class="vertical-stack full">
+      <div class="resource-list">
+        <h3>
+          Resources
+          <button mat-icon-button><mat-icon>plus</mat-icon></button>
+        </h3>
 
-      <button mat-button (click)="handleNewWavestrument()">New Wavestrument</button>
-      <button mat-button (click)="handleNewScript()">New Script</button>
-    </div>
+        <div class="resource-list-item" [attr.data-active]="activeEditor?.resourceName == resource" *ngFor="let resource of editedProjectResourceNames">
+            <a (click)="handleOpenResource(resource)">{{resource}}</a>
+        </div>
+
+      </div>
+      <div>
+        <button mat-button (click)="handleNewWavestrument()">New Wavestrument</button>
+        <button mat-button (click)="handleNewScript()">New Script</button>
+      </div>
+  </div>
   </mat-drawer>
   <mat-drawer-content>
     <div class="tabs-and-editor-container">

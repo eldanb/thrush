@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ThrushProject } from 'src/lib/project-datamodel/project-datamodel';
 import { ThrushProjectController } from 'src/lib/project-datamodel/thrush-project-controller';
 import { ThrushEngineService } from './services/thrush-engine.service';
@@ -13,7 +13,7 @@ const BLANK_PROJECT: ThrushProject = require('src/assets/example-projects/blank.
   styleUrls: ['./app.component.scss'],
   providers: [AppUiFrameworkService]
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements AfterViewInit {
   title = 'thrush';
 
   public currentProjectController: ThrushProjectController | null = null;
@@ -21,14 +21,31 @@ export class AppComponent implements OnInit {
   constructor(private _thrushEngine: ThrushEngineService) {    
   }
 
-  ngOnInit(): void {
-   this.asyncInitialize();
+  ngAfterViewInit(): void {
+    this.asyncInitialize();
   }
 
   async asyncInitialize() {
-    await this._thrushEngine.initialize();   
-    this.currentProjectController = new ThrushProjectController(Object.assign({}, BLANK_PROJECT), this._thrushEngine.sequencer)
-   }
+    await this._thrushEngine.initialize();
+    await this.loadProject(Object.assign({}, BLANK_PROJECT));
+  }
+
+  handleLoadProject() {
+    document.getElementById('fileLoadControl')?.click();
+  }
+  
+  handleLoadedProjectSelected(eventTarget: EventTarget) {
+    const filePicker = eventTarget as HTMLInputElement;
+    const sampleFile = filePicker!.files![0];    
+    const reader = new FileReader();
+
+    reader.onloadend = () => { 
+      this.loadProject(JSON.parse(reader.result as string));
+    };
+
+    reader.readAsText(sampleFile);  
+  }
+  
 
   handleDownloadProject() {
     const file = new Blob([JSON.stringify(this.currentProjectController!.project)], {type: "application/json"});
@@ -44,5 +61,10 @@ export class AppComponent implements OnInit {
         document.body.removeChild(dlanchor);
         window.URL.revokeObjectURL(url);  
     }, 0); 
+  }
+
+  async loadProject(projectJson: ThrushProject) {
+    this.currentProjectController = new ThrushProjectController(projectJson, this._thrushEngine.sequencer);
+    await this.currentProjectController.loadAllToSynthEngine();
   }
 }
