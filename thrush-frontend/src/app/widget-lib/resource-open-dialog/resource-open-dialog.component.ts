@@ -41,7 +41,7 @@ export class ResourceOpenDialogComponent implements OnInit {
 
     ) { 
       if(dialogData.config.browseSources) {
-        this.selectBrowserSource(dialogData.config.browseSources[0])
+        this.selectedBrowserSource = dialogData.config.browseSources[0];
       }
   }
 
@@ -50,6 +50,10 @@ export class ResourceOpenDialogComponent implements OnInit {
 
   handleOpenLocal() {
     document.getElementById('fileLoadControl')?.click();
+  }
+
+  handleCancelClicked() {
+    this._dialogRef.close(null);
   }
 
   async handleBrowserItemClicked(browserItem: FileBrowserFileDetails) {
@@ -79,12 +83,18 @@ export class ResourceOpenDialogComponent implements OnInit {
     reader.readAsArrayBuffer(sampleFile);  
   }
  
-  async selectBrowserSource(browserSource: IFileOpenBrowseSource) {
-    this._currentFileSystem = browserSource;
+  set selectedBrowserSource(browserSource: IFileOpenBrowseSource | null) {
+    this._currentFileSystem = browserSource;    
     this.currentFolderItems = [];
     this._currentFolderStack = [undefined];
 
-    this.refreshBrowseFolder();
+    if(this._currentFileSystem) {
+      this.refreshBrowseFolder();
+    }
+  }
+
+  get selectedBrowserSource(): IFileOpenBrowseSource | null {
+    return this._currentFileSystem;
   }
 
   private async refreshBrowseFolder() {

@@ -13,6 +13,7 @@
     <mat-icon>upload</mat-icon>
   </button>
 
+  <div class="spacer"></div>
 
   <button mat-icon-button (click)="handleZoomOutClick()">
     <mat-icon>zoom_out</mat-icon>
@@ -30,13 +31,12 @@
     <mat-icon>crop</mat-icon>
   </button>
 
+  <div class="spacer"></div>
+
   
   <button mat-icon-button (click)="handleSetLoopToSelection()">
     <mat-icon>repeat</mat-icon>
   </button>
-  
-  <div class="spacer"></div>
-  <button mat-button (click)="createEncodedStream()">meh</button>
 </app-ui-region-content>
 
   <div class="waveform-editor-main">
@@ -84,16 +84,33 @@
     ></app-envelope-editor>
   </div>
   
-  <div class="vertical-stack">
-    <mat-icon>select</mat-icon>
-    <input type="number" class="cursor-input" [(ngModel)]="selectionStartTime" />s
-    <input type="number" class="cursor-input" [(ngModel)]="selectionEndTime" />s
+  <div class="property-pane">
+    <h1>Selection</h1>
+    <div class="property">
+      Start: 
+      <div class="spacer"></div>
+      <input type="number" class="cursor-input" [(ngModel)]="selectionStartTime" />&nbsp;s
+    </div>
+
+    <div class="property">
+      End: 
+      <div class="spacer"></div>
+      <input type="number" class="cursor-input" [(ngModel)]="selectionEndTime" />&nbsp;s
+    </div>
 
 
-    <button mat-icon-button (click)="handleSetLoopToSelection()">
-      <mat-icon>repeat</mat-icon>
-    </button>
-    <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />s -
-    <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />s
+    <h1>Loop</h1>
+    <div class="property">
+      Start: 
+      <div class="spacer"></div>
+      <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />&nbsp;s
+    </div>
+
+    <div class="property">
+      End: 
+      <div class="spacer"></div>
+      <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />&nbsp;s
+    </div>
+
 
   </div>

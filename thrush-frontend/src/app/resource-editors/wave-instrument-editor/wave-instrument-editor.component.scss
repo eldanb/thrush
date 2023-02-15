@@ -14,10 +14,12 @@
   flex-grow: 1;
 }
 
-.waveform-editor-props {
-  display: flex;
-  flex-direction: column;
-  width: 20rem;
+.property-pane {
+  width: 12rem;
+}
+
+.property input {
+  width: 5rem;
 }
 
 app-waveform-editor {
@@ -35,8 +37,8 @@ app-envelope-editor {
     align-items: center;
     gap: 6px;
 
-    background: black;
-    color: lightgray;
+    background: white;
+    color: gray;
     text-transform: uppercase;
     font-size: 12px;
     padding: 12px 6px;
@@ -51,28 +53,3 @@ app-envelope-editor {
         }
     }    
 }
-
-.controls {
-    display: flex;
-    flex-direction: flex-row;
-    align-items: center;
-    
-    margin-top: 6px;
-    gap: 6px;
-
-    button {
-      padding: 0;
-    }
-
-    .spacer {
-      width: 12px;
-    }
-
-    .cursor-input {
-        width: 48px;
-    }
-  }
-
-  #fileLoadControl {
-    display: none;
-  }

@@ -10,6 +10,7 @@
 
   .browser-sidebar {
     background: rgb(250, 250, 250);
+    min-width: 8rem;
   }
   
   .browser-items {
@@ -19,7 +20,7 @@
     flex-direction: column;
     
     overflow: scroll;
-    padding: 0.5rem;
+    padding: 0 0.5rem;
 
     align-items: stretch;
   }

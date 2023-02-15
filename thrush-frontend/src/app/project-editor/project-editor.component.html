@@ -7,8 +7,11 @@
           <button mat-icon-button><mat-icon>plus</mat-icon></button>
         </h3>
 
-        <div class="list-item" [attr.data-active]="activeEditor?.resourceName == resource" *ngFor="let resource of editedProjectResourceNames">
-            <a (click)="handleOpenResource(resource)">{{resource}}</a>
+        <div *ngFor="let resource of editedProjectResourceNames"
+            class="list-item" 
+            [attr.data-active]="activeEditor?.resourceName == resource" 
+            (click)="handleOpenResource(resource)">
+            {{resource}}
         </div>
 
       </div>

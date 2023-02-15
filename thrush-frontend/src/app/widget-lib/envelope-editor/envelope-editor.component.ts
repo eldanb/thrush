@@ -1,9 +1,9 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 
-const ENVELOPE_COLOR_BACKGROUND = '#101010';
-const ENVELOPE_COLOR_LINE = 'green';
-const ENVELOPE_COLOR_HANDLE = '#FFFFFFC0'
+const ENVELOPE_COLOR_BACKGROUND = 'white';
+const ENVELOPE_COLOR_LINE = 'darkgray';
+const ENVELOPE_COLOR_HANDLE = 'blue'
 
 const HANDLE_SIZE = 4;
 

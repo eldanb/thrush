@@ -6,6 +6,7 @@ import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthIn
 import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
 import {  JsonToWaveform, WaveformToJson, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
 import { ResourceEditor } from '../resource-editor';
+import { ResourceOpenDialogService } from 'src/app/widget-lib/resource-open-dialog/resource-open-dialog-service';
 
 
 @Component({
@@ -90,7 +91,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     return this._playbackTime;
   }
 
-  constructor(private _synthEngine: ThrushEngineService) { }
+  constructor(private _synthEngine: ThrushEngineService, 
+    private _fileOpenDlg: ResourceOpenDialogService) { }
 
   ngOnInit(): void {
     this._playbackCursorUpdateTimer = setInterval(() => this.updatePlaybackCursor(), 50);    
@@ -187,8 +189,43 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     }   
   }
 
-  public handleImportRequest() {
-    document.getElementById('fileLoadControl')?.click();
+  public async handleImportRequest() {
+    const fileArrayBuffer = await this._fileOpenDlg.open({
+      title: 'Select Waveform to Import',
+      allowLocal: true,
+      browseSources: []
+    });
+
+    if(!fileArrayBuffer) {
+      return;
+    }
+    
+    const wavFile = parseWav(fileArrayBuffer);
+
+    this.editedWaveform = { 
+      channelSamples: wavFile.samples,
+      sampleRate: wavFile.sampleRate
+    };
+
+    this.loopStartTime = null;
+    this.loopEndTime = null;
+    this.selectionEndTime = null;
+    this.selectionStartTime = null;
+    this._editedEntryEnvelopes = {
+      volume: [{
+        time: 0,
+        value: 1
+        }]
+      };
+
+    this._editedExitEnvelopes = {
+      volume: [{
+        time: 0, 
+        value: 0
+      }]
+    };
+
+    this.resourceDirty();
   }
 
   public handleTrimRequest() {
@@ -235,6 +272,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     this.resourceDirty();
   }
 
+  // TODO get rid
   public handleLoadSample(eTarget: EventTarget) {
     const filePicker = eTarget as HTMLInputElement;
     const sampleFile = filePicker!.files![0];    

@@ -1,17 +1,18 @@
 <h1>{{dialogData.config.title}}</h1>
-<div *ngIf="dialogData.config.browseSources">
+<div *ngIf="dialogData.config.browseSources?.length">
   Select a location in the left sidebar below to browse it.
 </div>
 <div *ngIf="dialogData.config.allowLocal">
   Press "Local..." below to open choose a file from your device.
 </div>
 <div class="horizontal-stack full browse-area">  
-  <div class="vertical-stack browser-sidebar">
-    <button mat-button 
+  <div class="vertical-stack browser-sidebar selectable-list">
+    <div
       *ngFor="let fsInterface of dialogData.config.browseSources || []"
-      (click)="selectBrowserSource(fsInterface)">
+      (click)="selectedBrowserSource = fsInterface"
+      class="list-item" [attr.data-active]="fsInterface == selectedBrowserSource">
       {{fsInterface.displayName}}
-    </button>    
+  </div>    
   </div>
   <div class="browser-items selectable-list">
     <div *ngFor="let fileItem of currentFolderItems" class="browser-item list-item" 
@@ -23,7 +24,7 @@
 <div class="horizontal-stack full">
   <button *ngIf="dialogData.config.allowLocal" mat-button (click)="handleOpenLocal()">Local...</button>
   <div class="spacer"></div>
-  <button mat-button>Cancel</button>
+  <button mat-button (click)="handleCancelClicked()">Cancel</button>
   <button mat-button cdkFocusInitial>Ok</button>
 </div>
 

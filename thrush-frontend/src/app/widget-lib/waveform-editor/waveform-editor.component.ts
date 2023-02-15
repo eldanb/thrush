@@ -1,13 +1,13 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 
-const WAVETABLE_COLOR_BACKGROUND = '#101010';
-const WAVETABLE_COLOR_WAVE = 'green';
+const WAVETABLE_COLOR_BACKGROUND = 'white';
+const WAVETABLE_COLOR_WAVE = 'darkgray';
 const CHANNEL_PAD_RATIO = 0.25;
-const WAVETABLE_COLOR_POINTER = '#FFFFFFC0';
-const WAVETABLE_COLOR_SELECTION = '#D0FFFFC0';
-const WAVETABLE_COLOR_SELECTION_BACKGROUND = '#D0FFFF40';
+const WAVETABLE_COLOR_POINTER = 'black';
+const WAVETABLE_COLOR_SELECTION = 'gray';
+const WAVETABLE_COLOR_SELECTION_BACKGROUND = 'lightgray';
 
-const WAVETABLE_COLOR_LOOP = '#FFFFD0C0';
+const WAVETABLE_COLOR_LOOP = 'red';
 
 export interface EditedWaveform {
   channelSamples: Float32Array[];

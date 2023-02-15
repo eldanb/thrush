@@ -54,15 +54,7 @@ $green-palette-background: (
 
 $wavetable-editor-theme: (
   density: -3,
-  color: (
-    primary: $green-palette,
-    accent: $green-palette,
-    warn: $green-palette,
-    background: map.merge(mat.$dark-theme-background-palette,
-      $green-palette-background), 
-    foreground: map.merge(mat.$dark-theme-foreground-palette, 
-      $green-palette-foreground),
-  ),
+  
 );
 
 .wavetable-editor-themed {
@@ -89,8 +81,28 @@ $wavetable-editor-theme: (
 }
 
 .vertical-stack, .horizontal-stack {
-  & .spacer {
+  .spacer {
     flex-grow: 1;
+  }
+}
+
+.property-pane {
+  @extend .vertical-stack;
+
+  h1 {    
+    font-size: 10pt !important;
+    margin-bottom: 0.5rem !important;
+    padding: 0.5rem;
+    color: darkgray;
+    font-weight: bolder !important;
+    text-transform: uppercase;
+  }
+
+  .property {
+    @extend .horizontal-stack;
+    font-size: 10pt !important;
+    display: flex;
+    margin: 0.5rem 1rem;
   }
 }
 
@@ -108,4 +120,8 @@ $wavetable-editor-theme: (
       background: rgb(245, 245, 255);
     }
   }
+}
+
+mat-toolbar .spacer {
+  width: 1rem;
 }
