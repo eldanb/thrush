@@ -9,24 +9,35 @@
 
         <div *ngFor="let resource of editedProjectResourceNames"
             class="list-item" 
-            [attr.data-active]="activeEditor?.resourceName == resource" 
-            (click)="handleOpenResource(resource)">
-            {{resource}}
+            [attr.data-active]="activeEditor?.resourceName == resource">
+            <input mat-input *ngIf="renamedResourceName == resource" 
+                   id="resource-rename-input"
+                   [(ngModel)]="renamedResourceNewName" 
+                   (keydown.enter)="handleRenameFieldBlurs()"
+                   (blur)="handleRenameFieldBlurs()"
+                   />
+            <div class="horizontal-stack" *ngIf="renamedResourceName !== resource">
+              <div class="spacer" (click)="handleOpenResource(resource)">{{resource}}</div>              
+              <button mat-icon-button class="item-hover-button" (click)="handleRequestRename(resource)">
+                <mat-icon class="small">edit</mat-icon>
+              </button>
+              <button mat-icon-button class="item-hover-button" (click)="handleRequestDelete(resource)">
+                <mat-icon class="small">delete</mat-icon>
+              </button>
+            </div> 
         </div>
 
-      </div>
-      <div>
-        <button mat-button (click)="handleNewWavestrument()">New Wavestrument</button>
-        <button mat-button (click)="handleNewScript()">New Script</button>
       </div>
   </div>
   </mat-drawer>
   <mat-drawer-content>
     <div class="tabs-and-editor-container">
       <nav mat-tab-nav-bar [tabPanel]="tabPanel">
-        <a mat-tab-link *ngFor="let editor of openEditors"
-          (click)="activeEditor = editor"
-          [active]="activeEditor == editor"> {{editor.title}} {{editor.draftResourceDirty ? "*" :""}} </a>
+        <div mat-tab-link (click)="activeEditor = editor" [active]="activeEditor == editor" *ngFor="let editor of openEditors" class="tab-title">
+          <a> {{editor.title}} {{editor.draftResourceDirty ? "*" :""}} </a>
+          <button mat-icon-button (click)="handleCloseTab(editor)"><mat-icon>close</mat-icon></button>
+        </div>
+        
       </nav>      
       <mat-tab-nav-panel class="thrush-editor-tabs" #tabPanel></mat-tab-nav-panel>
       
@@ -39,6 +50,20 @@
   <button mat-icon-button (click)="toggleResourceList()">
     <mat-icon>menu</mat-icon>
   </button>
+
+  <button mat-icon-button [matMenuTriggerFor]="newItemMenu">
+    <mat-icon>note_add</mat-icon>
+  </button>
+
+  <mat-menu #newItemMenu="matMenu">    
+    <button mat-menu-item (click)="handleNewWavestrument()">
+      New Wavestrument
+    </button>
+    <button mat-menu-item (click)="handleNewScript()">
+      New Script
+    </button>
+  </mat-menu>
+
 
   <button mat-icon-button (click)="handleSaveClicked()" [disabled]="!activeEditor?.draftResourceDirty">
     <mat-icon>save</mat-icon>

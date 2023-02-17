@@ -119,6 +119,26 @@ $wavetable-editor-theme: (
     &[data-active='true'] {
       background: rgb(245, 245, 255);
     }
+
+    button[mat-icon-button] {
+      height: 20px;
+      width: 20px;
+      line-height: 20px;
+      mat-icon {
+        height: 16px;
+        width: 16px;
+        font-size: 16px;
+        line-height: 16px;
+      }
+    }
+
+    button.item-hover-button {
+      display: none;
+    }
+
+    &:hover button.item-hover-button {
+      display: block;
+    }
   }
 }
 

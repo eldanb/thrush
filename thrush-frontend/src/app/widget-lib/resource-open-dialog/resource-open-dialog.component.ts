@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { AfterContentInit, Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 
@@ -29,7 +29,7 @@ export type ResourceOpenDialogData = {
   templateUrl: './resource-open-dialog.component.html',
   styleUrls: ['./resource-open-dialog.component.scss']
 })
-export class ResourceOpenDialogComponent implements OnInit {
+export class ResourceOpenDialogComponent implements OnInit, AfterContentInit {
   private _currentFileSystem: IFileOpenBrowseSource | null = null;
   private _currentFolderStack: (string | undefined)[] = [undefined];
   public currentFolderItems: FileBrowserFileDetails[] = [];
@@ -47,6 +47,13 @@ export class ResourceOpenDialogComponent implements OnInit {
 
   ngOnInit(): void {
   }
+
+  ngAfterContentInit(): void {
+    if(!this.dialogData.config.browseSources?.length) {
+      this.handleOpenLocal();
+    }
+  }
+
 
   handleOpenLocal() {
     document.getElementById('fileLoadControl')?.click();

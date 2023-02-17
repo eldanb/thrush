@@ -9,12 +9,17 @@ type ResourceCreationHandler = {
   [resourceType in ResourceType as `create_${resourceType}`]: () => Promise<ThrushProjectResourceWithType<resourceType>>;
 }
 
+
+type ResourceDeletionHandler = {
+  [resourceType in ResourceType as `delete_${resourceType}`]: (name: string, resource: ResourceTypes[resourceType]) => Promise<void>;
+}
+
 const EMPTY_PROJECT = {
   title: 'Untitled',
   resources: {}
 };
 
-export class ThrushProjectController implements ResourceUpdateHandler, ResourceCreationHandler {
+export class ThrushProjectController implements ResourceUpdateHandler, ResourceCreationHandler, ResourceDeletionHandler {
   private _registeredInstrumentIds: Record<string, number> = {};
   
   constructor(
@@ -72,6 +77,14 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     }
   }
 
+  async delete_script(name: string, resource: ResourceTypeScript) {
+  } 
+
+  async delete_abst_wave_instrument(name: string, resource: ResourceTypeAbstractWaveInstrument) {
+    await this._sequencer.tsynthToneGenerator.deleteInstrument(name);
+  }
+
+
   async createResource(resourceType: ResourceType) {
     let suggestedName;
     let untitledIndex = 1;
@@ -95,4 +108,30 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     await Promise.all(Object.entries(this._dataModel.resources).map(([resourceName, resource]) => 
       this[`update_${resource.type}`](resourceName, <any>resource)));      
   }
+
+  async renameResource(oldName: string, newName: string) {
+    const existingResource = this._dataModel.resources[oldName];
+    if(!existingResource) {
+      throw new Error(`Can't rename nonexisting resource ${oldName}`);      
+    }
+
+    if(this._dataModel.resources[newName]) {
+      throw new Error(`Can't rename resource ${oldName} to ${newName}: ${newName} already exists`);      
+    }
+
+    delete this._dataModel.resources[oldName];
+    this._dataModel.resources[newName] = existingResource;
+
+    await this[`delete_${existingResource.type}`](oldName, <any>existingResource);
+    await this[`update_${existingResource.type}`](newName, <any>existingResource);
+  }
+
+  async deleteResource(resourceName: string) {
+    const existingResource = this._dataModel.resources[resourceName];
+    if(existingResource) {
+      await this[`delete_${existingResource.type}`](resourceName, <any>existingResource);
+      delete this._dataModel.resources[resourceName];
+    }    
+  }
+
 }

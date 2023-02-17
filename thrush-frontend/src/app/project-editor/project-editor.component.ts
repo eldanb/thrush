@@ -36,14 +36,19 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
 
   public showDrawer: boolean = true;
 
+  public renamedResourceName: string | null = null;
+  public renamedResourceNewName: string | null = null;
+
   @Input()
   public set editedProjectController(editedProjectController: ThrushProjectController | null) {
-    this.closeAllEditors();
-    this._editedProjectController = editedProjectController;  
+    (async () => {
+      await this.closeAllEditors();
+      this._editedProjectController = editedProjectController;  
     
-    if(this._editedProjectController?.project.resources['main']) {
-      this.openResource('main');
-    }
+      if(this._editedProjectController?.project.resources['main']) {
+        this.openResource('main');
+      }
+    })();
   }
   
   public get editedProjectController(): ThrushProjectController | null {
@@ -109,17 +114,20 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     editor.dirtySubscription?.unsubscribe();
   }
 
-  private closeEditor(editor: ResourceEditorDescriptor) {
+  private async closeEditor(editor: ResourceEditorDescriptor): Promise<boolean> {
     this.destroyCachedEditor(editor);
+
     const index = this.openEditors.indexOf(editor);
     if(index >= 0) {
       this.openEditors.splice(index, 1);
     }
+
+    return true;
   }
 
-  private closeAllEditors() {
+  private async closeAllEditors() {
     while(this.openEditors.length) {
-      this.closeEditor(this.openEditors[0]);
+      await this.closeEditor(this.openEditors[0]);
     }
   }
 
@@ -153,6 +161,17 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     this.openResource(resourceName);
   }
 
+  public async handleRequestDelete(resourceName: string) {
+    const existingEditor = this.openEditors.find(editor => editor.resourceName == resourceName);
+    if(existingEditor) {
+      if(!(await this.closeEditor(existingEditor))) {
+        return;
+      }
+    }
+
+    await this._editedProjectController!.deleteResource(resourceName);
+  }
+
   public async handleNewWavestrument() {
     const newResourceName = await this.editedProjectController!.createResource('abst_wave_instrument');
     this.openResource(newResourceName);
@@ -164,7 +183,30 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     
   }
 
-  async handleSaveClicked() {
+  public handleRequestRename(oldResourceName: string) {
+    this.renamedResourceName = oldResourceName;
+    this.renamedResourceNewName = oldResourceName;
+    setTimeout(() => {
+      document.getElementById('resource-rename-input')?.focus();
+    }, 0);
+  }
+
+  public async handleRenameFieldBlurs() {
+    const renamedResourceName = this.renamedResourceName;
+    const renamedResourceNewName = this.renamedResourceNewName;
+
+    this.renamedResourceName = null;
+    
+    if(renamedResourceName && renamedResourceNewName) {       
+      await this.renameResource(renamedResourceName, renamedResourceNewName);
+    }      
+  }
+
+  public handleCloseTab(editor: ResourceEditorDescriptor) {
+    this.closeEditor(editor);
+  }
+
+   async handleSaveClicked() {
     await this.editedProjectController!.saveResource(this.activeEditor!.resourceName, 
       Object.assign({ 'type': this.activeEditor!.resourceType }, this.activeEditor?.cachedComponent!.instance.editedResource));
     this.activeEditor!.draftResourceDirty = false;
@@ -178,4 +220,15 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     this.activeEditor = this.getResourceEditor(resourceName);
   }
 
+  private async renameResource(oldName: string, newName: string) {
+    if(oldName !== newName) {
+      const existingEditor = this.openEditors.find(editor => editor.resourceName == oldName);
+
+      await this.editedProjectController!.renameResource(oldName, newName);
+      if(existingEditor) {
+        existingEditor.resourceName = newName;
+        existingEditor.title = newName;
+      }
+    }
+  }
 }

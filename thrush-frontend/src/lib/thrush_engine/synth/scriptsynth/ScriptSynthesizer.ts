@@ -60,7 +60,7 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
 
 
   deleteInstrument(instrumentId: string) {
-    this._workletNodeRpcProxy.deleteInstrument(
+    return this._workletNodeRpcProxy.deleteInstrument(
       instrumentId);      
   }
 

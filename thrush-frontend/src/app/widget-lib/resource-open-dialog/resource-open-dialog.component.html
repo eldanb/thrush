@@ -6,13 +6,13 @@
   Press "Local..." below to open choose a file from your device.
 </div>
 <div class="horizontal-stack full browse-area">  
-  <div class="vertical-stack browser-sidebar selectable-list">
+  <div *ngIf="dialogData.config.browseSources?.length" class="vertical-stack browser-sidebar selectable-list">
     <div
       *ngFor="let fsInterface of dialogData.config.browseSources || []"
       (click)="selectedBrowserSource = fsInterface"
       class="list-item" [attr.data-active]="fsInterface == selectedBrowserSource">
       {{fsInterface.displayName}}
-  </div>    
+    </div>    
   </div>
   <div class="browser-items selectable-list">
     <div *ngFor="let fileItem of currentFolderItems" class="browser-item list-item" 
