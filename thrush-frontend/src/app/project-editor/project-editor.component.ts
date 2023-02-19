@@ -1,11 +1,14 @@
 import { ComponentType } from '@angular/cdk/portal';
 import { AfterViewInit, Component, ComponentRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ResourceType } from 'src/lib/project-datamodel/project-datamodel';
+import { ResourceType, ThrushProject } from 'src/lib/project-datamodel/project-datamodel';
 import { ThrushProjectController } from 'src/lib/project-datamodel/thrush-project-controller';
 import { ResourceEditor } from '../resource-editors/resource-editor';
 import { SynthScriptEditorComponent } from '../resource-editors/synth-script-editor/synth-script-editor.component';
 import { WaveInstrumentEditorComponent } from '../resource-editors/wave-instrument-editor/wave-instrument-editor.component';
+import { ThrushEngineService } from '../services/thrush-engine.service';
+import { ResourceOpenDialogService } from '../widget-lib/resource-open-dialog/resource-open-dialog-service';
+import { FileBrowserFileDetails, IFileOpenBrowseSource } from '../widget-lib/resource-open-dialog/resource-open-dialog.component';
 
 
 type ResourceEditorDescriptor = {
@@ -39,30 +42,18 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
   public renamedResourceName: string | null = null;
   public renamedResourceNewName: string | null = null;
 
-  @Input()
-  public set editedProjectController(editedProjectController: ThrushProjectController | null) {
-    (async () => {
-      await this.closeAllEditors();
-      this._editedProjectController = editedProjectController;  
-    
-      if(this._editedProjectController?.project.resources['main']) {
-        this.openResource('main');
-      }
-    })();
-  }
-  
-  public get editedProjectController(): ThrushProjectController | null {
-    return this._editedProjectController;
-  }
 
   openEditors: ResourceEditorDescriptor[] = [ 
   ];
 
   private _activeEditor: ResourceEditorDescriptor | null = null;
 
-  constructor() { }
+  constructor(
+    private _thrushEngine: ThrushEngineService,
+    private _fileOpenDlg: ResourceOpenDialogService) { }
 
   ngOnInit(): void {
+    this.loadProject(Object.assign({}, BLANK_PROJECT));
   }
 
   ngAfterViewInit(): void {
@@ -143,7 +134,7 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
       return existingEditor;
     }
 
-    const editedResource = this.editedProjectController!.project.resources[resourceName];
+    const editedResource = this._editedProjectController!.project.resources[resourceName];
     const newEditor: ResourceEditorDescriptor = {
       title: resourceName,
       resourceName: resourceName,
@@ -173,12 +164,12 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
   }
 
   public async handleNewWavestrument() {
-    const newResourceName = await this.editedProjectController!.createResource('abst_wave_instrument');
+    const newResourceName = await this._editedProjectController!.createResource('abst_wave_instrument');
     this.openResource(newResourceName);
   }
 
   public async handleNewScript() {
-    const newResourceName = await this.editedProjectController!.createResource('script');
+    const newResourceName = await this._editedProjectController!.createResource('script');
     this.openResource(newResourceName);
     
   }
@@ -202,18 +193,47 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     }      
   }
 
+  async handleLoadProject() {
+    const fileArrayBuffer = await this._fileOpenDlg.open({
+      title: 'Select Project to Open',
+      allowLocal: true,
+      browseSources: [new SampleProjectsBrowser()]
+    });
+
+    const projectJson = JSON.parse(new TextDecoder().decode(fileArrayBuffer));
+    this.loadProject(projectJson);    
+  }
+  
+
+  handleDownloadProject() {
+    const file = new Blob([JSON.stringify(this._editedProjectController!.project)], {type: "application/json"});
+
+    const url = URL.createObjectURL(file);
+
+    const dlanchor = document.createElement("a");
+    dlanchor.href = url;
+    dlanchor.download = `${this._editedProjectController!.project.title}.thrush.json`;
+    document.body.appendChild(dlanchor);
+    dlanchor.click();
+    setTimeout(function() {
+        document.body.removeChild(dlanchor);
+        window.URL.revokeObjectURL(url);  
+    }, 0); 
+  }
+
+
   public handleCloseTab(editor: ResourceEditorDescriptor) {
     this.closeEditor(editor);
   }
 
    async handleSaveClicked() {
-    await this.editedProjectController!.saveResource(this.activeEditor!.resourceName, 
+    await this._editedProjectController!.saveResource(this.activeEditor!.resourceName, 
       Object.assign({ 'type': this.activeEditor!.resourceType }, this.activeEditor?.cachedComponent!.instance.editedResource));
     this.activeEditor!.draftResourceDirty = false;
   }
 
   public get editedProjectResourceNames(): string[] {
-    return Object.keys(this.editedProjectController!.project.resources);
+    return Object.keys(this._editedProjectController!.project.resources);
   }
 
   private openResource(resourceName: string) {
@@ -224,11 +244,53 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     if(oldName !== newName) {
       const existingEditor = this.openEditors.find(editor => editor.resourceName == oldName);
 
-      await this.editedProjectController!.renameResource(oldName, newName);
+      await this._editedProjectController!.renameResource(oldName, newName);
       if(existingEditor) {
         existingEditor.resourceName = newName;
         existingEditor.title = newName;
       }
     }
   }
+
+  private async loadProject(projectJson: ThrushProject) {
+    await this.closeAllEditors();
+
+    this._editedProjectController = new ThrushProjectController(projectJson, this._thrushEngine.sequencer);
+    await this._editedProjectController.loadAllToSynthEngine();
+
+    if(this._editedProjectController?.project.resources['main']) {
+      this.openResource('main');
+    }
+  }
+}
+
+
+
+
+const BLANK_PROJECT: ThrushProject = require('src/assets/example-projects/blank.thrush.json');
+
+
+class SampleProjectsBrowser implements IFileOpenBrowseSource {
+  
+  async getFilesInFolder(folderId?: string | undefined): Promise<FileBrowserFileDetails[]> {
+    return [
+      './assets/example-projects/part-notation.thrush.json',
+    ].map((url) => {
+      const urlParts = url.split('/');
+      const filename = urlParts[urlParts.length-1];
+      const basename = filename.split('.')[0]
+      return {
+        isFolder: false,
+        id: url,
+        name: basename
+      };
+    });
+  }
+
+  async getFileContent(fileId: string): Promise<ArrayBuffer> {
+    const result = await fetch(fileId);
+    return await result.arrayBuffer();    
+  }
+  
+  public readonly displayName: string = "Examples";
 }

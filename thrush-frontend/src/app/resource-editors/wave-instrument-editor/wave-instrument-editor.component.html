@@ -1,3 +1,80 @@
+
+<div class="waveform-editor-main">
+  <div class="waveform-editor-heading">
+    <div class="tab">Waveform</div>
+  </div>
+  
+  <app-waveform-editor
+    [editedWaveform]="editedWaveform"
+    [displayStartTime]="displayStartTime"
+    [displayEndTime]="displayEndTime"
+    [(selectionStartTime)]="selectionStartTime"
+    [(selectionEndTime)]="selectionEndTime"
+    [(loopStartTime)]="loopStartTime"
+    [(loopEndTime)]="loopEndTime"
+    [playbackTime]="playbackTime"
+  ></app-waveform-editor>
+  
+  <div class="waveform-editor-heading wavetable-editor-themed">
+    <div>Attack:</div>
+  
+    <mat-button-toggle-group>
+      <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
+      <mat-button-toggle value="italic">PAN</mat-button-toggle>    
+    </mat-button-toggle-group>
+  </div>
+  <app-envelope-editor
+    [(editedEnvelope)]="editedEntryEnvelope"
+    [displayStartTime]="displayStartTime"
+    [displayEndTime]="displayEndTime"
+  ></app-envelope-editor>
+  
+  <div class="waveform-editor-heading wavetable-editor-themed">
+    <div>Release:</div>
+    <mat-button-toggle-group>
+      <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
+      <mat-button-toggle value="italic">PAN</mat-button-toggle>    
+    </mat-button-toggle-group>
+  </div>
+  
+  <app-envelope-editor
+    [(editedEnvelope)]="editedExitEnvelope"
+    [displayStartTime]="displayStartTime"
+    [displayEndTime]="displayEndTime"
+  ></app-envelope-editor>
+</div>
+
+<div class="property-pane">
+  <h1>Selection</h1>
+  <div class="property">
+    Start: 
+    <div class="spacer"></div>
+    <input type="number" class="cursor-input" [(ngModel)]="selectionStartTime" />&nbsp;s
+  </div>
+
+  <div class="property">
+    End: 
+    <div class="spacer"></div>
+    <input type="number" class="cursor-input" [(ngModel)]="selectionEndTime" />&nbsp;s
+  </div>
+
+
+  <h1>Loop</h1>
+  <div class="property">
+    Start: 
+    <div class="spacer"></div>
+    <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />&nbsp;s
+  </div>
+
+  <div class="property">
+    End: 
+    <div class="spacer"></div>
+    <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />&nbsp;s
+  </div>
+
+
+</div>
+
 <app-ui-region-content region="toolbar">
   <button mat-icon-button (click)="handlePreviewStart()">
     <mat-icon>play_arrow</mat-icon>
@@ -38,79 +115,3 @@
     <mat-icon>repeat</mat-icon>
   </button>
 </app-ui-region-content>
-
-  <div class="waveform-editor-main">
-    <div class="waveform-editor-heading">
-      <div class="tab">Waveform</div>
-    </div>
-    
-    <app-waveform-editor
-      [editedWaveform]="editedWaveform"
-      [displayStartTime]="displayStartTime"
-      [displayEndTime]="displayEndTime"
-      [(selectionStartTime)]="selectionStartTime"
-      [(selectionEndTime)]="selectionEndTime"
-      [(loopStartTime)]="loopStartTime"
-      [(loopEndTime)]="loopEndTime"
-      [playbackTime]="playbackTime"
-    ></app-waveform-editor>
-    
-    <div class="waveform-editor-heading wavetable-editor-themed">
-      <div>Attack:</div>
-    
-      <mat-button-toggle-group>
-        <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
-        <mat-button-toggle value="italic">PAN</mat-button-toggle>    
-      </mat-button-toggle-group>
-    </div>
-    <app-envelope-editor
-      [(editedEnvelope)]="editedEntryEnvelope"
-      [displayStartTime]="displayStartTime"
-      [displayEndTime]="displayEndTime"
-    ></app-envelope-editor>
-    
-    <div class="waveform-editor-heading wavetable-editor-themed">
-      <div>Release:</div>
-      <mat-button-toggle-group>
-        <mat-button-toggle value="bold">VOLUME</mat-button-toggle>
-        <mat-button-toggle value="italic">PAN</mat-button-toggle>    
-      </mat-button-toggle-group>
-    </div>
-    
-    <app-envelope-editor
-      [(editedEnvelope)]="editedExitEnvelope"
-      [displayStartTime]="displayStartTime"
-      [displayEndTime]="displayEndTime"
-    ></app-envelope-editor>
-  </div>
-  
-  <div class="property-pane">
-    <h1>Selection</h1>
-    <div class="property">
-      Start: 
-      <div class="spacer"></div>
-      <input type="number" class="cursor-input" [(ngModel)]="selectionStartTime" />&nbsp;s
-    </div>
-
-    <div class="property">
-      End: 
-      <div class="spacer"></div>
-      <input type="number" class="cursor-input" [(ngModel)]="selectionEndTime" />&nbsp;s
-    </div>
-
-
-    <h1>Loop</h1>
-    <div class="property">
-      Start: 
-      <div class="spacer"></div>
-      <input type="number" class="cursor-input" [(ngModel)]="loopStartTime" />&nbsp;s
-    </div>
-
-    <div class="property">
-      End: 
-      <div class="spacer"></div>
-      <input type="number" class="cursor-input" [(ngModel)]="loopEndTime" />&nbsp;s
-    </div>
-
-
-  </div>

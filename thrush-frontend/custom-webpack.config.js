@@ -48,6 +48,9 @@ module.exports = (config, options, targetOptions) => {
   }],
     include: [/monaco/]
   });
+
+  config.module.noParse = /benchmark\.js/;
   
   return config;
 };
+

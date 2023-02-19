@@ -2,10 +2,9 @@
   <mat-drawer mode="side" [opened]="showDrawer">
     <div class="vertical-stack full">
       <div class="resource-list selectable-list">
-        <h3>
-          Resources
-          <button mat-icon-button><mat-icon>plus</mat-icon></button>
-        </h3>
+        <h1>
+          Resources          
+        </h1>
 
         <div *ngFor="let resource of editedProjectResourceNames"
             class="list-item" 
@@ -68,4 +67,20 @@
   <button mat-icon-button (click)="handleSaveClicked()" [disabled]="!activeEditor?.draftResourceDirty">
     <mat-icon>save</mat-icon>
   </button>
+</app-ui-region-content>
+
+<app-ui-region-content region="menubar">
+  <button mat-button [matMenuTriggerFor]="fileMenu">File</button>  
+  <mat-menu #fileMenu>  
+    <button mat-menu-item>New</button>  
+    <button mat-menu-item (click)="handleLoadProject()">Open...</button>  
+    <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
+  </mat-menu>  
+  <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
+  <mat-menu #helpMenu>  
+    <a href="/td" target="thrush-docs" style="text-decoration: none" mat-menu-item>
+      <mat-icon style="vertical-align: middle">help_outline</mat-icon>
+      Thrush Docs
+    </a>    
+  </mat-menu>  
 </app-ui-region-content>

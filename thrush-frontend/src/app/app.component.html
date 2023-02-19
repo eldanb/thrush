@@ -1,23 +1,17 @@
 <div class="thrush-header">        
-  <h1>Thrush</h1>
-  <img src="../assets/images/thrush_logo.svg"/>
-
+  <a class="unhinted-link" href="/">
+    <div class="thrush-logo">
+      <h1>Thrush</h1>
+      <img src="../assets/images/thrush_logo.svg"/>
+    </div>
+  </a>
 
   <div class="thrush-menu-bar">
-    <button mat-button [matMenuTriggerFor]="fileMenu">File</button>  
-    <mat-menu #fileMenu>  
-      <button mat-menu-item>New</button>  
-      <button mat-menu-item (click)="handleLoadProject()">Open...</button>  
-      <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
-    </mat-menu>  
-    <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
-    <mat-menu #helpMenu>  
-      <a href="/td" target="thrush-docs" style="text-decoration: none" mat-menu-item>
-        <mat-icon style="vertical-align: middle">help_outline</mat-icon>
-        Thrush Docs
-      </a>    
-    </mat-menu>  
+    <app-ui-region region="menubar"></app-ui-region>
   </div>
+  
+  <div class="spacer"></div>
+  <div><a href="/dragons">Here Be Dragons</a></div>
 </div>
 
 
@@ -26,8 +20,7 @@
 </mat-toolbar>
 
 <div class="thrush-main-content">
-  <app-project-editor *ngIf="currentProjectController" 
-    [editedProjectController]="currentProjectController"></app-project-editor>
+  <router-outlet></router-outlet>  
 </div>
 
 <!--<div class="thrush-status-bar">

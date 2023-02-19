@@ -1,7 +1,7 @@
 import { Injectable, ViewContainerRef } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 
-export type PluggableFrameworkRegion = "toolbar";
+export type PluggableFrameworkRegion = "toolbar" | "menubar";
 
 @Injectable()
 export class AppUiFrameworkService {

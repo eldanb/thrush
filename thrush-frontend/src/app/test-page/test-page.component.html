@@ -19,5 +19,23 @@
     <hr/>
   </div>
 
+  <div>
+    <button (click)="runBenchmark()">Run Benchmarks</button>
+    <p></p>
+    <table *ngIf="benchmarkResults">
+      <thead>
+        <tr>
+          <td>Results</td>
+          <td>Mean Time</td>
+        </tr>
+      </thead>
+      <tr *ngFor="let benchmarkResult of benchmarkResults">
+        <td>{{benchmarkResult.name}}</td>
+        <td>{{(benchmarkResult.stats.mean * 1000).toFixed(3)}}ms</td>
+      </tr>
+    </table>
+    <hr/>
+  </div>
+
   <!--<app-wave-instrument-editor [editedWaveform]="editedWaveform"></app-wave-instrument-editor>-->
 </div>

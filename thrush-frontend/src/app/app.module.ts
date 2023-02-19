@@ -15,7 +15,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MonacoEditorComponent } from './widget-lib/monaco-editor/monaco-editor.component';
-import { CodeSynthPageComponent } from './code-synth-page/code-synth-page.component';
 import { AboutPageComponent } from './about-page/about-page.component';
 import { TestPageComponent } from './test-page/test-page.component';
 import { WaveformEditorComponent } from './widget-lib/waveform-editor/waveform-editor.component';
@@ -38,7 +37,6 @@ import { ResourceOpenDialogService } from './widget-lib/resource-open-dialog/res
   declarations: [
     AppComponent,
     MonacoEditorComponent,
-    CodeSynthPageComponent,
     AboutPageComponent,
     TestPageComponent,
     WaveformEditorComponent,

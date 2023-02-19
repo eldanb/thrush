@@ -9,6 +9,16 @@ import { ThrushSequenceGenerator } from 'src/lib/thrush_engine/ThrushSequencer';
 import { ThrushEngineService } from '../services/thrush-engine.service';
 import { EditedWaveform } from '../widget-lib/waveform-editor/waveform-editor.component';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
+import { ScriptSynthBenchmark } from 'src/lib/thrush_engine/synth/benchmarks/ScriptSynthBenchmark';
+import { Suite } from 'benchmark';
+import { Benchmark, BenchmarkStats } from 'src/lib/thrush_engine/synth/benchmarks/BenchmarkJsShim';
+
+
+
+type BenchmarkResultSummary = {
+  name: string;
+  stats: BenchmarkStats;
+}
 
 const TEMPO = 0.2;
 
@@ -23,6 +33,8 @@ export class TestPageComponent implements OnInit {
 
   private _synthMode: string = 'script';
   private _parsedModule: AmigaModFile | null = null;
+
+  public benchmarkResults: BenchmarkResultSummary[] | null = null;
 
   public editedWaveform: EditedWaveform | null = null;
   public editedEnvelope: EnvelopeCurveCoordinate[] | null = [{
@@ -193,5 +205,15 @@ export class TestPageComponent implements OnInit {
     return this._thrushEngine.ready;
   }
 
+  runBenchmark() {
+    this.runAndReportBenchmark(ScriptSynthBenchmark);
+  }
 
+  private runAndReportBenchmark(benchmark: Suite) {
+    benchmark.on('complete',  ()  => {
+      this.benchmarkResults = 
+        ScriptSynthBenchmark.map((bm: Benchmark) => ({ name: bm, stats: bm.stats }) );
+    })
+    .run({ async: true });
+  }
 }
