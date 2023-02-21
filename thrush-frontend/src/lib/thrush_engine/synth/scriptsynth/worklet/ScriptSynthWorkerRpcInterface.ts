@@ -1,11 +1,11 @@
 import { ScriptSynthEngineEvent } from "../ScriptSynthEngine";
-import { Envelopes } from "../ScriptSynthInstrument";
+import { Envelopes } from "../ScriptSynthInstrumentWave";
 
 export interface ScriptSynthWorkerRpcInterface {
   executeImmediateCommand(command: { newNote: any; releaseNote: any; panning: any; volume: any; vibrato: any; }): number | PromiseLike<number>;
   deleteInstrument(instrumentId: string): unknown;
   configure(sampleRate: number): Promise<void>;
-  createInstrument(instrumentId: string, 
+  createWaveInstrument(instrumentId: string, 
     instrument: ArrayBuffer,
     sampleRate: number,    
     loopStart: number, loopLen: number,

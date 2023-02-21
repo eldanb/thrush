@@ -2,11 +2,11 @@ import { Component, EventEmitter, OnDestroy, OnInit } from '@angular/core';
 import { EditedWaveform } from 'src/app/widget-lib/waveform-editor/waveform-editor.component';
 import { parseWav } from 'src/lib/formats/WavParser';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
-import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrument';
 import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
 import {  JsonToWaveform, WaveformToJson, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
 import { ResourceEditor } from '../resource-editor';
 import { ResourceOpenDialogService } from 'src/app/widget-lib/resource-open-dialog/resource-open-dialog-service';
+import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrumentWave';
 
 
 @Component({
@@ -199,7 +199,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     if(!fileArrayBuffer) {
       return;
     }
-    
+
     const wavFile = parseWav(fileArrayBuffer);
 
     this.editedWaveform = { 

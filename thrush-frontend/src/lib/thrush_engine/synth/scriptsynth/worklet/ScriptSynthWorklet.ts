@@ -1,7 +1,7 @@
 import { ScriptSynthEngine, ScriptSynthEngineEvent } from "../ScriptSynthEngine";
-import { Envelopes, ScriptSynthWaveInstrument } from "../ScriptSynthInstrument";
 import { ScriptSynthWorkerRpcInterface } from "./ScriptSynthWorkerRpcInterface";
 import { MessagePortRpcDispatcher } from "../../../../util/MessagePortRpc";
+import { Envelopes, ScriptSynthWaveInstrument } from "../ScriptSynthInstrumentWave";
 
 class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorkerRpcInterface {
   _rpcDispathcer: MessagePortRpcDispatcher<ScriptSynthWorkerRpcInterface>;
@@ -42,7 +42,7 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
     this._synthEngine.panic();
   }
 
-  async createInstrument(
+  async createWaveInstrument(
     instrumentId: string,
     instrumentBuff: ArrayBuffer,
     sampleRate: number,

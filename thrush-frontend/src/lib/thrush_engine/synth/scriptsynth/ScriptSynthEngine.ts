@@ -1,4 +1,4 @@
-import { ScriptSynthInstrument, ScriptSynthWaveInstrument } from "./ScriptSynthInstrument";
+import { ScriptSynthInstrument } from "./ScriptSynthInstrument";
 import { ScriptSynthToneGenerator } from "./ScriptSynthToneGenerator";
 
 export type ScriptSynthEngineEvent = {
