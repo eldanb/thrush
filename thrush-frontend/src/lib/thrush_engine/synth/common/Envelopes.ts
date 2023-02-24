@@ -16,6 +16,8 @@ export class EnvelopeCurveState {
   }
 
   rewind() {
+    this._curveIndex = 0;
+
     this._startValue = this._epochStartValue;
     this._endValue = this._envelope[0].value;
     this.currentValue = -1;
@@ -24,7 +26,7 @@ export class EnvelopeCurveState {
     this._startSample = this._epochSample;
     this._endSample = this._epochSample + this._envelope[0].time * this._sampleRate;
     this._durationSamples = this._endSample - this._startSample;
-
+    
     this.running = true;
   }
 

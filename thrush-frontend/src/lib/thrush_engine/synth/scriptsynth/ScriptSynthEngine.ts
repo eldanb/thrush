@@ -1,4 +1,5 @@
 import { ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { FmAlgorithmNode, ScriptSynthFmInstrument } from "./ScriptSynthInstrumentFm";
 import { ScriptSynthToneGenerator } from "./ScriptSynthToneGenerator";
 
 export type ScriptSynthEngineEvent = {
@@ -32,6 +33,16 @@ export class ScriptSynthEngine {
   constructor(sampleRate: number, numChannels: number) {
     this._toneGenerator =  new ScriptSynthToneGenerator(sampleRate, numChannels);
     this._sampleRate = sampleRate;
+
+    this._instruments['fm_sample'] = new ScriptSynthFmInstrument(
+      new FmAlgorithmNode(1, [{ time: 0, value: 1 }, { time: 1, value: 0 }], [
+        new FmAlgorithmNode(3, [{time: 0, value: 0.27}, {time: 2, value: 0.22}], [
+          new FmAlgorithmNode(7, [{time: 0, value: 0.5 }, {time: 0.030, value: 0.23}], [
+            new FmAlgorithmNode(16, [{time: 0, value: 0.37 }, {time: 0.05, value: 0.20}], [])
+          ])
+        ])
+      ])
+    );
   }
 
   panic(): void {

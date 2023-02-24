@@ -66,20 +66,26 @@ class ScriptSynthInstrumentFmNoteGenerator implements IScriptSynthInstrumentNote
 }
 
 type FmAlgorithmNodeState = {
+  currentSample: number;
+
   currentArg: number;
   currentArgFrac: number;
+
   wholeArgStepsPerSample: number;
   fracArgStepsPerSample: number;
+  envelopeState: EnvelopeCurveState | null;
 }
 
 export class FmAlgorithmNode {
   private _stateSlot: number = -1;
   private _modulators: FmAlgorithmNode[];
+  private _freqModifier: number;
   private _amplitudeEnvelope: EnvelopeCurveCoordinate[];
 
-  constructor(amplitudeEnvelope: EnvelopeCurveCoordinate[], modulators: FmAlgorithmNode[]) {
+  constructor(freqModifier: number, amplitudeEnvelope: EnvelopeCurveCoordinate[], modulators: FmAlgorithmNode[]) {
     this._modulators = modulators;
     this._amplitudeEnvelope = amplitudeEnvelope;
+    this._freqModifier = freqModifier;
   }
 
   allocateStateSlot(slotId: number) {
@@ -90,16 +96,34 @@ export class FmAlgorithmNode {
     this._stateSlot = slotId;
   }
 
+  initializeStateSlot(baseFreqArgStepsPerSample: number, startSample: number, sampleRate: number): FmAlgorithmNodeState {
+    const slotArgSteps = baseFreqArgStepsPerSample * this._freqModifier;
+    return {
+      currentSample: startSample,
+
+      currentArg: 0,
+      currentArgFrac: 0,
+      wholeArgStepsPerSample: Math.floor(slotArgSteps),
+      fracArgStepsPerSample: Math.round((slotArgSteps - Math.floor(slotArgSteps)) * STEPS_PER_SINE_CYCLE),
+      envelopeState: this._amplitudeEnvelope?.length 
+                        ? new EnvelopeCurveState(this._amplitudeEnvelope, 1, startSample, sampleRate) 
+                        : null
+    }
+  }
+
   public computeNextSample(state: FmAlgorithmNodeState[], samplesToSkip: number): number {
     const numMods = this._modulators.length;
     let modValue = 0;
     for(let modulatorIndex=0; modulatorIndex<numMods; modulatorIndex++) {
-      modValue += this._modulators[modulatorIndex].computeNextSample(state, samplesToSkip)*10;      
+      modValue += this._modulators[modulatorIndex].computeNextSample(state, samplesToSkip);      
     }
 
     const stateSlot = state[this._stateSlot];
     let currentArg = stateSlot.currentArg;
     let currentArgFrac = stateSlot.currentArgFrac;
+
+    stateSlot.envelopeState?.updateEnvelopeState(stateSlot.currentSample);
+    stateSlot.currentSample += samplesToSkip;
 
     while(samplesToSkip--) {
       currentArgFrac += stateSlot.fracArgStepsPerSample;
@@ -108,17 +132,30 @@ export class FmAlgorithmNode {
         currentArg++;
       }
 
-      currentArg += Math.round(modValue) + stateSlot.wholeArgStepsPerSample;
-    }
+      currentArg += stateSlot.wholeArgStepsPerSample;
 
-    if(currentArg >= STEPS_PER_SINE_CYCLE) {
-      currentArg -= STEPS_PER_SINE_CYCLE;
+      if(currentArg>STEPS_PER_SINE_CYCLE) {
+        currentArg -= STEPS_PER_SINE_CYCLE;
+      }
     }
 
     stateSlot.currentArg = currentArg;
     stateSlot.currentArgFrac = currentArgFrac;
+
+    currentArg += Math.round(modValue*1.6*STEPS_PER_SINE_CYCLE);
+
+    while(currentArg >= STEPS_PER_SINE_CYCLE) {
+     currentArg -= STEPS_PER_SINE_CYCLE;
+    } 
     
-    return SinLookup[currentArg];
+    while(currentArg < 0) {
+      currentArg += STEPS_PER_SINE_CYCLE;
+    }
+
+    const baseWav = SinLookup[currentArg];
+    const envelope = stateSlot.envelopeState?.currentValue ?? 1;
+
+    return baseWav * envelope * envelope;
   }
 
   public get modulators() {
@@ -128,13 +165,13 @@ export class FmAlgorithmNode {
 
 const SinLookup: number[] = [];
 for(let idx=0; idx < STEPS_PER_SINE_CYCLE; idx++) {
-  SinLookup[idx] = Math.sin((idx / STEPS_PER_SINE_CYCLE) * 2 * Math.PI)*0.9;
+  SinLookup[idx] = Math.sin((idx / STEPS_PER_SINE_CYCLE) * 2 * Math.PI);
 }
 
 
 export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
   private _algo: FmAlgorithmNode;
-  private _numSlots: number = -1;
+  private _nodesBySlot: FmAlgorithmNode[] = [];
 
   constructor(algo: FmAlgorithmNode) {
     super();
@@ -144,35 +181,25 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
 
 
   private allocateStateSlots(): void {
-    const walkStack: FmAlgorithmNode[] = [this._algo];
-    let slotId = 0;
-    for(let stackIndex = 0; stackIndex < walkStack.length; stackIndex++) {
-      const currentNode = walkStack[stackIndex];
-      currentNode.allocateStateSlot(slotId++);
-      walkStack.push(...currentNode.modulators);      
-    }
-
-    this._numSlots = slotId;
+    this._nodesBySlot = [this._algo];    
+    for(let stackIndex = 0; stackIndex < this._nodesBySlot.length; stackIndex++) {
+      const currentNode = this._nodesBySlot[stackIndex];
+      currentNode.allocateStateSlot(stackIndex);
+      this._nodesBySlot.push(...currentNode.modulators);      
+    }    
   }
 
-  public initializeState(argStepsPerSample: number): FmAlgorithmNodeState[] {    
+  public initializeState(baseFreqArgStepsPerSample: number, startSampleNumber: number, outputSampleRate: number): FmAlgorithmNodeState[] {    
     const ret: FmAlgorithmNodeState[] = [];
-    for(let idx = 0; idx < this._numSlots; idx++) {
-      ret[idx] = {
-        currentArg: 0,
-        currentArgFrac: 0,
-        wholeArgStepsPerSample: Math.floor(argStepsPerSample),
-        fracArgStepsPerSample: Math.round((argStepsPerSample - Math.floor(argStepsPerSample)) * STEPS_PER_SINE_CYCLE)
-      }
-    }
-
-    return ret;
+    return this._nodesBySlot.map((node, nodeIndex) => {
+      return node.initializeStateSlot(baseFreqArgStepsPerSample, startSampleNumber, outputSampleRate);
+    });
   }
 
 
   createNoteGenerator(note: number, outputSampleRate: number, startSampleNumber: number) : IScriptSynthInstrumentNoteGenerator {
-    const argStepsPerSample = (65.41 * Math.pow(2, (note / 12)) * STEPS_PER_SINE_CYCLE) / outputSampleRate;
-    return new ScriptSynthInstrumentFmNoteGenerator(this._algo, this.initializeState(argStepsPerSample), startSampleNumber);
+    const baseFreqArgStepsPerSample = (65.41 * Math.pow(2, (note / 12)) * STEPS_PER_SINE_CYCLE) / outputSampleRate;
+    return new ScriptSynthInstrumentFmNoteGenerator(this._algo, this.initializeState(baseFreqArgStepsPerSample, startSampleNumber, outputSampleRate), startSampleNumber);
   }
 
   get algo(): FmAlgorithmNode {
