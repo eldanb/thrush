@@ -31,7 +31,7 @@ class ScriptSynthInstrumentFmNoteGenerator implements IScriptSynthInstrumentNote
   }
 
   getNoteSample(currentSample: number, currentTime: number, outChannels: number[]): boolean {
-    if(this._releasing) {
+    if(this._releasing && !this._alg.isEnvelopeRunning(this._algState)) {
       return false;
     }
 
@@ -50,6 +50,7 @@ class ScriptSynthInstrumentFmNoteGenerator implements IScriptSynthInstrumentNote
 
   releaseNote(releaseSampleNumber: number): void {
     this._releasing = true;
+    this._alg.releaseNote(this._algState, releaseSampleNumber);
   }
 
   setVolume(volume: any) {
@@ -67,7 +68,8 @@ class ScriptSynthInstrumentFmNoteGenerator implements IScriptSynthInstrumentNote
 
 type FmAlgorithmNodeState = {
   currentSample: number;
-
+  sampleRate: number;
+  
   currentArg: number;
   currentArgFrac: number;
 
@@ -81,10 +83,15 @@ export class FmAlgorithmNode {
   private _modulators: FmAlgorithmNode[];
   private _freqModifier: number;
   private _amplitudeEnvelope: EnvelopeCurveCoordinate[];
+  private _amplitudeReleaseEnvelope: EnvelopeCurveCoordinate[];
 
-  constructor(freqModifier: number, amplitudeEnvelope: EnvelopeCurveCoordinate[], modulators: FmAlgorithmNode[]) {
+  constructor(freqModifier: number, 
+      amplitudeEnvelope: EnvelopeCurveCoordinate[], 
+      amplitudeReleaseEnvelope: EnvelopeCurveCoordinate[],
+      modulators: FmAlgorithmNode[]) {
     this._modulators = modulators;
     this._amplitudeEnvelope = amplitudeEnvelope;
+    this._amplitudeReleaseEnvelope = amplitudeReleaseEnvelope;
     this._freqModifier = freqModifier;
   }
 
@@ -100,6 +107,7 @@ export class FmAlgorithmNode {
     const slotArgSteps = baseFreqArgStepsPerSample * this._freqModifier;
     return {
       currentSample: startSample,
+      sampleRate: sampleRate,
 
       currentArg: 0,
       currentArgFrac: 0,
@@ -110,6 +118,16 @@ export class FmAlgorithmNode {
                         : null
     }
   }
+
+  public releaseNote(state: FmAlgorithmNodeState[], startSample: number) {
+    this._modulators.forEach((m) => m.releaseNote(state, startSample));
+    const stateSlot = state[this._stateSlot];
+    if(this._amplitudeReleaseEnvelope?.length) {
+      stateSlot.envelopeState = new EnvelopeCurveState(this._amplitudeReleaseEnvelope, 
+        stateSlot.envelopeState?.currentValue ?? 1, startSample, stateSlot.sampleRate);
+    }
+  }
+
 
   public computeNextSample(state: FmAlgorithmNodeState[], samplesToSkip: number): number {
     const numMods = this._modulators.length;
@@ -161,6 +179,11 @@ export class FmAlgorithmNode {
   public get modulators() {
     return this._modulators;
   }
+
+  isEnvelopeRunning(algState: FmAlgorithmNodeState[]) {
+    return algState[this._stateSlot].envelopeState?.running;
+  }
+
 }
 
 const SinLookup: number[] = [];
