@@ -37,5 +37,14 @@
     <hr/>
   </div>
 
+
+  <div>
+    <button (click)="computeFm()">Compute FM</button>
+    <p></p>
+    <app-waveform-editor *ngIf="fmWaveform" style="height: 320px" [editedWaveform]="fmWaveform" [displayStartTime]="0" [displayEndTime]="fmWaveformDuration">
+
+    </app-waveform-editor>    
+  </div>
+
   <!--<app-wave-instrument-editor [editedWaveform]="editedWaveform"></app-wave-instrument-editor>-->
 </div>

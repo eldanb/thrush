@@ -9,6 +9,7 @@ import { WaveInstrumentEditorComponent } from '../resource-editors/wave-instrume
 import { ThrushEngineService } from '../services/thrush-engine.service';
 import { ResourceOpenDialogService } from '../widget-lib/resource-open-dialog/resource-open-dialog-service';
 import { FileBrowserFileDetails, IFileOpenBrowseSource } from '../widget-lib/resource-open-dialog/resource-open-dialog.component';
+import { FmInstrumentEditorComponent } from '../resource-editors/fm-instrument-editor/fm-instrument-editor.component';
 
 
 type ResourceEditorDescriptor = {
@@ -24,6 +25,7 @@ type ResourceEditorDescriptor = {
 const ResourceEditorTypes: Record<ResourceType, ComponentType<ResourceEditor<any, never>>>  = {
   abst_wave_instrument: WaveInstrumentEditorComponent,
   script: SynthScriptEditorComponent,
+  fm_instrument: FmInstrumentEditorComponent
 }
 
 @Component({

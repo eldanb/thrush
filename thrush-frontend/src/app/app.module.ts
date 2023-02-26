@@ -33,6 +33,7 @@ import { UiRegionContentComponent } from './widget-lib/ui-region-content/ui-regi
 import { UiRegionComponent } from './widget-lib/ui-region/ui-region.component';
 import { ResourceOpenDialogComponent } from './widget-lib/resource-open-dialog/resource-open-dialog.component';
 import { ResourceOpenDialogService } from './widget-lib/resource-open-dialog/resource-open-dialog-service';
+import { FmInstrumentEditorComponent } from './resource-editors/fm-instrument-editor/fm-instrument-editor.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -48,6 +49,7 @@ import { ResourceOpenDialogService } from './widget-lib/resource-open-dialog/res
     UiRegionContentComponent,
     UiRegionComponent,
     ResourceOpenDialogComponent,
+    FmInstrumentEditorComponent,
   ],
   imports: [
     BrowserModule,

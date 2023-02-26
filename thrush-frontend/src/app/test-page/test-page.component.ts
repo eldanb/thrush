@@ -12,6 +12,7 @@ import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Enve
 import { ScriptSynthBenchmark } from 'src/lib/thrush_engine/synth/benchmarks/ScriptSynthBenchmark';
 import { Suite } from 'benchmark';
 import { Benchmark, BenchmarkStats } from 'src/lib/thrush_engine/synth/benchmarks/BenchmarkJsShim';
+import { FmAlgorithmNode, ScriptSynthFmInstrument } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrumentFm';
 
 
 
@@ -42,6 +43,7 @@ export class TestPageComponent implements OnInit {
     value: 1
   }];
  
+  public fmWaveform: EditedWaveform | null = null;
   constructor(private _thrushEngine: ThrushEngineService) { }
 
   ngOnInit(): void {
@@ -207,6 +209,41 @@ export class TestPageComponent implements OnInit {
 
   runBenchmark() {
     this.runAndReportBenchmark(ScriptSynthBenchmark);
+  }
+
+  computeFm() {
+    const instrument = new ScriptSynthFmInstrument(new FmAlgorithmNode(1, [], [], [
+      new FmAlgorithmNode(1.98, [], [], [])
+    ]));
+
+    const outputSampleRate = 22050;
+    const noteGenerator = instrument.createNoteGenerator(24, outputSampleRate, 0);
+    
+    const editedWaveform: EditedWaveform = {
+      sampleRate: outputSampleRate,
+      channelSamples: [new Float32Array(outputSampleRate*0.12), new Float32Array(outputSampleRate*0.12)]
+    }
+    const outputChannels = [0, 0];
+
+    for(let idx=0; idx<editedWaveform.channelSamples[0].length; idx++) {
+      outputChannels[0] = 0; 
+      outputChannels[1] = 0; 
+
+      if(!noteGenerator.getNoteSample(idx, idx/outputSampleRate, outputChannels)) {
+        break;
+      }
+
+      editedWaveform.channelSamples[0][idx] = outputChannels[0];
+      editedWaveform.channelSamples[1][idx] = outputChannels[1];
+    } 
+
+    this.fmWaveform = editedWaveform;
+  }
+
+  get fmWaveformDuration(): number {
+    return this.fmWaveform
+      ? this.fmWaveform.channelSamples[0].length / this.fmWaveform.sampleRate
+      : 0;
   }
 
   private runAndReportBenchmark(benchmark: Suite) {
