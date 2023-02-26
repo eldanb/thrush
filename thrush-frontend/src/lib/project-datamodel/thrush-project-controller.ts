@@ -1,5 +1,5 @@
 import { ThrushSequencer } from "../thrush_engine/ThrushSequencer";
-import { JsonToWaveform, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectResourceWithType, ThrushProjectTypedResource } from "./project-datamodel";
+import { JsonToWaveform, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeFmInstrument, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectResourceWithType, ThrushProjectTypedResource } from "./project-datamodel";
 
 type ResourceUpdateHandler = {
   [resourceType in ResourceType as `update_${resourceType}`]: (name: string, resource: ResourceTypes[resourceType]) => Promise<void>;
@@ -27,7 +27,7 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     private _sequencer: ThrushSequencer    
     ) {
   }
-  
+
   public get project(): ThrushProject {
     return this._dataModel;
   }
@@ -54,6 +54,10 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
       resource.exitEnvelopes);
   }
   
+  async update_fm_instrument(name: string, resource: ResourceTypeFmInstrument): Promise<void> {
+    
+  }
+
   async create_script(): Promise<ThrushProjectResourceWithType<'script'>> {
     return {
       type: 'script',
@@ -77,13 +81,31 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     }
   }
 
+  async create_fm_instrument(): Promise<ThrushProjectResourceWithType<'fm_instrument'>> {
+    return {
+      type: 'fm_instrument',
+      'rootAlgorithmNode': {
+        freqType: "multiplier",
+        freqValue: 1,
+        attackEnvelope: [],
+        releaseEnvelope: [],
+        modulators: []
+      }
+    };
+  }
+
+
   async delete_script(name: string, resource: ResourceTypeScript) {
   } 
 
   async delete_abst_wave_instrument(name: string, resource: ResourceTypeAbstractWaveInstrument) {
     await this._sequencer.tsynthToneGenerator.deleteInstrument(name);
+    // TODO native synth
   }
 
+  async delete_fm_instrument(name: string, resource: ResourceTypeFmInstrument) {
+    await this._sequencer.tsynthToneGenerator.deleteInstrument(name);
+  }
 
   async createResource(resourceType: ResourceType) {
     let suggestedName;

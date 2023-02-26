@@ -1,3 +1,4 @@
+import { EnvelopeCurveCoordinate } from "../thrush_engine/synth/common/Envelopes";
 import { Envelopes } from "../thrush_engine/synth/native/NativeSynthesizerInstrument";
 
 export type ThrushProject = {
@@ -5,9 +6,18 @@ export type ThrushProject = {
   resources: Record<string, ThrushProjectTypedResource>;
 }
 
+export type ThrushProjectResourceWithType<K> = 
+  K extends keyof ResourceTypes ? ({ type: K } & ResourceTypes[K]) : never;
+
+export type ThrushProjectTypedResource = ThrushProjectResourceWithType<keyof ResourceTypes>;
+
+export type ResourceType = keyof ResourceTypes;
+
+
 export type ResourceTypes = {
   'script': ResourceTypeScript,
-  'abst_wave_instrument': ResourceTypeAbstractWaveInstrument
+  'abst_wave_instrument': ResourceTypeAbstractWaveInstrument,
+  'fm_instrument': ResourceTypeFmInstrument
 }
 
 export type ResourceTypeScript = {
@@ -23,12 +33,20 @@ export type ResourceTypeAbstractWaveInstrument = {
   exitEnvelopes: Envelopes
 }
 
-export type ThrushProjectResourceWithType<K> = 
-  K extends keyof ResourceTypes ? ({ type: K } & ResourceTypes[K]) : never;
+type ResourceTypeFmInstrumentAlgorithmNode = {
+  freqType: "fixed" | "multiplier" | "dc",
+  freqValue: number,
 
-export type ThrushProjectTypedResource = ThrushProjectResourceWithType<keyof ResourceTypes>;
+  attackEnvelope: EnvelopeCurveCoordinate[],
+  releaseEnvelope: EnvelopeCurveCoordinate[],
 
-export type ResourceType = keyof ResourceTypes;
+  modulators: ResourceTypeFmInstrumentAlgorithmNode[]
+};
+
+export type ResourceTypeFmInstrument = {
+  rootAlgorithmNode: ResourceTypeFmInstrumentAlgorithmNode;
+}
+
 
 function Base64ToFloat32ArrayLe(b64: string) {
   const binaryContent = atob(b64);
