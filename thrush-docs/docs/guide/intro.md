@@ -12,12 +12,18 @@ The Main Event in the current setup is CodeSynth -- allowing you to write JavaSc
 
 ## In this Version
 
-- A software-based wavetable synthesizer.  This is CPU intensive but will allow accuracy and flexibility in rendering different effects.  
+- A software-based wavetable synthesizer.  This is 'CPU intensive' but will allow accuracy and flexibility in rendering different effects.  
 - A WebAudio-native wavetable synthesizer. This is more CPU optimized (since a lot of the work is offloaded to WebAudio), but as such it is somewhat restricted in flexibility. 
+- An FM synthesizer.
 - Buffering sequencer. Capable of operating the synthesizers in a synchronized manner, and orchestrating multiple synthesizer event sequences. Sequences may be mixed, concatenated, and otherwise transformed. Sequences may operate multiple synthesizers, and include markers / cues that can be observed and waited upon. Event sequences are lazily evaluated, buffered and streamed into the synthesizers.
 - Generator function based sequence. Generates an event sequence by evaluating a JavaScript generator function.  This is useful for creating generative / procedural musical content.
 - Pattern based sequences. These are sequences that are based on fixed-time slots with commands.
-- Rudimentary UI to experiment with the thing.
+- Simple part notation sequences. These are sequences that are specified in a simple language for musical notation.
+- Project editing UI -- with tabbed editors, resource lists, etc.
+
+### News: March 2022
+- Project editor UI including code and wavetable synthesis editing
+- FM synthesis and instrument editor
 
 ### News: December 2022
 - Support for volume envelopes for notes
@@ -31,13 +37,11 @@ The Main Event in the current setup is CodeSynth -- allowing you to write JavaSc
 The following is listed roughly by current priority:
     
 - Procedural sequences -- utility functions (concat, transpose, chords, ...)
-- A complete song editor that allows loading instruments, and editing sequences of multiple types to compose a full 'song'. Also save / load projects.
 - A timeline editor (editing a timeline on which other sequences can be placed)
 - A pattern sequence editor.
 - A sample editor
 - More power to wavetable synthesizer engines: e.g effects and layers
 - Realtime event ingestion (MIDI, on-screen controllers)
-- Additional synthesizer engines: FM
 - Collaboration features: every asset in a tune becomes freely available for anyone to consume in their one project.
 - Maintain a pedigree of assets (which asset was derived from which asset) and allow consumers to browse by pedigree.              
 - An initial insturments bank, and perhaps patterns bank.
