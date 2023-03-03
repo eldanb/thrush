@@ -20,7 +20,7 @@ type FmAlgorithmNodeState = {
 
 type FmToneGeneratorFactory = 
   (startSample: number, sampleRate: number, baseFrequencyArgStepsPerSample: number, EnvelopeCurveState: any) => 
-    [(samplesToSkip: number) => number, () => void];
+    [(samplesToSkip: number) => number, (releaseAt: number) => void];
 
 
 class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrumentNoteGenerator {
@@ -30,12 +30,12 @@ class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrum
   private _lastSample: number = 0;
   private _startSampleNumber: number = 0;
   private _algToneGenerator: ((skipCount: number) => number);
-  private _algToneGeneratorRelease: (() => void);
+  private _algToneGeneratorRelease: ((releaseAt: number) => void);
 
   vibratoGenerator: WaveFormGenerator | null = null;
 
   constructor(startSampleNumber: number,
-      algToneGeneratorFns: [((skipCount: number) => number), () => void]) {
+      algToneGeneratorFns: [((skipCount: number) => number), (releaseAt: number) => void]) {
     this._startSampleNumber = startSampleNumber;
     this._algToneGenerator = algToneGeneratorFns[0];
     this._algToneGeneratorRelease = algToneGeneratorFns[1];
@@ -61,7 +61,7 @@ class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrum
   }
 
   releaseNote(releaseSampleNumber: number): void {
-    this._algToneGeneratorRelease();
+    this._algToneGeneratorRelease(releaseSampleNumber);
   }
 
   setVolume(volume: any) {
@@ -217,13 +217,15 @@ export class FmAlgorithmNode {
         : `0`;
         
     return `
-      const nodeOutput${stateSuffix} = ${baseAmplitudeCalculation}
+      let nodeOutput${stateSuffix} = ${baseAmplitudeCalculation}
       
       if(envelopeState${stateSuffix}) {
         envelopeState${stateSuffix}.updateEnvelopeState(currentSample${stateSuffix});  
         const envelope = envelopeState${stateSuffix}.currentValue;
         nodeOutput${stateSuffix} *= envelope * envelope;   
-      }      
+      }
+      
+      currentSample${stateSuffix} += samplesToSkip;
     `;
 
   }
@@ -266,7 +268,7 @@ export class FmAlgorithmNode {
   generateRelease(stateSuffix: string): any {
     if(this._amplitudeReleaseEnvelope?.length) {
       return `
-        envelopeState${stateSuffix} = EnvelopeCurveState(${JSON.stringify(this._amplitudeReleaseEnvelope)}, envelopeState${stateSuffix}?.currentValue ?? 1, startSample, sampleRate);
+        envelopeState${stateSuffix} = EnvelopeCurveState(${JSON.stringify(this._amplitudeReleaseEnvelope)}, envelopeState${stateSuffix}?.currentValue ?? 1, releaseAt, sampleRate);
       `
     } else {
       return ``;
@@ -354,7 +356,7 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
         return nodeOutputNode${this._algo.stateSlot};
       };
 
-      const release = () => {
+      const release = (releaseAt) => {
         releasing = true;
 
         ${releaseBody}        

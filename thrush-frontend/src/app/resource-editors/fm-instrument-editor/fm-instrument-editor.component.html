@@ -1,19 +1,20 @@
 <div class="horizontal-stack full">
   <div class="spacer">    
-    <div class="vertical-stack full" *ngIf="editedAlgorithmNode && editedAlgorithmNode.oscType != 'adder'">
-      <div class="waveform-editor-heading">
-        <div class="tab">Operator Waveform</div>
-      </div>
-      
-      <app-waveform-editor *ngIf="operatorWaveform" class="spacer"
-        [editedWaveform]="operatorWaveform" 
-        [(selectionStartTime)]="selectionStartTime"
-        [(selectionEndTime)]="selectionEndTime"      
-        [displayStartTime]="resultDisplayStartTime" 
-        [displayEndTime]="resultDisplayEndTime">
+    <div class="vertical-stack full" *ngIf="editedAlgorithmNode">
+      <ng-container *ngIf="editedAlgorithmNode.oscType != 'adder'">
+        <div class="waveform-editor-heading">
+          <div class="tab">Operator Waveform</div>
+        </div>
+        
+        <app-waveform-editor *ngIf="operatorWaveform" class="spacer"
+          [editedWaveform]="operatorWaveform" 
+          [(selectionStartTime)]="selectionStartTime"
+          [(selectionEndTime)]="selectionEndTime"      
+          [displayStartTime]="resultDisplayStartTime" 
+          [displayEndTime]="resultDisplayEndTime">
 
-      </app-waveform-editor>    
-
+        </app-waveform-editor>    
+      </ng-container>
 
       <div class="waveform-editor-heading">
         <div class="tab">Attack Envelope</div>
