@@ -25,6 +25,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { ResourceEditorDialogService } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.service';
 import { ResourceEditorDialogComponent } from './resource-editors/resource-editor-dialog-service/resource-editor-dialog.component';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { ProjectEditorComponent } from './project-editor/project-editor.component';
@@ -70,7 +71,8 @@ import { FmInstrumentEditorComponent } from './resource-editors/fm-instrument-ed
     MatDialogModule,
     MatButtonToggleModule,
     MatMenuModule,
-    MatToolbarModule
+    MatToolbarModule,
+    MatSlideToggleModule
   ],
   providers: [
     ResourceEditorDialogService, 

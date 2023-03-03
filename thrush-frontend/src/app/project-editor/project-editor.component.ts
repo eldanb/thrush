@@ -170,10 +170,14 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     this.openResource(newResourceName);
   }
 
+  public async handleNewFmInstrument() {
+    const newResourceName = await this._editedProjectController!.createResource('fm_instrument');
+    this.openResource(newResourceName);
+  }
+
   public async handleNewScript() {
     const newResourceName = await this._editedProjectController!.createResource('script');
-    this.openResource(newResourceName);
-    
+    this.openResource(newResourceName);    
   }
 
   public handleRequestRename(oldResourceName: string) {

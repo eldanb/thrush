@@ -1,0 +1,85 @@
+:host {
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+
+  flex-grow: 1;
+}
+
+.algorithm-pane {
+  border: solid 1px silver;
+  border-radius: 0.25rem;
+  margin: 0 1rem;
+
+  .algorithm-selector {
+    align-items: center;
+
+    .selected-algorithm-title {
+      text-align: center;  
+    }
+  }
+}
+
+.property-pane {
+  width: 20rem;
+}
+
+.property-label {
+  width: 5rem;
+}
+
+.preview-pane {
+  display: flex;
+  
+  overflow-y: hidden;
+
+  border: solid 1px silver;
+  border-radius: 0.25rem;
+  margin: 0 1rem;
+  flex-grow: 1;
+}
+
+.waveform-editor-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  background: white;
+  color: gray;
+  text-transform: uppercase;
+  font-size: 12px;
+  padding: 12px 6px;
+
+  border-top: solid 1px rgb(245, 245, 255);
+  border-bottom: solid 1px rgb(245, 245, 255);
+
+}
+
+.algo-node {
+  fill: green;
+}
+
+.algo-node-selection {
+  fill: none;
+  stroke: gray;
+}
+
+.algo-node-label {
+  font-weight: bold;
+  fill: white;
+}
+
+.algo-node-connection {
+  stroke: blue;
+}
+
+
+app-waveform-editor {
+  flex-basis: 10px;
+  flex-grow: 1;
+}
+
+app-envelope-editor {
+  flex-basis: 10px;
+  flex-grow: 1;
+}

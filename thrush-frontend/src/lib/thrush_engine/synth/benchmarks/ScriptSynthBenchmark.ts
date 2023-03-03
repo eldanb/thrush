@@ -8,7 +8,7 @@ import { ScriptSynthWaveInstrument } from '../scriptsynth/ScriptSynthInstrumentW
 export const ScriptSynthBenchmark = 
   new Benchmark.Suite()  
   .add('single-note-all-fm', () => {
-    const bmEngine = new ScriptSynthEngine(22050, 16);
+    const bmEngine = new ScriptSynthEngine(44100, 16);
     bmEngine.registerInstrument('i1', new ScriptSynthWaveInstrument(
       new Float32Array(8192),
       8192, 10, 1000, 1, 
@@ -21,10 +21,10 @@ export const ScriptSynthBenchmark =
       bmEngine.enqueueEvent({ channelOrNoteId: `n${nid}`, newNote: { instrumentId: 'fm_sample', note: 11+nid }, time: nid*0.01 });
     }
     
-    bmEngine.fillSampleBuffer(0, new Float32Array(22050), new Float32Array(22050), 0, 22050);
+    bmEngine.fillSampleBuffer(0, new Float32Array(44100), new Float32Array(44100), 0, 44100);
   }, {initCount: 15, minSamples: 15})
   .add('single-note-all-channels', () => {
-    const bmEngine = new ScriptSynthEngine(22050, 16);
+    const bmEngine = new ScriptSynthEngine(44100, 16);
     bmEngine.registerInstrument('i1', new ScriptSynthWaveInstrument(
       new Float32Array(8192),
       8192, 10, 1000, 1, 
@@ -36,10 +36,10 @@ export const ScriptSynthBenchmark =
       bmEngine.enqueueEvent({ channelOrNoteId: `n${nid}`, newNote: { instrumentId: 'i1', note: 11+nid }, time: nid*0.01 });
     }
     
-    bmEngine.fillSampleBuffer(0, new Float32Array(22050), new Float32Array(22050), 0, 22050);
+    bmEngine.fillSampleBuffer(0, new Float32Array(44100), new Float32Array(44100), 0, 44100);
   }, {initCount: 15, minSamples: 15})  
   .add('single-note-all-channels-vibrator', () => {
-    const bmEngine = new ScriptSynthEngine(22050, 16);
+    const bmEngine = new ScriptSynthEngine(44100, 16);
     bmEngine.registerInstrument('i1', new ScriptSynthWaveInstrument(
       new Float32Array(8192),
       8192, 10, 1000, 1, 
@@ -54,7 +54,7 @@ export const ScriptSynthBenchmark =
         time: nid*0.01 });
     }
     
-    bmEngine.fillSampleBuffer(0, new Float32Array(22050), new Float32Array(22050), 0, 22050);
+    bmEngine.fillSampleBuffer(0, new Float32Array(44100), new Float32Array(44100), 0, 44100);
   }, {initCount: 15, minSamples: 15})
   
   

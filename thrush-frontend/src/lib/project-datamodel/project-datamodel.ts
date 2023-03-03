@@ -1,5 +1,5 @@
-import { EnvelopeCurveCoordinate } from "../thrush_engine/synth/common/Envelopes";
 import { Envelopes } from "../thrush_engine/synth/native/NativeSynthesizerInstrument";
+import { FmInstrumentAlgorithmNodeDescriptor } from "../thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface";
 
 export type ThrushProject = {
   title: string;
@@ -33,18 +33,8 @@ export type ResourceTypeAbstractWaveInstrument = {
   exitEnvelopes: Envelopes
 }
 
-type ResourceTypeFmInstrumentAlgorithmNode = {
-  freqType: "fixed" | "multiplier" | "dc",
-  freqValue: number,
-
-  attackEnvelope: EnvelopeCurveCoordinate[],
-  releaseEnvelope: EnvelopeCurveCoordinate[],
-
-  modulators: ResourceTypeFmInstrumentAlgorithmNode[]
-};
-
 export type ResourceTypeFmInstrument = {
-  rootAlgorithmNode: ResourceTypeFmInstrumentAlgorithmNode;
+  rootAlgorithmNode: FmInstrumentAlgorithmNodeDescriptor;  
 }
 
 

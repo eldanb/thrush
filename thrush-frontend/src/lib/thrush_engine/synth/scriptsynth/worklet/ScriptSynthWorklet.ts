@@ -1,7 +1,8 @@
-import { ScriptSynthEngine, ScriptSynthEngineEvent } from "../ScriptSynthEngine";
-import { ScriptSynthWorkerRpcInterface } from "./ScriptSynthWorkerRpcInterface";
 import { MessagePortRpcDispatcher } from "../../../../util/MessagePortRpc";
+import { ScriptSynthEngine, ScriptSynthEngineEvent } from "../ScriptSynthEngine";
+import { ScriptSynthFmInstrument } from "../ScriptSynthInstrumentFm";
 import { Envelopes, ScriptSynthWaveInstrument } from "../ScriptSynthInstrumentWave";
+import { FmInstrumentAlgorithmNodeDescriptor, ScriptSynthWorkerRpcInterface } from "./ScriptSynthWorkerRpcInterface";
 
 class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorkerRpcInterface {
   _rpcDispathcer: MessagePortRpcDispatcher<ScriptSynthWorkerRpcInterface>;
@@ -65,6 +66,12 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
         exitEnvelopes
         ));
   }
+
+  async createFmInstrument(instrumentId: string, algorithm: FmInstrumentAlgorithmNodeDescriptor): Promise<void> {    
+    this._synthEngine?.registerInstrument(instrumentId, 
+      ScriptSynthFmInstrument.fromDescriptor(algorithm));
+  }
+
 
   async configure(sampleRate: number) {
     this._synthEngine = new ScriptSynthEngine(sampleRate, 16);

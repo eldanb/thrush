@@ -1,1 +1,138 @@
-<p>fm-instrument-editor works!</p>
+<div class="horizontal-stack full">
+  <div class="spacer">    
+    <div class="vertical-stack full" *ngIf="editedAlgorithmNode && editedAlgorithmNode.oscType != 'adder'">
+      <div class="waveform-editor-heading">
+        <div class="tab">Operator Waveform</div>
+      </div>
+      
+      <app-waveform-editor *ngIf="operatorWaveform" class="spacer"
+        [editedWaveform]="operatorWaveform" 
+        [(selectionStartTime)]="selectionStartTime"
+        [(selectionEndTime)]="selectionEndTime"      
+        [displayStartTime]="resultDisplayStartTime" 
+        [displayEndTime]="resultDisplayEndTime">
+
+      </app-waveform-editor>    
+
+
+      <div class="waveform-editor-heading">
+        <div class="tab">Attack Envelope</div>
+      </div>
+      <app-envelope-editor
+            class="operand-envelope"
+            [(editedEnvelope)]="editedAlgorithmNodeAttack"
+            [displayStartTime]="resultDisplayStartTime"
+            [displayEndTime]="resultDisplayEndTime"
+      ></app-envelope-editor>
+
+
+      <div class="waveform-editor-heading">
+        <div class="tab">Release Envelope</div>
+      </div>
+      <app-envelope-editor
+        class="operand-envelope"
+        [(editedEnvelope)]="editedAlgorithmNodeRelease"
+        [displayStartTime]="resultDisplayStartTime"
+        [displayEndTime]="resultDisplayEndTime"
+      ></app-envelope-editor>
+    </div>
+  </div>
+  
+  <div class="property-pane">
+    <h1>Algorithm</h1>
+    <div class="algorithm-pane">
+      <div class="horizontal-stack full centered algorithm-selector">
+        <button mat-icon-button (click)="handlePreviousAlgo()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+
+        <div class="spacer selected-algorithm-title small-header">Algorithm #{{selectedTopologyId}}</div>
+
+        <button mat-icon-button (click)="handleNextAlgo()">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 150" width="100%" height="150">
+        <g *ngFor="let visNode of algorithmVisualizationNodes">
+          <path *ngFor="let targetNode of visNode.children"
+                [attr.d]="'M' + (visNode.x+20) + ',' + (visNode.y+20) +' L' + (targetNode.x+20) + ',' + (targetNode.y+20)"
+                class="algo-node-connection" />    
+        </g>
+      
+        <g *ngFor="let visNode of algorithmVisualizationNodes" 
+          [attr.transform]="'translate(' + visNode.x + ',' + visNode.y + ')'"
+          (click)="handleAlgorithmGraphNodeClicked(visNode)">
+      
+          <rect class="algo-node" x="5" y="5" width="30" height="30" rx="6"/>
+      
+          <rect *ngIf="visNode.fmAlgorithmNodeDescriptor == editedAlgorithmNode"
+                class="algo-node-selection" x="0" y="0" width="40" height="40" rx="6"/>
+
+          <text *ngIf="visNode.fmAlgorithmNodeDescriptor.oscType == 'adder'"
+                class="algo-node-label" x="8" y="14">+</text>
+
+          <text class="algo-node-label" x="20" y="25" text-anchor="middle">{{visNode.label}}</text>
+      
+        </g>
+      </svg>        
+    </div>
+
+    <ng-container *ngIf="editedAlgorithmNode">
+      <h1>Operator {{editedAlgorithmVisualizationNode?.label}} Parameters</h1>
+      
+      <ng-container *ngIf="editedAlgorithmNode.oscType != 'adder'">
+        <div class="property">
+          <div class="property-label">Frequency:</div>        
+          <div class="vertical-stack" style="gap: 0.5rem">
+            <div>Proportional <mat-slide-toggle [(ngModel)]="editedAlgorithmNodeFreqFixed"></mat-slide-toggle> Fixed</div>
+            <div>
+              <input type="number" class="param-input spacer" [(ngModel)]="editedAlgorithmNodeFreq" />&nbsp; {{editedAlgorithmNodeFreqFixed ? 'Hz' : 'x Note'}}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="editedAlgorithmNode.oscType == 'adder'">
+        <div class="property">
+          This is an adder node. There are no available for this node.
+        </div>
+      </ng-container>
+
+    </ng-container>
+
+    <h1>Preview Pane</h1>
+    <div class="preview-pane">
+      <app-waveform-editor *ngIf="resultWaveform" 
+        [editedWaveform]="resultWaveform" 
+        [displayStartTime]="resultDisplayStartTime" 
+        [displayEndTime]="resultDisplayEndTime">
+    </app-waveform-editor>    
+    </div>
+  </div>
+</div>
+
+
+
+<app-ui-region-content region="toolbar">
+  <button mat-icon-button (click)="handlePreviewStart()">
+    <mat-icon>play_arrow</mat-icon>
+  </button>
+
+  <button mat-icon-button (click)="handlePreviewStop()">
+    <mat-icon>stop</mat-icon>
+  </button>
+
+  <div class="spacer"></div>
+
+  <button mat-icon-button (click)="handleZoomOutClick()">
+    <mat-icon>zoom_out</mat-icon>
+  </button>
+  <button mat-icon-button (click)="handleZoomInClick()">
+    <mat-icon>zoom_in</mat-icon>
+  </button>
+  <button mat-icon-button (click)="handleZoomToSelectionClick()">
+    <mat-icon>crop_free</mat-icon>
+  </button>
+
+</app-ui-region-content>

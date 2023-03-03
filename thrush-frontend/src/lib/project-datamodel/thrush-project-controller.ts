@@ -55,7 +55,7 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
   }
   
   async update_fm_instrument(name: string, resource: ResourceTypeFmInstrument): Promise<void> {
-    
+    await this._sequencer.tsynthToneGenerator.createFmInstrument(name, resource.rootAlgorithmNode);
   }
 
   async create_script(): Promise<ThrushProjectResourceWithType<'script'>> {
@@ -84,7 +84,8 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
   async create_fm_instrument(): Promise<ThrushProjectResourceWithType<'fm_instrument'>> {
     return {
       type: 'fm_instrument',
-      'rootAlgorithmNode': {
+      rootAlgorithmNode: {
+        oscType: "sine",
         freqType: "multiplier",
         freqValue: 1,
         attackEnvelope: [],
@@ -115,9 +116,9 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
       untitledIndex++;
     } while(this._dataModel.resources[suggestedName]);
 
-
-    this._dataModel.resources[suggestedName] = await this[`create_${resourceType}`]();
-
+    const newResource = await this[`create_${resourceType}`]();
+    this._dataModel.resources[suggestedName] = newResource;
+    await this[`update_${newResource.type}`](suggestedName, <any>newResource);
     return suggestedName;
   }
 

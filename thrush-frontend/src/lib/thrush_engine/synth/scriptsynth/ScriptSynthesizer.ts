@@ -1,6 +1,6 @@
 import { createMessagePortRpcProxy } from "src/lib/util/MessagePortRpc";
 import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerEventCommands, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
-import { ScriptSynthWorkerRpcInterface } from "./worklet/ScriptSynthWorkerRpcInterface";
+import { FmInstrumentAlgorithmNodeDescriptor, ScriptSynthWorkerRpcInterface } from "./worklet/ScriptSynthWorkerRpcInterface";
 import { Envelopes } from "./ScriptSynthInstrumentWave";
 
 
@@ -56,6 +56,13 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
         volume,
         entryEnvelopes,
         exitEnvelopes);
+  }
+
+  createFmInstrument(instrumentId: string,
+    algorithmDescriptor: FmInstrumentAlgorithmNodeDescriptor): Promise<void> {
+      return this._workletNodeRpcProxy.createFmInstrument(
+        instrumentId,
+        algorithmDescriptor);
   }
 
 
