@@ -42,11 +42,15 @@ type AlgorithmVisualizationNode = {
   fmAlgorithmNodeDescriptor: FmInstrumentAlgorithmNodeDescriptor;
 }
 
+type FmInstrumentEditorState = {
+  selectedAlgorithmNodeIndex: number | null;
+}
+
 @Component({
   templateUrl: './fm-instrument-editor.component.html',
   styleUrls: ['./fm-instrument-editor.component.scss']
 })
-export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<ResourceTypeFmInstrument>, ResourceEditorWithPlaySupport {
+export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<ResourceTypeFmInstrument, FmInstrumentEditorState>, ResourceEditorWithPlaySupport {
 
   constructor(private _synthEngine: ThrushEngineService) { }
 
@@ -375,5 +379,19 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     return this.resultWaveform 
       ? this.resultWaveform.channelSamples[0].length / this.resultWaveform.sampleRate
       : 0;
+  }
+
+  set editorState(value: FmInstrumentEditorState) {
+    if(value.selectedAlgorithmNodeIndex !== null) {
+      const visualizationNode = this.algorithmVisualizationNodes[value.selectedAlgorithmNodeIndex];
+      this.editedAlgorithmVisualizationNode = visualizationNode;
+    }
+  }
+
+  get editorState(): FmInstrumentEditorState {
+    return {
+      selectedAlgorithmNodeIndex: 
+        this.editedAlgorithmVisualizationNode && this.algorithmVisualizationNodes.indexOf(this.editedAlgorithmVisualizationNode)
+    }
   }
 }

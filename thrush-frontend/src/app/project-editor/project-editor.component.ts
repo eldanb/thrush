@@ -13,6 +13,7 @@ import { FileBrowserFileDetails, IFileOpenBrowseSource } from '../widget-lib/res
 
 
 type ResourceEditorDescriptor = {
+  editorState: any;
   title: string;
   resourceName: string;
   resourceType: ResourceType;
@@ -22,7 +23,7 @@ type ResourceEditorDescriptor = {
   dirtySubscription: Subscription | null;
 }
 
-const ResourceEditorTypes: Record<ResourceType, ComponentType<ResourceEditor<any, never>>>  = {
+const ResourceEditorTypes: Record<ResourceType, ComponentType<ResourceEditor<any, any>>>  = {
   abst_wave_instrument: WaveInstrumentEditorComponent,
   script: SynthScriptEditorComponent,
   fm_instrument: FmInstrumentEditorComponent
@@ -97,18 +98,23 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     if(!editor.cachedComponent) {
       editor.cachedComponent = this.createEditorComponentForResource(
         editor.resourceType,
-        editor.draftResource);
+        editor.draftResource)!;
 
-      editor.dirtySubscription = editor.cachedComponent!.instance.resourceEdited.subscribe((r) => {
+      editor.dirtySubscription = editor.cachedComponent.instance.resourceEdited.subscribe((r) => {
         editor.draftResourceDirty = true;
         editor.draftResource = r;
       });
+
+      if(editor.editorState) {
+        editor.cachedComponent.instance.editorState = editor.editorState;
+      }
     }
   }
 
   private destroyCachedEditor(editor: ResourceEditorDescriptor) {
     if(editor.cachedComponent) {
       editor.draftResource = editor.cachedComponent.instance.editedResource;
+      editor.editorState = editor.cachedComponent.instance.editorState;
       editor.cachedComponent.destroy();
     }
 
@@ -133,7 +139,7 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private createEditorComponentForResource(resourceType: ResourceType, resource: any): ComponentRef<ResourceEditor<any, never>> | undefined {
+  private createEditorComponentForResource(resourceType: ResourceType, resource: any): ComponentRef<ResourceEditor<any, any>> | undefined {
     const component = this._editorHost!.createComponent(ResourceEditorTypes[resourceType]);
     component.instance.editedResource = resource;
     return component;
@@ -152,7 +158,8 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
       draftResource: Object.assign({}, editedResource),
       draftResourceDirty: false,
       dirtySubscription: null,
-      resourceType: editedResource.type,      
+      resourceType: editedResource.type, 
+      editorState: null,
     }
     this.openEditors.push(newEditor);
 

@@ -29,7 +29,6 @@ export class ResourceEditorDialogComponent<R, C> implements OnInit, AfterViewIni
   ngAfterViewInit() {
     const component = this._resourceEditor?.createComponent(this._dialogData.editorComponent);
     this._resourceEditorComponent = component!.instance;
-    this._resourceEditorComponent.editorConfig = this._dialogData.editorConfig
     this._resourceEditorComponent.editedResource = this._dialogData.editedResource;
   }
   

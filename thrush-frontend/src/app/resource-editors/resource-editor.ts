@@ -1,8 +1,8 @@
 import { EventEmitter } from "@angular/core";
 
- export interface ResourceEditor<R, C = never> {
+ export interface ResourceEditor<R, S = never> {
   editedResource?: R;
-  editorConfig?: C;
+  editorState?: S;
 
   resourceEdited: EventEmitter<boolean>;
  }
