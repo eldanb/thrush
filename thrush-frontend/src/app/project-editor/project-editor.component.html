@@ -70,6 +70,16 @@
   <button mat-icon-button (click)="handleSaveClicked()" [disabled]="!activeEditor?.draftResourceDirty">
     <mat-icon>save</mat-icon>
   </button>
+
+  <div class="spacer"></div>
+
+  <button mat-icon-button (click)="handlePreviewStart()" [disabled]="!activeEditorSupportsPreview">
+    <mat-icon>play_arrow</mat-icon>
+  </button>
+
+  <button mat-icon-button (click)="handlePreviewStop()" [disabled]="!playingPreviewStopHandler">
+    <mat-icon>stop</mat-icon>
+  </button>
 </app-ui-region-content>
 
 <app-ui-region-content region="menubar">

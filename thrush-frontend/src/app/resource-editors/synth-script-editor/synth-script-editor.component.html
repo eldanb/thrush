@@ -1,9 +1,1 @@
-<app-ui-region-content region="toolbar">
-  <button (click)="handlePlayCode()" mat-icon-button>
-    <mat-icon>play_arrow</mat-icon>
-  </button>
-  <button (click)="handleStop()" mat-icon-button>
-    <mat-icon>stop</mat-icon>
-  </button>
-</app-ui-region-content>
 <app-monaco-editor #codeEditor [text]="scriptCode" (editorTextChanged)="handleEditorTextChanged()"></app-monaco-editor>      

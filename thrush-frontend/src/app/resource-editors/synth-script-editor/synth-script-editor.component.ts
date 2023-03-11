@@ -1,18 +1,17 @@
 import { Component, EventEmitter, OnInit, ViewChild } from '@angular/core';
-import { ResourceTypeScript } from 'src/lib/project-datamodel/project-datamodel';
+import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
 import { MonacoEditorComponent } from 'src/app/widget-lib/monaco-editor/monaco-editor.component';
-import { ResourceEditor } from '../resource-editor';
-import { BehaviorSubject } from 'rxjs';
+import { ResourceTypeScript } from 'src/lib/project-datamodel/project-datamodel';
 import { ThrushAggregatedSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushAggregatedSequenceGenerator';
 import { ThrushFunctionSequenceGenerator } from 'src/lib/thrush_engine/sequences/ThrushFunctionSequenceGenerator';
-import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
+import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
 
 
 @Component({
   templateUrl: './synth-script-editor.component.html',
   styleUrls: ['./synth-script-editor.component.scss']
 })
-export class SynthScriptEditorComponent implements OnInit, ResourceEditor<ResourceTypeScript, never> {  
+export class SynthScriptEditorComponent implements OnInit, ResourceEditor<ResourceTypeScript, never>, ResourceEditorWithPlaySupport {  
   constructor(private _thrushEngine: ThrushEngineService) { }
 
   ngOnInit(): void {
@@ -46,12 +45,16 @@ export class SynthScriptEditorComponent implements OnInit, ResourceEditor<Resour
     this.resourceEdited.emit();
   }
 
-  handlePlayCode() {
+
+
+  async playResourcePreview(): Promise<PlayingPreviewStopHandler | null> {
     const aggregator = new ThrushAggregatedSequenceGenerator();
     const generatorFunction = new Function(`return (${this._editedResource?.code})`)();
     const generatorFunctionSeq = new ThrushFunctionSequenceGenerator(generatorFunction, aggregator);
     aggregator.addInitialChild(generatorFunctionSeq);    
     this._thrushEngine.playSequence(aggregator);
+
+    return async () => this.handleStop();
   }
 
   handleStop() {

@@ -4,7 +4,7 @@ import { parseWav } from 'src/lib/formats/WavParser';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 import { ThrushEngineService } from 'src/app/services/thrush-engine.service';
 import {  JsonToWaveform, WaveformToJson, ResourceTypeAbstractWaveInstrument } from 'src/lib/project-datamodel/project-datamodel';
-import { ResourceEditor } from '../resource-editor';
+import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
 import { ResourceOpenDialogService } from 'src/app/widget-lib/resource-open-dialog/resource-open-dialog-service';
 import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrumentWave';
 
@@ -15,7 +15,7 @@ import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthIn
   styleUrls: ['./wave-instrument-editor.component.scss']
 })
 export class WaveInstrumentEditorComponent implements OnInit, OnDestroy, 
-  ResourceEditor<ResourceTypeAbstractWaveInstrument, never> {
+  ResourceEditor<ResourceTypeAbstractWaveInstrument, never>, ResourceEditorWithPlaySupport {
 
   public displayStartTime: number = 0;
   public displayEndTime: number = 0;
@@ -93,6 +93,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
 
   constructor(private _synthEngine: ThrushEngineService, 
     private _fileOpenDlg: ResourceOpenDialogService) { }
+
+  editorConfig?: undefined;
 
   ngOnInit(): void {
     this._playbackCursorUpdateTimer = setInterval(() => this.updatePlaybackCursor(), 50);    
@@ -339,7 +341,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   }
 
 
-  async handlePreviewStart() { 
+  async playResourcePreview(): Promise<PlayingPreviewStopHandler | null> { 
     const abstInstrument = this.editedResource;
     const synth = this._synthEngine.sequencer.tsynthToneGenerator;
 
@@ -371,6 +373,8 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
       volume: 1,
       panning: 0.5      
     });
+
+    return () => this.handlePreviewStop();
   }
 
   async handlePreviewStop() {

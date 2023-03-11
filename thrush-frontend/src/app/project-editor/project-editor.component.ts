@@ -1,15 +1,15 @@
 import { ComponentType } from '@angular/cdk/portal';
-import { AfterViewInit, Component, ComponentRef, Input, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterViewInit, Component, ComponentRef, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ResourceType, ThrushProject } from 'src/lib/project-datamodel/project-datamodel';
 import { ThrushProjectController } from 'src/lib/project-datamodel/thrush-project-controller';
-import { ResourceEditor } from '../resource-editors/resource-editor';
+import { FmInstrumentEditorComponent } from '../resource-editors/fm-instrument-editor/fm-instrument-editor.component';
+import { IsResourceEditorWithPlaySupport, PlayingPreviewStopHandler, ResourceEditor } from '../resource-editors/resource-editor';
 import { SynthScriptEditorComponent } from '../resource-editors/synth-script-editor/synth-script-editor.component';
 import { WaveInstrumentEditorComponent } from '../resource-editors/wave-instrument-editor/wave-instrument-editor.component';
 import { ThrushEngineService } from '../services/thrush-engine.service';
 import { ResourceOpenDialogService } from '../widget-lib/resource-open-dialog/resource-open-dialog-service';
 import { FileBrowserFileDetails, IFileOpenBrowseSource } from '../widget-lib/resource-open-dialog/resource-open-dialog.component';
-import { FmInstrumentEditorComponent } from '../resource-editors/fm-instrument-editor/fm-instrument-editor.component';
 
 
 type ResourceEditorDescriptor = {
@@ -44,6 +44,12 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
   public renamedResourceName: string | null = null;
   public renamedResourceNewName: string | null = null;
 
+  public playingPreviewStopHandler: PlayingPreviewStopHandler | null = null;
+
+  public get activeEditorSupportsPreview(): boolean {
+    const editorComponenet = this._activeEditor?.cachedComponent?.instance;
+    return editorComponenet ? IsResourceEditorWithPlaySupport(editorComponenet) : false;
+  }
 
   openEditors: ResourceEditorDescriptor[] = [ 
   ];
@@ -55,7 +61,10 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     private _fileOpenDlg: ResourceOpenDialogService) { }
 
   ngOnInit(): void {
-    this.loadProject(Object.assign({}, BLANK_PROJECT));
+    (async () => {
+      await this._thrushEngine.initialize();
+      this.loadProject(Object.assign({}, BLANK_PROJECT));  
+    })();
   }
 
   ngAfterViewInit(): void {
@@ -239,7 +248,9 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
   }
 
   public get editedProjectResourceNames(): string[] {
-    return Object.keys(this._editedProjectController!.project.resources);
+    return this._editedProjectController 
+      ? Object.keys(this._editedProjectController.project.resources) 
+      : [];
   }
 
   private openResource(resourceName: string) {
@@ -268,10 +279,23 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
       this.openResource('main');
     }
   }
+
+
+  async handlePreviewStart() {
+    await this.handlePreviewStop();
+    const resourceEditorComponent = this._activeEditor?.cachedComponent?.instance;
+    if(resourceEditorComponent && IsResourceEditorWithPlaySupport(resourceEditorComponent)) {
+      this.playingPreviewStopHandler = await resourceEditorComponent.playResourcePreview();
+    }
+  }
+
+  async handlePreviewStop() {
+    if(this.playingPreviewStopHandler) {
+      await this.playingPreviewStopHandler();
+      this.playingPreviewStopHandler = null;
+    }
+  }
 }
-
-
-
 
 const BLANK_PROJECT: ThrushProject = require('src/assets/example-projects/blank.thrush.json');
 

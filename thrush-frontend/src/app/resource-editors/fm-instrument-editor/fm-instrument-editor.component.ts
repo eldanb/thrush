@@ -5,7 +5,7 @@ import { ResourceTypeFmInstrument } from 'src/lib/project-datamodel/project-data
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 import { ScriptSynthFmInstrument } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrumentFm';
 import { FmInstrumentAlgorithmNodeDescriptor } from 'src/lib/thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface';
-import { ResourceEditor } from '../resource-editor';
+import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
 
 const GRAPH_NODE_HEIGHT = 30;
 const GRAPH_LAYER_WIDTH = 80;
@@ -46,7 +46,7 @@ type AlgorithmVisualizationNode = {
   templateUrl: './fm-instrument-editor.component.html',
   styleUrls: ['./fm-instrument-editor.component.scss']
 })
-export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<ResourceTypeFmInstrument> {
+export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<ResourceTypeFmInstrument>, ResourceEditorWithPlaySupport {
 
   constructor(private _synthEngine: ThrushEngineService) { }
 
@@ -283,7 +283,8 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
   }
 
 
-  async handlePreviewStart() { 
+
+  async playResourcePreview(): Promise<PlayingPreviewStopHandler | null> { 
     const fmInstrument = this.editedResource;
     const synth = this._synthEngine.sequencer.tsynthToneGenerator;
 
@@ -308,6 +309,8 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
       volume: 1,
       panning: 0.5      
     });
+
+    return () => this.handlePreviewStop();
   }
 
   async handlePreviewStop() {
