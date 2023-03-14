@@ -212,8 +212,8 @@ export class TestPageComponent implements OnInit {
   }
 
   computeFm() {
-    const instrument = new ScriptSynthFmInstrument(new FmAlgorithmNode('sine', false, 1, [], [], [
-      new FmAlgorithmNode('sine', false, 1.98, [], [], [])
+    const instrument = new ScriptSynthFmInstrument(new FmAlgorithmNode('sine', false, 1, [], [], 0, [
+      new FmAlgorithmNode('sine', false, 1.98, [], [], 0, [])
     ]));
 
     const outputSampleRate = 22050;

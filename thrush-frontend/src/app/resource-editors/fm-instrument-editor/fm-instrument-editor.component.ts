@@ -86,6 +86,16 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     this.notifyResourceDirty();
   }
 
+  get editedAlgorithmNodeFeedback(): number {
+    return this.editedAlgorithmNode!.feedback;
+  }
+
+  set editedAlgorithmNodeFeedback(f: number) {
+    this.editedAlgorithmNode!.feedback = f;
+    this.notifyResourceDirty();
+  }
+
+
   get editedAlgorithmNodeFreqFixed(): boolean {
     return this.editedAlgorithmNode!.freqType == 'fixed';
   }
@@ -135,6 +145,7 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
       freqType: 'multiplier',
       freqValue: 1,
       oscType: 'sine',
+      feedback: 0,
       modulators: [] 
     }
   }; 
@@ -257,6 +268,7 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
         attackEnvelope: [],
         freqType: 'multiplier',
         freqValue: 1,
+        feedback: 0,
         modulators: node.subNodes.map(modulator => cloneTopology(modulator))
       };
     }

@@ -92,6 +92,11 @@
             </div>
           </div>
         </div>
+        <div class="property">
+          <div class="property-label">Feedback:</div>        
+          <input type="number" class="param-input spacer" [(ngModel)]="editedAlgorithmNodeFeedback" />
+        </div>
+
       </ng-container>
 
       <ng-container *ngIf="editedAlgorithmNode.oscType == 'adder'">

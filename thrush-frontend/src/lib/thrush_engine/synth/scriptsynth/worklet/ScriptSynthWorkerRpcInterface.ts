@@ -15,6 +15,8 @@ export type FmInstrumentAlgorithmNodeDescriptor = {
   attackEnvelope: EnvelopeCurveCoordinate[],
   releaseEnvelope: EnvelopeCurveCoordinate[],
 
+  feedback: number,
+
   modulators: FmInstrumentAlgorithmNodeDescriptor[]
 };
 

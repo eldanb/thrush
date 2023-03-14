@@ -88,6 +88,7 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
         oscType: "sine",
         freqType: "multiplier",
         freqValue: 1,
+        feedback: 0,
         attackEnvelope: [],
         releaseEnvelope: [],
         modulators: []

@@ -80,6 +80,7 @@ class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrum
 export class FmAlgorithmNode {
   private _stateSlot: number = -1;
   private _modulators: FmAlgorithmNode[];
+  private _feedback: number;
   private _freqModifier: number;
   private _fixedFreq: boolean;
   private _amplitudeEnvelope: EnvelopeCurveCoordinate[];
@@ -92,12 +93,14 @@ export class FmAlgorithmNode {
       freqModifier: number, 
       amplitudeEnvelope: EnvelopeCurveCoordinate[], 
       amplitudeReleaseEnvelope: EnvelopeCurveCoordinate[],
+      feedback: number,
       modulators: FmAlgorithmNode[]) {
     this._fixedFreq = fixedFreq;
     this._modulators = modulators;
     this._amplitudeEnvelope = amplitudeEnvelope;
     this._amplitudeReleaseEnvelope = amplitudeReleaseEnvelope;
     this._freqModifier = freqModifier;
+    this._feedback = feedback;
     this._oscType = oscType;
   }
 
@@ -130,7 +133,7 @@ export class FmAlgorithmNode {
       this._fixedFreq 
         ? `${this._freqModifier * STEPS_PER_SINE_CYCLE} / sampleRate`
         : `baseFrequencyArgStepsPerSample * ${this._freqModifier}`;
-
+    
     return `
       let currentSample${stateSuffix} = startSample;
 
@@ -138,6 +141,8 @@ export class FmAlgorithmNode {
       let currentArgFrac${stateSuffix} = 0;
 
       const wholeArgStepsPerSample${stateSuffix} = ${frequencyInitializer};
+
+      let feedbackNodeInput${stateSuffix} = 0;
 
       let envelopeState${stateSuffix} = 
         ${this.amplitudeEnvelope?.length 
@@ -231,12 +236,19 @@ export class FmAlgorithmNode {
   }
 
   generateComputeNextSampleForOscilator(stateSuffix: string, modulatorStateSuffixes: string[]): string {
-    const modValueCalculation = 
-      this._modulators.length 
-        ? `
-          (${modulatorStateSuffixes.map(suffix => `nodeOutput${suffix}`).join(' + ')})
-          * 1.6 * ${STEPS_PER_SINE_CYCLE}`
+    const modValueTerms = 
+      modulatorStateSuffixes.map(suffix => `nodeOutput${suffix}`);
+    if(this._feedback) {
+      modValueTerms.push(`${this._feedback} * feedbackNodeInput${stateSuffix}`);
+    }
+        
+    let modValueCalculation = 
+      modValueTerms.length 
+        ? `(${modValueTerms.join(' + ')}) * 1.6 * ${STEPS_PER_SINE_CYCLE}`
         : `0`;
+
+    const feedbackUpdateCode =
+      this._feedback ? `feedbackNodeInput${stateSuffix} = nodeOutput${stateSuffix}` : '';
         
     return `
       const modValue${stateSuffix} = ${modValueCalculation};
@@ -252,7 +264,6 @@ export class FmAlgorithmNode {
 
       let currentModulatedArg${stateSuffix} = Math.round(currentArg${stateSuffix} + modValue${stateSuffix}) & (${STEPS_PER_SINE_CYCLE}-1);
 
-
       let nodeOutput${stateSuffix} = SinLookup[currentModulatedArg${stateSuffix}];
 
       if(envelopeState${stateSuffix}) {
@@ -262,7 +273,8 @@ export class FmAlgorithmNode {
       }
 
       currentSample${stateSuffix} += samplesToSkip;
-    `  
+      ${feedbackUpdateCode}
+    `
   }
 
   generateRelease(stateSuffix: string): any {
@@ -403,7 +415,9 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
 
           algoNodeDescriptor.attackEnvelope,
           algoNodeDescriptor.releaseEnvelope,
-
+          
+          algoNodeDescriptor.feedback,
+          
           algoNodeDescriptor.modulators.map(modulator => createInstrumentAlgoNode(modulator))
         );
     };
