@@ -6,6 +6,8 @@ const ENVELOPE_COLOR_LINE = 'darkgray';
 const ENVELOPE_COLOR_HANDLE = 'blue'
 
 const HANDLE_SIZE = 4;
+const ENVELOPE_EDITOR_MARGIN = 4;
+
 
 export interface EditedWaveform {
   channelSamples: Float32Array[];
@@ -34,6 +36,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   private _canvasWidth: number = 0;
   private _canvasHeight: number = 0;
   private _pixelsInTimeUnit: number = 0;
+  private _margin: number = ENVELOPE_EDITOR_MARGIN;
 
   constructor(private _vcr: ViewContainerRef) {
   }
@@ -96,7 +99,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
 
     this._canvasHeight = renderContext.canvas.height;
     this._canvasWidth = renderContext.canvas.width;
-    this._pixelsInTimeUnit = this._canvasWidth / (this._displayEndTime - this._displayStartTime);
+    this._pixelsInTimeUnit = (this._canvasWidth - 2*this._margin) / (this._displayEndTime - this._displayStartTime);
 
     this.refresh();
   }
@@ -118,7 +121,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
         this._editedEnvelope.splice(this._draggingEnvelopeIndex+1, 1);
     } else
     if((this._draggingEnvelopeIndex > 0 && 
-        targetTime < this._editedEnvelope[this._draggingEnvelopeIndex - 1].time)) {
+        targetTime <= this._editedEnvelope[this._draggingEnvelopeIndex - 1].time)) {
       this._editedEnvelope.splice(this._draggingEnvelopeIndex-1, 1);
       this._draggingEnvelopeIndex --;
     } else 
@@ -202,19 +205,23 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   yCoordToValue(yCoord: number) {
-    return 1 - (yCoord / this._canvasHeight);    
+    return Math.max(0, 
+        Math.min(1, 
+          1 - ((yCoord - this._margin) / (this._canvasHeight-2*this._margin))));    
   }
 
   xCoordToTime(xCoord: number) {
-    return (xCoord / this._pixelsInTimeUnit) + this._displayStartTime;    
+    return Math.max(this._displayStartTime, 
+            Math.min(this._displayEndTime,
+              ((xCoord - this._margin) / this._pixelsInTimeUnit) + this._displayStartTime));    
   }
 
   valueToYCoord(value: number) {
-    return (1-value) * this._canvasHeight;
+    return (1-value) * (this._canvasHeight-2*this._margin) + this._margin;
   }
 
   timeToXCoord(time: number) {
-    return (time - this._displayStartTime) * this._pixelsInTimeUnit;
+    return (time - this._displayStartTime) * this._pixelsInTimeUnit + this._margin;
   }
 
   public handleCanvasMouseUp(event: MouseEvent) {
@@ -263,15 +270,24 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
     this._editedEnvelope.forEach(envelopeCoordinate => {
       renderContext.beginPath();
       renderContext.ellipse(this.timeToXCoord(envelopeCoordinate.time), this.valueToYCoord(envelopeCoordinate.value), HANDLE_SIZE, HANDLE_SIZE, 0, 0, Math.PI*2);
-      renderContext.strokeStyle = ENVELOPE_COLOR_HANDLE;
-      renderContext.stroke();
+      renderContext.fillStyle = ENVELOPE_COLOR_HANDLE;
+      renderContext.fill();
     });   
     
     if(this._draggingEnvelopeIndex !== null) {
       const draggingEnvelope = this._editedEnvelope[this._draggingEnvelopeIndex];
-      renderContext.fillStyle = ENVELOPE_COLOR_HANDLE;        
+      renderContext.fillStyle = ENVELOPE_COLOR_HANDLE;
+
+      const textX = this.timeToXCoord(draggingEnvelope.time) + (1.5*HANDLE_SIZE);
+      let textY = this.valueToYCoord(draggingEnvelope.value) - (1.5*HANDLE_SIZE);
+
+      if(textY < 24) {
+        textY += 24;
+      }
+
       renderContext.fillText(`${Math.round(draggingEnvelope.value*1000)/1000}@${Math.round(draggingEnvelope.time*1000)/1000}s`, 
-        this.timeToXCoord(draggingEnvelope.time) + (1.5*HANDLE_SIZE), this.valueToYCoord(draggingEnvelope.value) - (1.5*HANDLE_SIZE));
+        this.timeToXCoord(draggingEnvelope.time) + (1.5*HANDLE_SIZE), 
+        textY);
     }
   
 

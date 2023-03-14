@@ -58,7 +58,15 @@
         <g *ngFor="let visNode of algorithmVisualizationNodes">
           <path *ngFor="let targetNode of visNode.children"
                 [attr.d]="'M' + (visNode.x+20) + ',' + (visNode.y+20) +' L' + (targetNode.x+20) + ',' + (targetNode.y+20)"
-                class="algo-node-connection" />    
+                class="algo-node-connection" />
+
+          <path *ngIf="visNode.fmAlgorithmNodeDescriptor.feedback"
+                class="algo-node-connection" 
+                [attr.d]="'M' + (visNode.x+35) + ',' + (visNode.y+15) + 
+                          ' L' + (visNode.x+45) + ',' + (visNode.y+15) + 
+                          ' L' + (visNode.x+45) + ',' + (visNode.y-5) + 
+                          ' L' + (visNode.x+20) + ',' + (visNode.y-5) + 
+                          ' L' + (visNode.x+20) + ',' + (visNode.y+5) "/>
         </g>
       
         <g *ngFor="let visNode of algorithmVisualizationNodes" 

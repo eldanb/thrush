@@ -92,6 +92,7 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
 
   set editedAlgorithmNodeFeedback(f: number) {
     this.editedAlgorithmNode!.feedback = f;
+    this.computeAlgorithmVisualizationGraph();
     this.notifyResourceDirty();
   }
 
