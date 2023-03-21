@@ -24,11 +24,92 @@ const TOPOLOOGY_TEMPLATES: TopologyDescriptionNode[] = [
   { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] },
   { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] } ] },
 
-
   { isAdder: true, subNodes: [
     { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },
     { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] }
   ] },
+
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] }
+  ] },
+
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [] },
+    { isAdder: false, subNodes: [] },    
+  ] },
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [] },
+    { isAdder: false, subNodes: [] },    
+    { isAdder: false, subNodes: [] },    
+  ] },
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [] },
+    { isAdder: false, subNodes: [] },    
+    { isAdder: false, subNodes: [] },    
+    { isAdder: false, subNodes: [] },    
+  ] },
+  
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] },
+  ] },
+
+
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] } ] },
+  ] },
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },    
+    { isAdder: false, subNodes: [ 
+        { isAdder: false, subNodes: [] },
+        { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] }
+    ] }
+  ] },
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] }, { isAdder: false, subNodes: [] } ] },
+  ] },
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },
+    { isAdder: false, subNodes: [ 
+      { isAdder: false, subNodes: [] }, 
+      { isAdder: false, subNodes: [] },
+      { isAdder: false, subNodes: [] }
+    ] },
+  ] },
+
+  { isAdder: true, subNodes: [
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [
+      { isAdder: false, subNodes: [] },
+      { isAdder: false, subNodes: [] }
+    ] } ] },    
+  ] },
+
+  { isAdder: false, subNodes: [
+    { isAdder: false, subNodes: [] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] }
+  ] },
+
+  { isAdder: false, subNodes: [
+    { isAdder: false, subNodes: [] },
+    { isAdder: false, subNodes: [] },
+    { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] }
+  ] },
+
+
 ]
 
 type AlgorithmVisualizationNode = {
