@@ -50,7 +50,8 @@ export class NoteSequenceContext {
   }
 
   generateNoteId(): string {
-    return `${this.noteIdPrefix}${this.noteIdSeed++}`
+    this.latestNoteId = `${this.noteIdPrefix}${this.noteIdSeed++}`
+    return this.latestNoteId;
   }
   
   createInheritedContext() {

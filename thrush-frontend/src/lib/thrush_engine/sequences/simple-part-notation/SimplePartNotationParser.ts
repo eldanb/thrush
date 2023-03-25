@@ -1,10 +1,10 @@
 import { Parser, ParserBuilder, ParserOperators, WhitespaceParser, parse } from '@zigsterz/parzing';
 import { NoteSequence } from './NoteSequence';
-import { NoteSpecification } from './NoteSpecification';
+import { NoteChangeRequest, NoteChangeRequestParameter, NoteSpecification } from './NoteSpecification';
 import { ParallelSequences } from './ParallelSequences';
 import { ParameterChangeCommand, ParameterChangeRequest } from './ParameterChangeCommand';
 import { PauseSpecification } from './PauseSpecification';
-import { TempoAbsoluteTimingSpecification, TempoRelativeTimingSpecification } from './TimingSpecification';
+import { LegatoTimingSpecification, TempoAbsoluteTimingSpecification, TempoRelativeTimingSpecification } from './TimingSpecification';
 
 import map = ParserOperators.map
 import omit = ParserOperators.omit;
@@ -20,36 +20,58 @@ const paramChangeCommand = pb.sequence(
     pb.sequence(
       pb.anyOf("vpitdf"),
       pb.optional(pb.anyOf("+-")),
-      pb.anyOf("0123456789", 1, 10)._(map(parseInt))
+      pb.regex(/[0-9]{1,10}/)._(map(parseInt))
     )._(build(ParameterChangeRequest))
   ),
   pb.optional(pb.token('!'))._(map(s => s === '!')),
   pb.token(']')._(omit()))._(build(ParameterChangeCommand));
   
-const timingSpec = pb.sequence(
-  pb.token("/")._(omit()),
 
-  pb.choice(        
+const noteChangeSpec =  pb.sequence(
+  pb.token('[')._(omit()),
+  pb.many(
     pb.sequence(
-      pb.anyOf("12345678"),
-      pb.optional(pb.token("."))
-    )._(map(([denom, half]) => new TempoRelativeTimingSpecification(parseInt(denom), half !== null))),
+      pb.sequence(pb.token("@"), pb.regex(/[0-9]+(\.[0-9]+)?/))
+        ._(map(([_, reltime]) => parseFloat(reltime))),      
+      pb.many(
+        pb.sequence(
+          pb.anyOf("vpdf"),
+          pb.optional(pb.token("!"))._(map(flag => !flag)),
+          pb.regex(/[0-9]{1,10}/)._(map(parseInt))
+        )._(build(NoteChangeRequestParameter))
+      )
+    )._(build(NoteChangeRequest))
+  ),  
+  pb.token(']')._(omit()))._(map(([r]) => r));
 
-    pb.sequence(
-      pb.token('=')._(omit()),
-      pb.many(pb.anyOf("0123456789"))._(map((s) => parseInt(s.join(''))))
-    )._(map(([time]) => new TempoAbsoluteTimingSpecification(time))),
-  ))._(map((r) => r[0]));
+const timingSpec = pb.many(
+  pb.sequence(
+    pb.token("/")._(omit()),
+
+    pb.choice(        
+      pb.sequence(
+        pb.regex(/[1-8]/),
+        pb.optional(pb.token("."))
+      )._(map(([denom, half]) => new TempoRelativeTimingSpecification(parseInt(denom), half !== null))),
+
+      pb.sequence(
+        pb.token('=')._(omit()),
+        pb.regex(/[0-9]{1,10}/)._(map(parseInt))
+      )._(map(([time]) => new TempoAbsoluteTimingSpecification(time))),
+    ))._(map((r) => r[0])), 
+
+  pb.token("+"), 1)._(map(specifications => 
+    specifications.length == 1 
+      ? specifications[0] 
+      : new LegatoTimingSpecification(specifications)));
 
 const noteParser = pb.sequence(
     pb.anyOf("abcdefg"),
     pb.optional(pb.token("#")._(map(() => true))),
     pb.anyOf("012345678")._(map(parseInt)),
     pb.optional(timingSpec)._(map(t => t || TempoRelativeTimingSpecification.qNote)),
-    pb.optional(
-      pb.choice(
-        pb.anyOf("!", 1),
-        pb.anyOf("@", 1)))
+    pb.optional(pb.regex(/\!+|\@+/)),
+    pb.optional(noteChangeSpec)
   )._(build(NoteSpecification));
 
 const pauseParser = pb.sequence(

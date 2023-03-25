@@ -4,6 +4,62 @@ import { ThrushArraySequenceGenerator } from "../ThrushArraySequenceGenerator";
 import { CompilableSimplePart, NoteSequenceContext } from "./SimplePartNotationModel";
 
 
+
+export const NoteParameterUpdaters: {
+  [parameter: string]: {
+    update: (context: NoteSequenceContext, value: number, commandToUpdate: ThrushCommonSynthesizerEventCommands | null) => void,
+    getFromContext: (context: NoteSequenceContext) => number
+  }
+} = {
+  'v': {
+    update(context, value, commandToUpdate) {
+        context.noteVolume = value/100;
+        if(commandToUpdate) {
+          commandToUpdate.volume = value/100;
+        }
+    },
+    getFromContext(context) {
+      return context.noteVolume*100;
+    }
+  },
+
+  'p': {
+    update(context, value, commandToUpdate) {
+        context.notePanning = value/100;
+        if(commandToUpdate) {
+          commandToUpdate.panning = value/100;
+        }
+    },
+    getFromContext(context) {
+      return context.notePanning*100;
+    }
+  },
+
+  'd': {
+    update(context, value, commandToUpdate) {
+        context.noteVibratoDepth = value/1000;
+        if(commandToUpdate) {
+          commandToUpdate.vibrato = context.noteVibrato;
+        }
+    },
+    getFromContext(context) {
+      return context.noteVibratoDepth * 1000;
+    }
+  },
+
+  'f': {
+    update(context, value, commandToUpdate) {
+        context.noteVibratoFrequency = value/100;
+        if(commandToUpdate) {
+          commandToUpdate.vibrato = context.noteVibrato;
+        }
+    },
+    getFromContext(context) {
+      return context.noteVibratoFrequency * 100;
+    }
+  }
+}
+
 function TargetValue(baseValue: number, relative: string | null, value: number, valueScaling: number, clampMin: number, clampMax: number) {
   let ret = baseValue;
 
@@ -31,29 +87,9 @@ export class ParameterChangeRequest {
 
   applyToEvent(commands: ThrushCommonSynthesizerEventCommands, context: NoteSequenceContext) {
     switch(this._paramId) {
-      case 'v':
-        context.noteVolume = TargetValue(context.noteVolume, this._relative, this._value, 100, 0, 1);
-        commands.volume = context.noteVolume;
-        break;
-
-      case 'p':
-        context.notePanning = TargetValue(context.notePanning, this._relative, this._value, 100, 0, 1);
-        commands.panning = context.notePanning;
-        break;
-
-      case 'd':
-        context.noteVibratoDepth = TargetValue(context.noteVibratoDepth, this._relative, this._value, 1000, 0, 1);
-        commands.vibrato = context.noteVibrato;
-        break;
-
-      case 'f':
-        context.noteVibratoFrequency = TargetValue(context.noteVibratoFrequency, this._relative, this._value, 100, 0, 500);
-        commands.vibrato = context.noteVibrato;
-        break;
-  
       case 'i':
         if(this._relative) {
-          throw new Error("Can't execute relative change for instrucment.");
+          throw new Error("Can't execute relative change for instrument.");
         }
         context.instrumentId = context.instruments[this._value];
         break;
@@ -64,7 +100,22 @@ export class ParameterChangeRequest {
         }
         context.tempo = TargetValue(context.tempo, this._relative, this._value, 1, 20, 240);
         break;
-          
+
+      default:
+        const paramUpdater = NoteParameterUpdaters[this._paramId];
+        switch(this._relative) {
+          case '+':
+            paramUpdater.update(context, paramUpdater.getFromContext(context) + this._value, commands);
+            break;
+
+          case '-':
+            paramUpdater.update(context, paramUpdater.getFromContext(context) - this._value, commands);
+            break;
+
+          default:
+            paramUpdater.update(context, this._value, commands);
+            break;  
+        }
     }
   }
 }

@@ -1,8 +1,10 @@
+import { CommaExpr } from "@angular/compiler";
 import { ThrushSequenceEndEvent, ThrushSequenceGenerator, ThrushSequenceMarkerEvent } from "../../ThrushSequencer";
-import { ThrushCommonSynthesizerEvent } from "../../ThrushSynthesizerInterface";
+import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerEventCommands } from "../../ThrushSynthesizerInterface";
 import { ThrushArraySequenceGenerator } from "../ThrushArraySequenceGenerator";
 import { CompilableSimplePart, NoteSequenceContext } from "./SimplePartNotationModel";
 import { TimingSpecification } from "./TimingSpecification";
+import { NoteParameterUpdaters } from "./ParameterChangeCommand";
 
 const BASE_NOTE_NUMBER: { [note: string]: number } = {
   'c': 0,
@@ -14,6 +16,19 @@ const BASE_NOTE_NUMBER: { [note: string]: number } = {
   'b': -1
 };
 
+const LINEAR_PARAM_CHANGE_RESOLUTION_SEC = 0.01;
+
+export class NoteChangeRequestParameter {
+  constructor(public parameter: string, public linear: boolean, public newValue: number) {
+  }
+}
+
+export class NoteChangeRequest {
+  constructor(public relTime: number, public parameterChange: NoteChangeRequestParameter[]) {
+
+  }
+}
+
 export class NoteSpecification extends CompilableSimplePart {
   private noteNumber: number;
   private volModifier: number;
@@ -23,7 +38,8 @@ export class NoteSpecification extends CompilableSimplePart {
     sharp: boolean | null,
     octave: number, 
     private _timing: TimingSpecification,
-    volModifier: string | null) {
+    volModifier: string | null,
+    private _noteChangeRequests: NoteChangeRequest[] | null) {
       super();
 
       this.noteNumber = BASE_NOTE_NUMBER[note] + octave * 12 + (sharp ? 1 : 0);
@@ -50,9 +66,72 @@ export class NoteSpecification extends CompilableSimplePart {
         vibrato: sequenceContext.noteVibrato
       }),
 
+      ...this.generateNoteChangeEvents(endTime, sequenceContext),
+
       new ThrushCommonSynthesizerEvent(endTime, sequenceContext.synth!, noteId, { releaseNote: true }),
 
       new ThrushSequenceEndEvent(endTime)
-    ]);    
+    ]);
+  }
+
+  private generateNoteChangeEvents(endTime: number, sequenceContext: NoteSequenceContext): ThrushCommonSynthesizerEvent[] {
+    if(!this._noteChangeRequests?.length) {
+      return [];
+    }
+
+    const ret: ThrushCommonSynthesizerEvent[] = [];
+    let startTime = 0;
+    this._noteChangeRequests.forEach(changeRequest => {
+      const targetTime = changeRequest.relTime * endTime;
+      const endOfTimeCommands: ThrushCommonSynthesizerEventCommands = {};
+
+      let hasLinear = false;
+      const linearCommands: { time: number, relTime: number, commands: ThrushCommonSynthesizerEventCommands}[] = [];
+
+
+      for(let linearTime = startTime, linearCommandIndex = 0; 
+        linearCommandIndex < Math.floor((targetTime-startTime) / LINEAR_PARAM_CHANGE_RESOLUTION_SEC); 
+        linearTime += LINEAR_PARAM_CHANGE_RESOLUTION_SEC, linearCommandIndex++) {
+        const linearRelTime = (linearTime-startTime)/(targetTime-startTime);
+        linearCommands.push({ time: linearTime, relTime: linearRelTime, commands: {} });
+      }
+
+      changeRequest.parameterChange.forEach(parameterChange => {
+        const parameterHandler = NoteParameterUpdaters[parameterChange.parameter];
+
+        if(parameterChange.linear) {
+          hasLinear = true;
+          const linearChangeParameterStartValue = parameterHandler.getFromContext(sequenceContext);
+          linearCommands.forEach(linearCommand => {
+            const linearValue = 
+              linearChangeParameterStartValue +
+              (parameterChange.newValue-linearChangeParameterStartValue) * linearCommand.relTime;
+            parameterHandler.update(sequenceContext, linearValue, linearCommand.commands);
+          });
+        }
+
+        parameterHandler.update(sequenceContext, parameterChange.newValue, endOfTimeCommands);
+      })
+
+      if(hasLinear) {        
+        linearCommands.forEach(linearCommand => 
+          ret.push(new ThrushCommonSynthesizerEvent(
+            linearCommand.time, 
+            sequenceContext.synth!,
+            sequenceContext.latestNoteId!,
+            linearCommand.commands
+          )));
+      }
+        
+      ret.push(new ThrushCommonSynthesizerEvent(
+        targetTime, 
+        sequenceContext.synth!, 
+        sequenceContext.latestNoteId!, 
+        endOfTimeCommands));
+
+      startTime = targetTime;
+    });
+
+    return ret;
   }
 }
