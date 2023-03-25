@@ -179,3 +179,15 @@ a.unhinted-link {
   font-weight: bolder !important;
   text-transform: uppercase;
 }
+
+.thrush-menu-bar {
+  
+  padding: 0 0rem;
+
+  button {
+    min-width: 0;
+    padding: 0 0.5rem;
+    font-size: 10pt;
+    line-height: 1.5rem;
+  }
+}

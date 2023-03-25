@@ -44,3 +44,17 @@ mat-drawer-container {
     }
   }
 }
+
+div.project-title, input.project-title {
+  padding: 0 0.5rem;  
+  margin-bottom: 0.25rem;
+
+  font-size: 18px;
+  border: solid 1px transparent;
+  border-radius: 0.25rem;
+
+  &:hover {
+    border: solid 1px black;
+  }
+
+}

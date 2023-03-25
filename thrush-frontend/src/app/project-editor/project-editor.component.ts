@@ -45,6 +45,8 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
   public renamedResourceName: string | null = null;
   public renamedResourceNewName: string | null = null;
 
+  public projectTitleEditing: boolean = false;
+
   public playingPreviewStopHandler: PlayingPreviewStopHandler | null = null;
 
   public get activeEditorSupportsPreview(): boolean {
@@ -204,7 +206,7 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     }, 0);
   }
 
-  public async handleRenameFieldBlurs() {
+  public async handleRenameResourceFieldBlurs() {
     const renamedResourceName = this.renamedResourceName;
     const renamedResourceNewName = this.renamedResourceNewName;
 
@@ -213,6 +215,10 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     if(renamedResourceName && renamedResourceNewName) {       
       await this.renameResource(renamedResourceName, renamedResourceNewName);
     }      
+  }
+
+  public async handleRenameProjectBlurs() {
+    this.projectTitleEditing = false;    
   }
 
   async handleLoadProject() {
@@ -258,6 +264,16 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     return this._editedProjectController 
       ? Object.keys(this._editedProjectController.project.resources) 
       : [];
+  }
+
+  public get editedProjectTitle(): string {
+    return this._editedProjectController?.project.title || "";
+  }
+
+  public set editedProjectTitle(name: string) {
+    if(this._editedProjectController) {
+      this._editedProjectController.project.title = name;
+    }    
   }
 
   private openResource(resourceName: string) {

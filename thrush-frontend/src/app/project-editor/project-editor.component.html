@@ -12,8 +12,8 @@
             <input mat-input *ngIf="renamedResourceName == resource" 
                    id="resource-rename-input"
                    [(ngModel)]="renamedResourceNewName" 
-                   (keydown.enter)="handleRenameFieldBlurs()"
-                   (blur)="handleRenameFieldBlurs()"
+                   (keydown.enter)="handleRenameResourceFieldBlurs()"
+                   (blur)="handleRenameResourceFieldBlurs()"
                    />
             <div class="horizontal-stack" *ngIf="renamedResourceName !== resource">
               <div class="spacer" (click)="handleOpenResource(resource)">{{resource}}</div>              
@@ -83,17 +83,28 @@
 </app-ui-region-content>
 
 <app-ui-region-content region="menubar">
-  <button mat-button [matMenuTriggerFor]="fileMenu">File</button>  
-  <mat-menu #fileMenu>  
-    <button mat-menu-item>New</button>  
-    <button mat-menu-item (click)="handleLoadProject()">Open...</button>  
-    <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
-  </mat-menu>  
-  <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
-  <mat-menu #helpMenu>  
-    <a href="/td" target="thrush-docs" style="text-decoration: none" mat-menu-item>
-      <mat-icon style="vertical-align: middle">help_outline</mat-icon>
-      Thrush Docs
-    </a>    
-  </mat-menu>  
+  <div class="vertical-stack">
+    <div *ngIf="!projectTitleEditing" (click)="projectTitleEditing = true" class="project-title">{{editedProjectTitle}}</div>
+    <input mat-input class="project-title" *ngIf="projectTitleEditing" 
+                   id="resource-rename-input"
+                   [(ngModel)]="editedProjectTitle" 
+                   (keydown.enter)="handleRenameProjectBlurs()"
+                   (blur)="handleRenameProjectBlurs()"
+                   />
+    <div class="thrush-menu-bar">
+      <button mat-button [matMenuTriggerFor]="fileMenu">File</button>  
+      <mat-menu #fileMenu>  
+        <button mat-menu-item>New</button>  
+        <button mat-menu-item (click)="handleLoadProject()">Open...</button>  
+        <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
+      </mat-menu>  
+      <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
+      <mat-menu #helpMenu>  
+        <a href="/td" target="thrush-docs" style="text-decoration: none" mat-menu-item>
+          <mat-icon style="vertical-align: middle">help_outline</mat-icon>
+          Thrush Docs
+        </a>    
+      </mat-menu>  
+    </div>
+  </div>
 </app-ui-region-content>

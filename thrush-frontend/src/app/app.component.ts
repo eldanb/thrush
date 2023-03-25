@@ -17,11 +17,8 @@ import { FileBrowserFileDetails, IFileOpenBrowseSource } from './widget-lib/reso
 export class AppComponent implements AfterViewInit {
   title = 'thrush';
 
-  public currentProjectController: ThrushProjectController | null = null;
-
   constructor(
-    private _thrushEngine: ThrushEngineService,
-    private _fileOpenDlg: ResourceOpenDialogService) {    
+    private _thrushEngine: ThrushEngineService) {    
   }
 
   ngAfterViewInit(): void {
