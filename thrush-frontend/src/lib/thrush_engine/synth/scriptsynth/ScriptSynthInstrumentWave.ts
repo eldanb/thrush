@@ -19,15 +19,16 @@ class ScriptSynthInstrumentWaveNoteGenerator implements IScriptSynthInstrumentNo
   sampleLoopStart: number;
   sampleLoopLen: number;
   
-  samplePitch: number;
+  note: number;
   
+  pitchBend: number;
   volume: number;
   panning: number;
 
   vibratoGenerator: WaveFormGenerator | null = null;
 
   sampleCursor: number;
-  effectivePitch: number;
+  effectivePitch: number = 0;
   inLoop: boolean = false;
 
   enterEnvelopes: Envelopes | null = null;
@@ -38,6 +39,8 @@ class ScriptSynthInstrumentWaveNoteGenerator implements IScriptSynthInstrumentNo
   
 
   constructor(instrument: ScriptSynthWaveInstrument, note: number, outputSampleRate: number, startSampleNumber: number) {
+    this.outputSampleRate = outputSampleRate;
+
     this.sample = instrument.sample;
     this.sampleRate = instrument.sampleRate;
     this.sampleLoopStart = instrument.sampleLoopStart;
@@ -45,12 +48,13 @@ class ScriptSynthInstrumentWaveNoteGenerator implements IScriptSynthInstrumentNo
     this.volume = instrument.volume;
     this.enterEnvelopes = instrument.enterEnvelopes;
     this.exitEnvelopes = instrument.exitEnvelopes;
-    this.samplePitch = Math.pow(2, note/12);
-    this.effectivePitch = (this.sampleRate / outputSampleRate) * this.samplePitch;
+    this.note = note;
+    this.pitchBend = 0;
+    
+    this.calculateEffectivePitch();
 
     this.panning = 0.5;
 
-    this.outputSampleRate = outputSampleRate;
   
     this.sampleCursor = 0;
     this.startEnvelope(this.enterEnvelopes, false, startSampleNumber);    
@@ -130,10 +134,19 @@ class ScriptSynthInstrumentWaveNoteGenerator implements IScriptSynthInstrumentNo
     this.panning = panning;
   }
 
+  setPitchBend(pitchBend: number) {
+    this.pitchBend = pitchBend;
+    this.calculateEffectivePitch();
+  }
+
   setVibratorGenerator(vibratoGenerator: WaveFormGenerator | null) {
     this.vibratoGenerator = vibratoGenerator;
   }
 
+  private calculateEffectivePitch() {
+    const samplePitch = Math.pow(2, (this.note+this.pitchBend)/12);
+    this.effectivePitch = (this.sampleRate / this.outputSampleRate) * samplePitch;
+  }
 }
 
 

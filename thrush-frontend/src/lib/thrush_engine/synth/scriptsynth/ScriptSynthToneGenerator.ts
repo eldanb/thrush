@@ -10,6 +10,7 @@ class ChannelState  {
 
   volume: number = 0;
   panning: number = 0.5;
+  pitchBend: number = 0;
   vibratoGenerator: WaveFormGenerator | null = null;
 
   constructor(toneGenerator: ScriptSynthToneGenerator) {
@@ -21,6 +22,7 @@ class ChannelState  {
     if(this.noteSampleGenerator) {
       this.noteSampleGenerator.setPanning(this.panning);
       this.noteSampleGenerator.setVolume(this.volume);
+      this.noteSampleGenerator.setPitchBend(this.pitchBend);
       this.noteSampleGenerator.setVibratorGenerator(this.vibratoGenerator);
     }
   }
@@ -43,6 +45,13 @@ class ChannelState  {
     if(this.noteSampleGenerator) {
       this.noteSampleGenerator.setPanning(panning);
     }    
+  }
+
+  setPitchBend(pitchBend: number) {
+    this.pitchBend = pitchBend;
+    if(this.noteSampleGenerator) {
+      this.noteSampleGenerator.setPitchBend(this.pitchBend);
+    }
   }
 
   setVolume(volume: number) {
@@ -99,6 +108,11 @@ export class ScriptSynthToneGenerator {
   public setPanningOnChannel(channelOrNoteId: number | string, panning: number) {
     const channelState = this._getChannelState(channelOrNoteId);
     channelState.setPanning(panning);
+  }
+
+  public setPitchBendOnChannel(channelOrNoteId: number | string, pitchBend: number) {
+    const channelState = this._getChannelState(channelOrNoteId);
+    channelState.setPitchBend(pitchBend);
   }
 
   public setVibratoOnChannel(channelOrNoteId: number | string, waveform: "none" | WaveFormType, frequency: number, amplitude: number) {

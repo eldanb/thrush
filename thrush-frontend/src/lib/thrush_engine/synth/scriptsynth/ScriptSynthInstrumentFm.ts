@@ -19,26 +19,46 @@ type FmAlgorithmNodeState = {
 }
 
 type FmToneGeneratorFactory = 
-  (startSample: number, sampleRate: number, baseFrequencyArgStepsPerSample: number, EnvelopeCurveState: any) => 
-    [(samplesToSkip: number) => number, (releaseAt: number) => void];
+  (startSample: number, sampleRate: number, EnvelopeCurveState: any) => 
+    [(samplesToSkip: number) => number, (releaseAt: number) => void, (baseFrequencyArgStepsPerSample: number) => void];
 
 
+    //baseFrequencyArgStepsPerSample: number,
 class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrumentNoteGenerator {
   
   private _volume: number = 1;
   private _panning: number = 1;
+  private _pitchBend: number = 0;
   private _lastSample: number = 0;
   private _startSampleNumber: number = 0;
+  private _note: number;
+  private _outputSampleRate: number;
+
   private _algToneGenerator: ((skipCount: number) => number);
   private _algToneGeneratorRelease: ((releaseAt: number) => void);
+  private _algToneGeneratorSetStepsPerSample: (baseFreqArgStepsPerSample: number) => void;
 
   vibratoGenerator: WaveFormGenerator | null = null;
 
-  constructor(startSampleNumber: number,
-      algToneGeneratorFns: [((skipCount: number) => number), (releaseAt: number) => void]) {
+  constructor(startSampleNumber: number, outputSampleRate: number, note: number,
+      algToneGeneratorFns: [((skipCount: number) => number), (releaseAt: number) => void, (baseFreqArgStepsPerSample: number) => void]) {
+
     this._startSampleNumber = startSampleNumber;
+
     this._algToneGenerator = algToneGeneratorFns[0];
     this._algToneGeneratorRelease = algToneGeneratorFns[1];
+    this._algToneGeneratorSetStepsPerSample = algToneGeneratorFns[2];
+
+    this._note = note;
+    this._outputSampleRate = outputSampleRate;
+
+    this.loadNoteFrequency();
+    
+  }
+
+  loadNoteFrequency() {
+    const baseFreqArgStepsPerSample = (65.41 * Math.pow(2, ((this._note + this._pitchBend) / 12)) * STEPS_PER_SINE_CYCLE) / this._outputSampleRate;
+    this._algToneGeneratorSetStepsPerSample(baseFreqArgStepsPerSample);
   }
 
   getNoteSample(currentSample: number, currentTime: number, outChannels: number[]): boolean {
@@ -71,6 +91,12 @@ class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrum
   setPanning(panning: number) {
     this._panning = panning;
   }
+
+  setPitchBend(pitchBend: number): void {
+    this._pitchBend = pitchBend;
+    this.loadNoteFrequency();
+  }
+
 
   setVibratorGenerator(vibratoGenerator: WaveFormGenerator | null) {
     this.vibratoGenerator = vibratoGenerator;
@@ -112,35 +138,14 @@ export class FmAlgorithmNode {
     this._stateSlot = slotId;
   }
 
-  initializeStateSlot(baseFreqArgStepsPerSample: number, startSample: number, sampleRate: number): FmAlgorithmNodeState {
-    const slotArgSteps = baseFreqArgStepsPerSample * this._freqModifier;
-    return {
-      currentSample: startSample,
-      sampleRate: sampleRate,
-
-      currentArg: 0,
-      currentArgFrac: 0,
-      wholeArgStepsPerSample: Math.floor(slotArgSteps),
-      fracArgStepsPerSample: Math.round((slotArgSteps - Math.floor(slotArgSteps)) * STEPS_PER_SINE_CYCLE),
-      envelopeState: this._amplitudeEnvelope?.length 
-                        ? new EnvelopeCurveState(this._amplitudeEnvelope, 1, startSample, sampleRate) 
-                        : null
-    }
-  }
-
-  generateStateInitializationCode(stateSuffix: string) {    
-    const frequencyInitializer = 
-      this._fixedFreq 
-        ? `${this._freqModifier * STEPS_PER_SINE_CYCLE} / sampleRate`
-        : `baseFrequencyArgStepsPerSample * ${this._freqModifier}`;
-    
+  generateStateInitializationCode(stateSuffix: string) {        
     return `
       let currentSample${stateSuffix} = startSample;
 
       let currentArg${stateSuffix} = 0;
       let currentArgFrac${stateSuffix} = 0;
 
-      const wholeArgStepsPerSample${stateSuffix} = ${frequencyInitializer};
+      let wholeArgStepsPerSample${stateSuffix} = 0;
 
       let feedbackNodeInput${stateSuffix} = 0;
 
@@ -150,61 +155,14 @@ export class FmAlgorithmNode {
           : 'null'};    `
   }
 
-  public releaseNote(state: FmAlgorithmNodeState[], startSample: number) {
-    this._modulators.forEach((m) => m.releaseNote(state, startSample));
-    const stateSlot = state[this._stateSlot];
-    if(this._amplitudeReleaseEnvelope?.length) {
-      stateSlot.envelopeState = new EnvelopeCurveState(this._amplitudeReleaseEnvelope, 
-        stateSlot.envelopeState?.currentValue ?? 1, startSample, stateSlot.sampleRate);
-    }
-  }
+  generateFrequencyUpdateCode(stateSuffix: string) {
+    const frequencyInitializer = 
+      this._fixedFreq 
+        ? `${this._freqModifier * STEPS_PER_SINE_CYCLE} / sampleRate`
+        : `baseFrequencyArgStepsPerSample * ${this._freqModifier}`;
 
 
-  public computeNextSample(state: FmAlgorithmNodeState[], samplesToSkip: number): number {
-    const numMods = this._modulators.length;
-    let modValue = 0;
-    for(let modulatorIndex=0; modulatorIndex<numMods; modulatorIndex++) {
-      modValue += this._modulators[modulatorIndex].computeNextSample(state, samplesToSkip);      
-    }
-
-    const stateSlot = state[this._stateSlot];
-    let currentArg = stateSlot.currentArg;
-    let currentArgFrac = stateSlot.currentArgFrac;
-
-    stateSlot.envelopeState?.updateEnvelopeState(stateSlot.currentSample);
-    stateSlot.currentSample += samplesToSkip;
-
-    while(samplesToSkip--) {
-      currentArgFrac += stateSlot.fracArgStepsPerSample;
-      if(currentArgFrac > STEPS_PER_SINE_CYCLE) {
-        currentArgFrac -= STEPS_PER_SINE_CYCLE;
-        currentArg++;
-      }
-
-      currentArg += stateSlot.wholeArgStepsPerSample;
-
-      if(currentArg>STEPS_PER_SINE_CYCLE) {
-        currentArg -= STEPS_PER_SINE_CYCLE;
-      }
-    }
-
-    stateSlot.currentArg = currentArg;
-    stateSlot.currentArgFrac = currentArgFrac;
-
-    currentArg += Math.round(modValue*1.6*STEPS_PER_SINE_CYCLE);
-
-    while(currentArg >= STEPS_PER_SINE_CYCLE) {
-     currentArg -= STEPS_PER_SINE_CYCLE;
-    } 
-    
-    while(currentArg < 0) {
-      currentArg += STEPS_PER_SINE_CYCLE;
-    }
-
-    const baseWav = SinLookup[currentArg];
-    const envelope = stateSlot.envelopeState?.currentValue ?? 1;
-
-    return baseWav * envelope * envelope;
+    return `wholeArgStepsPerSample${stateSuffix} = ${frequencyInitializer}`;
   }
 
   generateComputeNextSample(stateSuffix: string, modulatorStateSuffixes: string[]): string {
@@ -339,6 +297,10 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
         node.generateStateInitializationCode(`Node${slotIndex}`)
       ).join('\n\n');
 
+    const setBaseFrequencyBody = this._nodesBySlot
+      .map((node) => node.generateFrequencyUpdateCode(`Node${node.stateSlot}`))
+      .join('\n\n');
+    
     const stateComputationBody = this._nodesBySlot.reverse().map((node) => 
         node.generateComputeNextSample(
           `Node${node.stateSlot}`, 
@@ -351,7 +313,8 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
           `Node${node.stateSlot}`))
           .join('\n\n');
 
-    const overallCode = `(startSample, sampleRate, baseFrequencyArgStepsPerSample, EnvelopeCurveState) => {
+
+    const overallCode = `(startSample, sampleRate, EnvelopeCurveState) => {
       ${stateVarsInitialization}
 
       let releasing = false;
@@ -374,29 +337,22 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
         ${releaseBody}        
       }
 
-      return [computeNextSample, release];
+      const setBaseFrequency = (baseFrequencyArgStepsPerSample) => {
+        ${setBaseFrequencyBody}
+      }
+
+      return [computeNextSample, release, setBaseFrequency];
     }`;
 
     //console.log(overallCode);
     return eval(overallCode);
   }
 
-  public initializeState(baseFreqArgStepsPerSample: number, startSampleNumber: number, outputSampleRate: number): FmAlgorithmNodeState[] {    
-    const ret: FmAlgorithmNodeState[] = [];
-    return this._nodesBySlot.map((node, nodeIndex) => {
-      return node.initializeStateSlot(baseFreqArgStepsPerSample, startSampleNumber, outputSampleRate);
-    });
-  }
 
-
-  createNoteGenerator(note: number, outputSampleRate: number, startSampleNumber: number) : IScriptSynthInstrumentNoteGenerator {
-    const baseFreqArgStepsPerSample = (65.41 * Math.pow(2, (note / 12)) * STEPS_PER_SINE_CYCLE) / outputSampleRate;
-    //return new ScriptSynthInstrumentFmNoteGenerator(this._algo, this.initializeState(baseFreqArgStepsPerSample, startSampleNumber, outputSampleRate), startSampleNumber);
-
-    return new ScriptSynthInstrumentFmNoteGeneratorCodeGen(startSampleNumber,  
+  createNoteGenerator(note: number, outputSampleRate: number, startSampleNumber: number) : IScriptSynthInstrumentNoteGenerator {    
+    return new ScriptSynthInstrumentFmNoteGeneratorCodeGen(startSampleNumber, outputSampleRate, note, 
       this._algoToneGeneratorFactory(startSampleNumber, 
-        outputSampleRate, 
-        baseFreqArgStepsPerSample, 
+        outputSampleRate,         
         (e: EnvelopeCurveCoordinate[], s: number, r: number, t: number) => new EnvelopeCurveState(e, s, r, t)));
   }
 

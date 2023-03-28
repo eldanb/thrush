@@ -18,12 +18,11 @@ const paramChangeCommand = pb.sequence(
   pb.token('[')._(omit()),
   pb.many(
     pb.sequence(
-      pb.anyOf("vpitdf"),
+      pb.anyOf("vpadfit"),
       pb.optional(pb.anyOf("+-")),
       pb.regex(/[0-9]{1,10}/)._(map(parseInt))
     )._(build(ParameterChangeRequest))
   ),
-  pb.optional(pb.token('!'))._(map(s => s === '!')),
   pb.token(']')._(omit()))._(build(ParameterChangeCommand));
   
 
@@ -35,7 +34,7 @@ const noteChangeSpec =  pb.sequence(
         ._(map(([_, reltime]) => parseFloat(reltime))),      
       pb.many(
         pb.sequence(
-          pb.anyOf("vpdf"),
+          pb.anyOf("vpadf"),
           pb.optional(pb.token("!"))._(map(flag => !flag)),
           pb.regex(/[0-9]{1,10}/)._(map(parseInt))
         )._(build(NoteChangeRequestParameter))

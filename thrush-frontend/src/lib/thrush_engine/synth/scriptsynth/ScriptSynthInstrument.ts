@@ -4,9 +4,10 @@ import { WaveFormGenerator } from "../common/WaveFormGenerators";
 export interface IScriptSynthInstrumentNoteGenerator {
   getNoteSample(currentSample: number, currentTime: number, outChannels: number[]): boolean;
 
-  setVolume(volume: any): unknown;
-  setPanning(panning: number): unknown;
-  setVibratorGenerator(vibratoGenerator: WaveFormGenerator | null): unknown;
+  setVolume(volume: any): void;
+  setPanning(panning: number): void;
+  setPitchBend(pitchBend: number): void;
+  setVibratorGenerator(vibratoGenerator: WaveFormGenerator | null): void;
 
   releaseNote(releaseSampleNumber: number): void;
 }

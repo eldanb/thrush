@@ -96,7 +96,7 @@ export class TestPageComponent implements OnInit {
       
       const instrumentIdNative = 'instrumentOne';
       this._thrushEngine.sequencer.waveTableSynthesizer.registerInstrument(instrumentIdNative,
-        wavFile.samples[0].buffer, wavFile.sampleRate, 0, 0, wavFile.samples.length-1000, 1);
+        wavFile.samples[0].buffer, wavFile.sampleRate, 0, wavFile.samples.length-1000, 1);
   
       const aggSeqContext = new ThrushAggregatedSequenceGenerator();
 

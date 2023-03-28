@@ -11,6 +11,7 @@ export class NoteSequenceContext {
   instrumentId: string = '';
   noteVolume: number = 1;
   notePanning: number = 0.5;
+  pitchBend: number = 0;
 
   private _noteVibrato: ThrushCommonSynthesizerVibratoParameters;
 
@@ -67,6 +68,7 @@ export class NoteSequenceContext {
       noteIdPrefix: `${this.generateNoteId()}.`,
       noteVibratoDepth: this.noteVibratoDepth,
       noteVibratoFrequency: this.noteVibratoDepth,
+      pitchBend: this.pitchBend
     });
 
     return ret;

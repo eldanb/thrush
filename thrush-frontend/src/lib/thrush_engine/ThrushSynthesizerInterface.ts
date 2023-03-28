@@ -15,6 +15,7 @@ export type ThrushCommonSynthesizerEventCommands = {
   releaseNote?: boolean;
   volume?: number;
   panning?: number;
+  pitchBend?: number;
   vibrato?: ThrushCommonSynthesizerVibratoParameters;
 }
 

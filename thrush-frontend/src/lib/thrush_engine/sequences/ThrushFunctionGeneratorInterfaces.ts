@@ -30,6 +30,12 @@ declare type NoteSettings = {
    * Panning of played note. 0 for left, 1 for right, 0.5 for middle.
    */  
   panning?: number;
+
+  /**
+   * Pitch bend in semi notes
+   */  
+  pitchBend?: number;
+
 }
 
 /**
@@ -213,12 +219,19 @@ declare interface ThrushSequenceGenerationCalls {
    * A musical part consists of a sequence of statements. Statements
    * belong to one of the following classes:
    * 
-   * - A note of the form `[note]'#'?[octave][timing][loudness-modifiers]`
+   * - A note of the form `[note]'#'?[octave][timing][loudness-modifiers][note-changes]`
    *   Where `[note]` is one of `abcdefg`, `#` indicates a sharp note,
    *   `[octave]` is a single digit octave, and `[timing]` is a timing spec
    *   (see below). `[loudness-modifiers]` can be a sequence of `!` for forte, or
    *   `@` for piano.
-   *  
+   * 
+   *   Note-changes is a list of the form `'[' ('@' [relative-time] ([parameter]'!'? [new-value] ...) ) ... ']'`. 
+   *   The `[relative-time]` part specifies a point in time during the duration of the note -- 0 is the 
+   *   begining, 1 is the end of the duration of the note.  `[parameter]` is a character that identifies
+   *   the parameters to change. See below the list of possible  parameters. `[new-value]` is the new value
+   *   to assign to the parameter. Parameter changes are applied gradually, linearly over time. If a change should be
+   *   applied abruptly at the point in time, add an exclamation mark after the parameter value.
+   * 
    * - A pause, of the form `'-'[timing]`.      
    * 
    * - A parallel sequence of the form:
@@ -230,13 +243,22 @@ declare interface ThrushSequenceGenerationCalls {
    *   You can also use a single parallel sequence together with the parameter
    *   change command (see below) to change parameters only for the length of the sequence.
    * 
-   * - A parameter change command of the form `'['[parameter][relative][value]...'!'?']'` 
-   *   where `[parameter]` is `v` for volume, `p` for panning, `i` for instrument, `t`
-   *   for tempo, `d` for vibrato depth, and `f` for vibrato frequency; relative can be absent 
-   *   to set a constant value for parameter or `+` to increase,
-   *   or `-` to increase (relative values not supported for instrument selection).
-   *   Include an exclamation mark at the end of the command to indicate change should apply
-   *   to currently playing note in sequence.
+   * - A parameter change command of the form `'['[parameter][relative]?[value]...']'` 
+   *   where `[parameter]` is either one of the parameters listed below for note changeable parameters,
+   *   or `i` for instrument, or `t` for tempo. `[relative]` can be absent 
+   *   to set a constant value for parameter or `+` to increase, or `-` to increase (relative values
+   *   not supported for instrument selection).
+   * 
+   *  - Timings are either of the form `/=[absolute-value]` for absolute values, e.g `/=2`, 
+   *    or `/[note-denominator][half-dot]` e.g. `/4` for quarter-note or `/2.` for three-quarters. 
+   *    Timing can also be a legato of multiple timings: `/4+/4.`.
+   *  
+   *  - The following parameters may be changed using the `[]` command or note modifiers:
+   *    `v`: Volume (0-100)
+   *    `a`: Panning (0-100)
+   *    `p`: Pitch bend (0-1280, 640 is no pitch bend)
+   *    `d`: Vibrato depth
+   *    `f`: Vibrato frequency
    * 
    * @param partSpecification A string representing the part to play. See remarks for syntax.
    * @param partSequenceOptions Options for part sequence.

@@ -52,6 +52,20 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
       1, 
       resource.entryEnvelopes,
       resource.exitEnvelopes);
+
+    await this._sequencer.waveTableSynthesizer.registerInstrument(
+        name,
+        new Float32Array(JsonToWaveform(resource.samplesBase64)),
+        resource.sampleRate,
+        hasLoop
+          ? resource.loopStartTime * resource.sampleRate
+          : 0,
+        hasLoop
+          ? (resource.loopEndTime-resource.loopStartTime) * resource.sampleRate
+          : 0,
+        1, 
+        resource.entryEnvelopes,
+        resource.exitEnvelopes);
   }
   
   async update_fm_instrument(name: string, resource: ResourceTypeFmInstrument): Promise<void> {

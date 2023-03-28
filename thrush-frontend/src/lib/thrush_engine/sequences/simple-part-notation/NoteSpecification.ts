@@ -63,7 +63,8 @@ export class NoteSpecification extends CompilableSimplePart {
         },
         panning: sequenceContext.notePanning,
         volume: Math.min(1, sequenceContext.noteVolume * this.volModifier),
-        vibrato: sequenceContext.noteVibrato
+        vibrato: sequenceContext.noteVibrato,
+        pitchBend: sequenceContext.pitchBend
       }),
 
       ...this.generateNoteChangeEvents(endTime, sequenceContext),

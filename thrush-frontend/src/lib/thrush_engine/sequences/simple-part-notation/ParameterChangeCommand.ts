@@ -23,7 +23,7 @@ export const NoteParameterUpdaters: {
     }
   },
 
-  'p': {
+  'a': {
     update(context, value, commandToUpdate) {
         context.notePanning = value/100;
         if(commandToUpdate) {
@@ -32,6 +32,19 @@ export const NoteParameterUpdaters: {
     },
     getFromContext(context) {
       return context.notePanning*100;
+    }
+  },
+
+  'p': {
+    update(context, value, commandToUpdate) {
+      const translatedPitchOffset = (value-640)/64;
+      context.pitchBend = translatedPitchOffset;
+      if(commandToUpdate) {
+        commandToUpdate.pitchBend = translatedPitchOffset;
+      }
+    },
+    getFromContext(context) {
+      return (context.pitchBend*64)+640;
     }
   },
 
@@ -57,7 +70,9 @@ export const NoteParameterUpdaters: {
     getFromContext(context) {
       return context.noteVibratoFrequency * 100;
     }
-  }
+  },
+
+
 }
 
 function TargetValue(baseValue: number, relative: string | null, value: number, valueScaling: number, clampMin: number, clampMax: number) {
@@ -85,7 +100,7 @@ export class ParameterChangeRequest {
 
   }
 
-  applyToEvent(commands: ThrushCommonSynthesizerEventCommands, context: NoteSequenceContext) {
+  applyToEvent(context: NoteSequenceContext) {
     switch(this._paramId) {
       case 'i':
         if(this._relative) {
@@ -105,15 +120,15 @@ export class ParameterChangeRequest {
         const paramUpdater = NoteParameterUpdaters[this._paramId];
         switch(this._relative) {
           case '+':
-            paramUpdater.update(context, paramUpdater.getFromContext(context) + this._value, commands);
+            paramUpdater.update(context, paramUpdater.getFromContext(context) + this._value, null);
             break;
 
           case '-':
-            paramUpdater.update(context, paramUpdater.getFromContext(context) - this._value, commands);
+            paramUpdater.update(context, paramUpdater.getFromContext(context) - this._value, null);
             break;
 
           default:
-            paramUpdater.update(context, this._value, commands);
+            paramUpdater.update(context, this._value, null);
             break;  
         }
     }
@@ -121,25 +136,15 @@ export class ParameterChangeRequest {
 }
 
 export class ParameterChangeCommand extends CompilableSimplePart {
-  constructor(private _changeRequests: ParameterChangeRequest[], private _immediate: boolean) { 
+  constructor(private _changeRequests: ParameterChangeRequest[]) { 
     super();
   }
 
   
   compile(sequenceContext: NoteSequenceContext): ThrushSequenceGenerator | null{
     const commands: ThrushCommonSynthesizerEventCommands = {};
-    this._changeRequests.forEach(r => r.applyToEvent(commands, sequenceContext));
+    this._changeRequests.forEach(r => r.applyToEvent(sequenceContext));
 
-    if(this._immediate) {
-      return new ThrushArraySequenceGenerator([
-        new ThrushCommonSynthesizerEvent(
-          0, 
-          sequenceContext.synth!, 
-          sequenceContext.latestNoteId!, 
-          commands)
-      ]);
-    } else {
-      return null;
-    }
+    return null;
   }
 }
