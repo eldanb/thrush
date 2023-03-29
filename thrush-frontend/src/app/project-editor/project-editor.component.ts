@@ -328,6 +328,7 @@ class SampleProjectsBrowser implements IFileOpenBrowseSource {
   async getFilesInFolder(folderId?: string | undefined): Promise<FileBrowserFileDetails[]> {
     return [
       './assets/example-projects/part-notation.thrush.json',
+      './assets/example-projects/top-gun.thrush.json',
     ].map((url) => {
       const urlParts = url.split('/');
       const filename = urlParts[urlParts.length-1];

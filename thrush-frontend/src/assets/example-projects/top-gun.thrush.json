@@ -1,0 +1,90 @@
+{
+  "title": "TopGun",
+  "resources": {
+    "main": {
+      "type": "script",
+      "code": "/**\n * @param {ThrushSequenceGenerationCalls} c\n */\nfunction* mainSequence(c) {\n    for(;;) {\n        yield c.playSequence(\n            c.partSequence(\n                \"[i0] c1 d1 f1 g1 f1/1. c1 e1/4+/1. c1 d1/4+/1. c1 e1/4+/1\", \n                { instruments: [\"fm_bass_deep\"], \n                tempo: 1.1, \n                synth: \"soft\", \n                defaultNoteSettings: {volume: 0.6} } )\n        );\n    }\n}\n"
+    },
+    "fm_bass_deep": {
+      "type": "fm_instrument",
+      "rootAlgorithmNode": {
+        "oscType": "adder",
+        "releaseEnvelope": [
+          { "time": 0.0006983240223463687, "value": 0.050334821428571375 },
+          { "time": 0.008379888268156424, "value": 0.059858630952380976 }
+        ],
+        "attackEnvelope": [
+          { "time": 0.0006983240223463687, "value": 0.6816220238095239 },
+          { "time": 0.22346368715083798, "value": 0.7054315476190476 },
+          { "time": 3.189944134078212, "value": 0.03400297619047621 }
+        ],
+        "freqType": "multiplier",
+        "freqValue": 1,
+        "feedback": 0,
+        "modulators": [
+          {
+            "oscType": "sine",
+            "releaseEnvelope": [],
+            "attackEnvelope": [],
+            "freqType": "multiplier",
+            "freqValue": 1,
+            "feedback": 0,
+            "modulators": [
+              {
+                "oscType": "sine",
+                "releaseEnvelope": [],
+                "attackEnvelope": [
+                  { "time": 0, "value": 1 },
+                  { "time": 0.04262231581703911, "value": 0.524324024822695 },
+                  { "time": 0.058605684248428776, "value": 0.9924091312056738 },
+                  { "time": 0.10122800006546788, "value": 0 },
+                  { "time": 0.13585863166681217, "value": 0.7867353723404256 },
+                  { "time": 0.21311157908519554, "value": 0 },
+                  { "time": 0.2157754738237605, "value": 0.9853169326241135 },
+                  { "time": 0.2770450528107542, "value": 0.9711325354609929 },
+                  {
+                    "time": 0.34630631601344275,
+                    "value": 0.0065935283687943436
+                  },
+                  { "time": 0.3915925265690468, "value": 0.3399268617021277 },
+                  { "time": 0.5046831828921867, "value": 0.34778432377049184 }
+                ],
+                "freqType": "multiplier",
+                "freqValue": 1,
+                "feedback": 0,
+                "modulators": []
+              }
+            ]
+          },
+          {
+            "oscType": "sine",
+            "releaseEnvelope": [],
+            "attackEnvelope": [],
+            "freqType": "multiplier",
+            "freqValue": 0.5,
+            "feedback": 0,
+            "modulators": [
+              {
+                "oscType": "sine",
+                "releaseEnvelope": [],
+                "attackEnvelope": [
+                  { "time": 0.10655578954259777, "value": 0 },
+                  { "time": 0.11721136849685755, "value": 0.9853169326241135 },
+                  { "time": 0.19446431591524094, "value": 0.09879210992907805 },
+                  { "time": 0.23175884225515014, "value": 0.9285793439716312 },
+                  { "time": 0.27438115807218927, "value": 0.5668772163120568 },
+                  { "time": 0.3170034738892284, "value": 0.9356715425531915 },
+                  { "time": 0.31966736862779327, "value": 0.9297515368852459 }
+                ],
+                "freqType": "multiplier",
+                "freqValue": 0.51,
+                "feedback": 0,
+                "modulators": []
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
