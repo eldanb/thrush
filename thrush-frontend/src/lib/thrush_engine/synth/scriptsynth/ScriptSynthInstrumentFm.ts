@@ -23,7 +23,6 @@ type FmToneGeneratorFactory =
     [(samplesToSkip: number) => number, (releaseAt: number) => void, (baseFrequencyArgStepsPerSample: number) => void];
 
 
-    //baseFrequencyArgStepsPerSample: number,
 class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrumentNoteGenerator {
   
   private _volume: number = 1;
@@ -202,7 +201,7 @@ export class FmAlgorithmNode {
         
     let modValueCalculation = 
       modValueTerms.length 
-        ? `(${modValueTerms.join(' + ')}) * 1.6 * ${STEPS_PER_SINE_CYCLE}`
+        ? `(${modValueTerms.join(' + ')}) * ${1.6 * STEPS_PER_SINE_CYCLE}`
         : `0`;
 
     const feedbackUpdateCode =
@@ -211,16 +210,20 @@ export class FmAlgorithmNode {
     return `
       const modValue${stateSuffix} = ${modValueCalculation};
       
-      sampleToSkipCounter = samplesToSkip;
-      while(sampleToSkipCounter--) {
-        currentArg${stateSuffix} += wholeArgStepsPerSample${stateSuffix};
+      let localCurrentArg${stateSuffix} = currentArg${stateSuffix};
 
-        if(currentArg${stateSuffix}>${STEPS_PER_SINE_CYCLE}) {
-          currentArg${stateSuffix} -= ${STEPS_PER_SINE_CYCLE};
+      sampleToSkipCounter = samplesToSkip;
+      
+      while(sampleToSkipCounter--) {
+        localCurrentArg${stateSuffix} += wholeArgStepsPerSample${stateSuffix};
+
+        if(localCurrentArg${stateSuffix}>${STEPS_PER_SINE_CYCLE-1}) {
+          localCurrentArg${stateSuffix} -= ${STEPS_PER_SINE_CYCLE};
         }
       }
 
-      let currentModulatedArg${stateSuffix} = Math.round(currentArg${stateSuffix} + modValue${stateSuffix}) & (${STEPS_PER_SINE_CYCLE}-1);
+
+      let currentModulatedArg${stateSuffix} = (localCurrentArg${stateSuffix} + modValue${stateSuffix}) & ${STEPS_PER_SINE_CYCLE-1};
 
       let nodeOutput${stateSuffix} = SinLookup[currentModulatedArg${stateSuffix}];
 
@@ -231,6 +234,7 @@ export class FmAlgorithmNode {
       }
 
       currentSample${stateSuffix} += samplesToSkip;
+      currentArg${stateSuffix} = localCurrentArg${stateSuffix};
       ${feedbackUpdateCode}
     `
   }
@@ -320,7 +324,7 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
       let releasing = false;
 
       const computeNextSample = (samplesToSkip) => {
-        let sampleToSkipCounter;
+        let sampleToSkipCounter = 0;
 
         ${stateComputationBody}
         
