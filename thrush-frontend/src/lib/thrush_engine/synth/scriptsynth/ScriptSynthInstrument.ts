@@ -12,7 +12,13 @@ export interface IScriptSynthInstrumentNoteGenerator {
   releaseNote(releaseSampleNumber: number): void;
 }
 
+
+export interface IScriptSynthInstrumentFilter {
+  filter(inputOutput: number[]): void;
+}
+
 export abstract class ScriptSynthInstrument {
   abstract createNoteGenerator(note: number, outputSampleRate: number, startSampleNumber: number) : IScriptSynthInstrumentNoteGenerator;
+  abstract createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null;
 }
 

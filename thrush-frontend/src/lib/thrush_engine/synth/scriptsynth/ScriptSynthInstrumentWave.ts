@@ -1,6 +1,6 @@
 import { EnvelopeCurveCoordinate, EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator } from "../common/WaveFormGenerators";
-import { IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
 
 export type Envelopes = {
   volume: EnvelopeCurveCoordinate[];
@@ -187,6 +187,10 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
   createNoteGenerator(note: number, outputSampleRate: number, startSampleNumber: number) : IScriptSynthInstrumentNoteGenerator {
     return new ScriptSynthInstrumentWaveNoteGenerator(this, note, outputSampleRate, startSampleNumber);
   }
+  
+  override createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null {
+    return null;
+  }
 
   get sample(): Float32Array {
     return this._sample;
@@ -226,5 +230,6 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
 
     return this._audioBuffer!;
   }
+  
 
 }

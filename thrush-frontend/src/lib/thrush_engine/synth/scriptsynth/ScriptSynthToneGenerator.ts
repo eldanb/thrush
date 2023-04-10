@@ -1,5 +1,5 @@
 import { WaveFormGenerator, WaveFormGeneratorFactories, WaveFormType } from "../common/WaveFormGenerators";
-import { IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
 
 class ChannelState  {
 
@@ -7,6 +7,7 @@ class ChannelState  {
   playingNoteId: string | null = null;
 
   noteSampleGenerator: IScriptSynthInstrumentNoteGenerator | null = null; 
+  ownerInstrumentState: InstrumentChannelStates | null = null;
 
   volume: number = 0;
   panning: number = 0.5;
@@ -62,14 +63,22 @@ class ChannelState  {
   }
 }
 
+type InstrumentChannelStates = {
+  instrument: ScriptSynthInstrument;
+  filterState: IScriptSynthInstrumentFilter | null;
+  channelStates: ChannelState[];
+}
+
 export class ScriptSynthToneGenerator {
   private _sampleRate: number;
   private _channelStates: ChannelState[];
   private _currentTime: number = 0;
   private _currentSample: number = 0;
+  private _instrumentChannelStates: InstrumentChannelStates[];
 
   constructor(sampleRate: number, private _numChannels: number) {
     this._channelStates = [];
+    this._instrumentChannelStates = [];
     
     this.panic();
 
@@ -79,6 +88,7 @@ export class ScriptSynthToneGenerator {
   public panic() {
     for(let channelIdx=0; channelIdx<this._numChannels; channelIdx++) {
       this._channelStates[channelIdx] = new ChannelState(this);
+      this._instrumentChannelStates = [];
     }    
   }
 
@@ -96,7 +106,8 @@ export class ScriptSynthToneGenerator {
       channelState = this._channelStates[channelOrNoteId];
       channelState.playingNoteId = null;
     }
-      
+    
+    this._changeChanelInstrument(channelState, instrument);
     channelState.playNote(instrument, note, this._currentSample);
   }
 
@@ -144,27 +155,93 @@ export class ScriptSynthToneGenerator {
     return ret;        
   }
 
+
+  private _changeChanelInstrument(channelState: ChannelState, newInstrument: ScriptSynthInstrument | null) {
+    const instrumentChannelStates = this._instrumentChannelStates;
+    let oldChannelInstrumentToDelete = channelState.ownerInstrumentState;
+    
+    // If we don't switch to a new instrument -- nothing to do here
+    if(oldChannelInstrumentToDelete?.instrument == newInstrument) {
+      return;
+    }
+
+    // Remove from current instrument; delete entire instrument if needed
+    if(oldChannelInstrumentToDelete) {
+      const oldChannelArray = oldChannelInstrumentToDelete.channelStates;
+      if(oldChannelArray.length > 1) {
+        oldChannelArray.splice(oldChannelArray.indexOf(channelState), 1);        
+      } else {
+        const instrumentStateIndex = instrumentChannelStates.indexOf(oldChannelInstrumentToDelete);
+        instrumentChannelStates.splice(instrumentStateIndex, 1);
+      }
+    }
+
+    // Try to update existing instrument
+    const numInstrumentStates = instrumentChannelStates.length;
+    for(let srcIdx=0; srcIdx < numInstrumentStates; srcIdx++) {
+      const instrumentState = instrumentChannelStates[srcIdx];
+
+      if(instrumentState.instrument == newInstrument) {
+        // Indicate no need to add a new instrument
+        newInstrument = null;
+        instrumentState.channelStates.push(channelState);
+        channelState.ownerInstrumentState = instrumentState;
+        break;
+      }
+    }
+
+    // Add new instrument if needed
+    if(newInstrument) {
+      const newInstrumentState: InstrumentChannelStates = {
+        channelStates: [channelState],
+        filterState: newInstrument.createFilterState(this._sampleRate),
+        instrument: newInstrument
+      }
+
+      instrumentChannelStates.push(newInstrumentState);
+      channelState.ownerInstrumentState = newInstrumentState;
+    }    
+  }
+
+
   public readBuffer(destinationLeft: Float32Array, destinationRight: Float32Array, destOffset: number, destLength: number): void
   {
     let currentSample = this._currentSample;
     for(let sampleIndex=destOffset; sampleIndex<destOffset+destLength; sampleIndex++)
     {
-      const leftAndRightSample = [0, 0];
-      const channels = this._channelStates.length;
+      let leftSample = 0;
+      let rightSample = 0;
+
       const currentTime = this._currentTime;
 
-      for(let channelIndex=0; channelIndex<channels; channelIndex++) {
-        const channelState = this._channelStates[channelIndex];
-        if(channelState.noteSampleGenerator) {
-          if(!channelState.noteSampleGenerator.getNoteSample(currentSample, currentTime, leftAndRightSample)) {
-            channelState.noteSampleGenerator = null;
-            channelState.playingNoteId = null;
+      const instruments = this._instrumentChannelStates.length;
+      for(let instrumentIndex=0; instrumentIndex<instruments; instrumentIndex++) {
+        const instrumentState = this._instrumentChannelStates[instrumentIndex];
+        const channelsCount = instrumentState.channelStates.length;
+        const channels = instrumentState.channelStates;
+
+        const instrumentLeftAndRightSample = [0, 0];
+
+        for(let channelIndex=0; channelIndex<channelsCount; channelIndex++) {
+          const channelState = channels[channelIndex];
+          if(channelState.noteSampleGenerator) {
+            if(!channelState.noteSampleGenerator.getNoteSample(currentSample, currentTime, instrumentLeftAndRightSample)) {
+              channelState.noteSampleGenerator = null;
+              channelState.playingNoteId = null;
+            }
           }
+        } 
+
+        if(instrumentState.filterState) {
+          instrumentState.filterState.filter(instrumentLeftAndRightSample);
         }
+        
+        leftSample += instrumentLeftAndRightSample[0];
+        rightSample += instrumentLeftAndRightSample[1];
       }
 
-      destinationLeft[sampleIndex] = leftAndRightSample[0];
-      destinationRight[sampleIndex] = leftAndRightSample[1];
+      destinationLeft[sampleIndex] = leftSample;
+      destinationRight[sampleIndex] = rightSample;
 
       currentSample++;      
     }

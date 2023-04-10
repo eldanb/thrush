@@ -1,6 +1,6 @@
 import { EnvelopeCurveCoordinate, EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator } from "../common/WaveFormGenerators";
-import { IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
 import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentAlgorithmNodeOscillatorType } from "./worklet/ScriptSynthWorkerRpcInterface";
 
 
@@ -358,6 +358,10 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
       this._algoToneGeneratorFactory(startSampleNumber, 
         outputSampleRate,         
         (e: EnvelopeCurveCoordinate[], s: number, r: number, t: number) => new EnvelopeCurveState(e, s, r, t)));
+  }
+
+  override createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null {
+    return null;
   }
 
   get algo(): FmAlgorithmNode {
