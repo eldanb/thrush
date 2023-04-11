@@ -107,7 +107,7 @@ export class ScriptSynthToneGenerator {
       channelState.playingNoteId = null;
     }
     
-    this._changeChanelInstrument(channelState, instrument);
+    this._changeChannelInstrument(channelState, instrument);
     channelState.playNote(instrument, note, this._currentSample);
   }
 
@@ -136,7 +136,7 @@ export class ScriptSynthToneGenerator {
   public releaseNoteOnChannel(channelOrNoteId: number | string): void {
     const channelState = this._getChannelStateOrNull(channelOrNoteId);
     if(channelState) {
-      channelState.releaseNote(this._currentSample);
+      channelState.releaseNote(this._currentSample);      
     }
   }
 
@@ -156,7 +156,7 @@ export class ScriptSynthToneGenerator {
   }
 
 
-  private _changeChanelInstrument(channelState: ChannelState, newInstrument: ScriptSynthInstrument | null) {
+  private _changeChannelInstrument(channelState: ChannelState, newInstrument: ScriptSynthInstrument | null) {
     const instrumentChannelStates = this._instrumentChannelStates;
     let oldChannelInstrumentToDelete = channelState.ownerInstrumentState;
     
@@ -212,6 +212,7 @@ export class ScriptSynthToneGenerator {
       let leftSample = 0;
       let rightSample = 0;
 
+      const endedChannelStates: ChannelState[] = [];
       const currentTime = this._currentTime;
 
       const instruments = this._instrumentChannelStates.length;
@@ -228,6 +229,7 @@ export class ScriptSynthToneGenerator {
             if(!channelState.noteSampleGenerator.getNoteSample(currentSample, currentTime, instrumentLeftAndRightSample)) {
               channelState.noteSampleGenerator = null;
               channelState.playingNoteId = null;
+              endedChannelStates.push(channelState);
             }
           }
         } 
@@ -238,6 +240,10 @@ export class ScriptSynthToneGenerator {
         
         leftSample += instrumentLeftAndRightSample[0];
         rightSample += instrumentLeftAndRightSample[1];
+      }
+
+      if(endedChannelStates.length) {
+        endedChannelStates.forEach((channelState) => this._changeChannelInstrument(channelState, null));
       }
 
       destinationLeft[sampleIndex] = leftSample;

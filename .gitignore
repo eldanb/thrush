@@ -110,3 +110,5 @@ thrush
 scratch.txt
 thrush.tar
 thrush-docs/docs/code-synth-api
+thrush-frontend/src/lib/thrush_engine/synth/scriptsynth/wasm/synthRoutines.wasm.embed
+thrush-frontend/src/assets/scriptsynth-audio-worklet.js

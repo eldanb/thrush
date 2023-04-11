@@ -1,8 +1,10 @@
+import { Base64ToUint8Array } from "../../../util/buffers";
 import { EnvelopeCurveCoordinate, EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator } from "../common/WaveFormGenerators";
 import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
 import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentAlgorithmNodeOscillatorType } from "./worklet/ScriptSynthWorkerRpcInterface";
 
+let ii=0;
 
 const STEPS_PER_SINE_CYCLE = 2048;
 
@@ -361,7 +363,7 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
   }
 
   override createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null {
-    return null;
+    return (ii++ & 1) ? null : new WasmFilterState();
   }
 
   get algo(): FmAlgorithmNode {
@@ -388,4 +390,71 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
 
     return new ScriptSynthFmInstrument(createInstrumentAlgoNode(descriptor));
   }
+}
+
+
+
+//let loadedFilters: any[] | null = null;
+
+let wasmModule: any;
+const numFilterHandles = 32;
+let nextHandleToAlloc = 0;
+let filterBufferStartOfs = 0;
+const filterMemory = new WebAssembly.Memory({initial: 10});
+
+async function initializeFilters() {
+   
+    const wasmContent = require('!!uint8array-loader!./wasm/synthRoutines.wasm.embed');
+    
+    wasmModule = await WebAssembly.instantiate(wasmContent!, {
+      "js": {
+        "memory": filterMemory
+      }
+    });
+
+    filterBufferStartOfs = wasmModule.instance.exports.allocFilterHandles(numFilterHandles, 1024);
+    const filterArray = new Float64Array(filterMemory.buffer, filterBufferStartOfs, 16384);
+
+    for(let i=0; i<256; i++) {
+      filterArray[i] = 0.02;  
+    }
+    
+    console.log('filters loaded!');
+}
+
+function allocFilterHandle() {
+  const ret = nextHandleToAlloc++;
+  if(nextHandleToAlloc > numFilterHandles) {
+    nextHandleToAlloc = 0;
+  }
+  return ret;
+}
+
+try { 
+  initializeFilters();
+} catch(e) {
+  console.log("error loading filters", e);  
+}
+
+class WasmFilterState implements IScriptSynthInstrumentFilter {
+  filterHandle1: number;
+  filterHandle2: number;
+
+  constructor() {
+    this.filterHandle1 = allocFilterHandle();
+    this.filterHandle2 = allocFilterHandle();
+
+    wasmModule.instance.exports.initFilter(this.filterHandle1, filterBufferStartOfs, 512);
+    wasmModule.instance.exports.initFilter(this.filterHandle2, filterBufferStartOfs, 512);
+  }
+
+  filter(inputOutput: number[]): void {
+
+    inputOutput[0] = 
+      wasmModule.instance.exports.applyFilter(this.filterHandle1, inputOutput[0]);
+    inputOutput[1] = 
+      wasmModule.instance.exports.applyFilter(this.filterHandle2, inputOutput[1]);
+
+  }
+
 }
