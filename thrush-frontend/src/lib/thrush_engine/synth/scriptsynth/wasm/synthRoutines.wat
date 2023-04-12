@@ -83,8 +83,8 @@
 
         (loop 
                 local.get $fcbOfs
-                f64.const 0
-                f64.store offset=0
+                i64.const 0
+                i64.store offset=0
 
                 local.get $fcbOfs
                 i32.const 8
@@ -100,9 +100,9 @@
 
   (func (export "applyFilter")
       (param $filterHandle i32) 
-      (param $input f64) 
+      (param $input i32) 
       
-      (result f64) 
+      (result i32) 
 
       (local $locFcbStart i32)      
       (local $locFilterOfs i32)
@@ -139,18 +139,21 @@
       ;; Mem[locBufferPtr] = input
       local.get $locBufferPtr
       local.get $input
-      f64.store offset=0
+      i64.extend_i32_s
+      i64.store offset=0
 
-      f64.const 0
+      i64.const 0
 
-      (loop (param f64) (result f64)
+      (loop (param i64) (result i64)
         ;; acc += Mem[locBufferPtr] * filter[idx]
         local.get $locBufferPtr
-        f64.load offset=0
+        i64.load offset=0
         local.get $locFilterOfs
-        f64.load offset=0
-        f64.mul
-        f64.add
+        i64.load offset=0
+        i64.mul
+        i64.const 31
+        i64.shr_s
+        i64.add
         
         ;; Increment locBufferPtr 
         local.get $locBufferPtr
@@ -179,8 +182,10 @@
         br_if 0
       )      
 
-        local.get $locFcbStart      
+      local.get $locFcbStart      
       local.get $locBufferPtr
       i32.store offset=16
+
+      i32.wrap_i64
   )      
 )

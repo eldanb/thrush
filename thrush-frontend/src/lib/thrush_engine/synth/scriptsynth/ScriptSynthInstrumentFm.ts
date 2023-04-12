@@ -39,6 +39,7 @@ class ScriptSynthInstrumentFmNoteGeneratorCodeGen implements IScriptSynthInstrum
   private _algToneGeneratorRelease: ((releaseAt: number) => void);
   private _algToneGeneratorSetStepsPerSample: (baseFreqArgStepsPerSample: number) => void;
 
+
   vibratoGenerator: WaveFormGenerator | null = null;
 
   constructor(startSampleNumber: number, outputSampleRate: number, note: number,
@@ -413,10 +414,10 @@ async function initializeFilters() {
     });
 
     filterBufferStartOfs = wasmModule.instance.exports.allocFilterHandles(numFilterHandles, 1024);
-    const filterArray = new Float64Array(filterMemory.buffer, filterBufferStartOfs, 16384);
+    const filterArray = new BigInt64Array(filterMemory.buffer, filterBufferStartOfs, 16384);
 
     for(let i=0; i<256; i++) {
-      filterArray[i] = 0.02;  
+      filterArray[i] = BigInt(Math.round(0.02 * 32767*65536));  
     }
     
     console.log('filters loaded!');
@@ -436,6 +437,8 @@ try {
   console.log("error loading filters", e);  
 }
 
+const FIXEDPOINT_FACTOR = 32767*65536;
+
 class WasmFilterState implements IScriptSynthInstrumentFilter {
   filterHandle1: number;
   filterHandle2: number;
@@ -451,10 +454,11 @@ class WasmFilterState implements IScriptSynthInstrumentFilter {
   filter(inputOutput: number[]): void {
 
     inputOutput[0] = 
-      wasmModule.instance.exports.applyFilter(this.filterHandle1, inputOutput[0]);
+      wasmModule.instance.exports.applyFilter(this.filterHandle1, Math.round(inputOutput[0]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
     inputOutput[1] = 
-      wasmModule.instance.exports.applyFilter(this.filterHandle2, inputOutput[1]);
+      wasmModule.instance.exports.applyFilter(this.filterHandle2, Math.round(inputOutput[1]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
 
+      
   }
 
 }
