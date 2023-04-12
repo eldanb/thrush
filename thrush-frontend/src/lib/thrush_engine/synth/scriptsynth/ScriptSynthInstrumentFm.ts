@@ -363,7 +363,7 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
   }
 
   override createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null {
-    return (ii++ & 1) ? null : new WasmFilterState();
+    return new WasmFilterState();
   }
 
   get algo(): FmAlgorithmNode {
@@ -444,8 +444,8 @@ class WasmFilterState implements IScriptSynthInstrumentFilter {
     this.filterHandle1 = allocFilterHandle();
     this.filterHandle2 = allocFilterHandle();
 
-    wasmModule.instance.exports.initFilter(this.filterHandle1, filterBufferStartOfs, 512);
-    wasmModule.instance.exports.initFilter(this.filterHandle2, filterBufferStartOfs, 512);
+    wasmModule.instance.exports.initFilter(this.filterHandle1, filterBufferStartOfs, 256);
+    wasmModule.instance.exports.initFilter(this.filterHandle2, filterBufferStartOfs, 256);
   }
 
   filter(inputOutput: number[]): void {

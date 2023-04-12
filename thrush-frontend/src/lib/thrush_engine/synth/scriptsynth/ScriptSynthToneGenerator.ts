@@ -176,6 +176,12 @@ export class ScriptSynthToneGenerator {
       }
     }
 
+    // No new instrument?
+    if(!newInstrument) {
+      channelState.ownerInstrumentState = null;
+      return;
+    }
+
     // Try to update existing instrument
     const numInstrumentStates = instrumentChannelStates.length;
     for(let srcIdx=0; srcIdx < numInstrumentStates; srcIdx++) {
