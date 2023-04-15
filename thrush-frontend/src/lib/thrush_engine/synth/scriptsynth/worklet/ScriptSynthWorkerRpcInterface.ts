@@ -1,10 +1,16 @@
 import { EnvelopeCurveCoordinate } from "../../common/Envelopes";
 import { ScriptSynthEngineEvent } from "../ScriptSynthEngine";
+import { ChorusEffectParameters, EqFilterParameters } from "../ScriptSynthInstrumentFm";
 import { Envelopes } from "../ScriptSynthInstrumentWave";
 
 
 export type FmInstrumentAlgorithmNodeOscillatorType = "sine" | "adder";
 
+export type FmInstrumentDescriptor = {
+  rootAlgorithmNode: FmInstrumentAlgorithmNodeDescriptor;  
+  chorusFilterParameters?: ChorusEffectParameters;
+  eqFilterParameters?: EqFilterParameters;
+}
 
 export type FmInstrumentAlgorithmNodeDescriptor = {
   oscType: FmInstrumentAlgorithmNodeOscillatorType;
@@ -33,7 +39,7 @@ export interface ScriptSynthWorkerRpcInterface {
     exitEnvelopes?: Envelopes): Promise<void>;
 
   createFmInstrument(instrumentId: string, 
-    algorithm: FmInstrumentAlgorithmNodeDescriptor): Promise<void>;
+    instrumentDescriptor: FmInstrumentDescriptor): Promise<void>;
   
   enqueueEvent(event: ScriptSynthEngineEvent): Promise<void>;
   

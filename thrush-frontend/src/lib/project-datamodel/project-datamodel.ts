@@ -1,5 +1,5 @@
 import { Envelopes } from "../thrush_engine/synth/native/NativeSynthesizerInstrument";
-import { FmInstrumentAlgorithmNodeDescriptor } from "../thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface";
+import { FmInstrumentDescriptor } from "../thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface";
 import { Base64ToFloat32ArrayLe, Float32ArrayToBase64Le } from "../util/buffers";
 
 export type ThrushProject = {
@@ -34,11 +34,7 @@ export type ResourceTypeAbstractWaveInstrument = {
   exitEnvelopes: Envelopes
 }
 
-export type ResourceTypeFmInstrument = {
-  rootAlgorithmNode: FmInstrumentAlgorithmNodeDescriptor;  
-}
-
-
+export type ResourceTypeFmInstrument = FmInstrumentDescriptor;
 
 export function WaveformToJson(waveform: Float32Array) {
   return Float32ArrayToBase64Le(waveform);

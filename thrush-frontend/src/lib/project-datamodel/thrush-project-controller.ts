@@ -69,7 +69,7 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
   }
   
   async update_fm_instrument(name: string, resource: ResourceTypeFmInstrument): Promise<void> {
-    await this._sequencer.tsynthToneGenerator.createFmInstrument(name, resource.rootAlgorithmNode);
+    await this._sequencer.tsynthToneGenerator.createFmInstrument(name, resource);
   }
 
   async create_script(): Promise<ThrushProjectResourceWithType<'script'>> {

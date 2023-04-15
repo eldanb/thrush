@@ -4,7 +4,7 @@ import { EditedWaveform } from 'src/app/widget-lib/waveform-editor/waveform-edit
 import { ResourceTypeFmInstrument } from 'src/lib/project-datamodel/project-datamodel';
 import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Envelopes';
 import { ScriptSynthFmInstrument } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrumentFm';
-import { FmInstrumentAlgorithmNodeDescriptor } from 'src/lib/thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface';
+import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentDescriptor } from 'src/lib/thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface';
 import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
 
 const GRAPH_NODE_HEIGHT = 30;
@@ -139,7 +139,7 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     this._editedResource = resource;
     this.selectedTopologyId = this.identifyTopology(this._editedResource.rootAlgorithmNode);
     this.computeAlgorithmVisualizationGraph();
-    this.resultWaveform = this.computeWaveform(ScriptSynthFmInstrument.fromDescriptor(this._editedResource!.rootAlgorithmNode), DEFAULT_FM_RENDER_DURATION);
+    this.resultWaveform = this.computeWaveform(ScriptSynthFmInstrument.fromDescriptor(this._editedResource!), DEFAULT_FM_RENDER_DURATION);
     this.ensureValidEditedOperator();
   }
 
@@ -372,7 +372,7 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
 
   notifyResourceDirty(): void {
     this._cachedOperatorWaveformForNode = null;
-    this.resultWaveform = this.computeWaveform(ScriptSynthFmInstrument.fromDescriptor(this._editedResource!.rootAlgorithmNode), DEFAULT_FM_RENDER_DURATION);    
+    this.resultWaveform = this.computeWaveform(ScriptSynthFmInstrument.fromDescriptor(this._editedResource!), DEFAULT_FM_RENDER_DURATION);    
     this.resourceEdited.emit();    
   }
   
@@ -393,7 +393,7 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     }
     
     await synth.createFmInstrument(this._registeredInstrument, 
-      this._editedResource.rootAlgorithmNode);
+      this._editedResource);
 
     await synth.executeImmediateCommand({
       releaseNote: true
@@ -460,7 +460,9 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     }
 
     if(this._cachedOperatorWaveformForNode != this.editedAlgorithmNode) {
-      const isolatedOperatorDescriptor = Object.assign({}, this.editedAlgorithmNode, { modulators: [] });
+      const isolatedOperatorDescriptor: FmInstrumentDescriptor = { 
+        rootAlgorithmNode: Object.assign({}, this.editedAlgorithmNode, { modulators: [] })
+      };      
       const isolatedOperatorNode = ScriptSynthFmInstrument.fromDescriptor(isolatedOperatorDescriptor);
       this._cachedOperatorWaveformForNode = this.editedAlgorithmNode;
       this._cachedOperatorWaveform = this.computeWaveform(isolatedOperatorNode, DEFAULT_FM_RENDER_DURATION)
