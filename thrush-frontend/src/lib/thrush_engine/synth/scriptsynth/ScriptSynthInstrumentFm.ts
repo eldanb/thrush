@@ -1,4 +1,3 @@
-import { CheckboxRequiredValidator } from "@angular/forms";
 import { EnvelopeCurveCoordinate, EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator } from "../common/WaveFormGenerators";
 import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
@@ -13,7 +12,6 @@ export type ChorusEffectParameters = {
   chorusScaling: number;
   chorusLfoFrequency: number;
   chorusDelay: number;
-
 }
 
 

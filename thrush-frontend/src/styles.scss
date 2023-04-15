@@ -91,7 +91,8 @@ $wavetable-editor-theme: (
 
 .property-pane {
   @extend .vertical-stack;
-
+  overflow-y: scroll;
+  
   h1 {
     @extend .small-header;
 

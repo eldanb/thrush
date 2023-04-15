@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 150" width="100%" height="150">
+  <g *ngFor="let visNode of algorithmVisualizationNodes">
+    <path *ngFor="let targetNode of visNode.children"
+          [attr.d]="'M' + (visNode.x+algoNodeSize/2) + ',' + (visNode.y+algoNodeSize/2) +' L' + (targetNode.x+algoNodeSize/2) + ',' + (targetNode.y+algoNodeSize/2)"
+          class="algo-node-connection" />
+
+    <path *ngIf="visNode.fmAlgorithmNodeDescriptor.feedback"
+          class="algo-node-connection" 
+          [attr.d]="'M' + (visNode.x+algoNodeSize-algoNodeMargin) + ',' + (visNode.y+algoNodeMargin+algoNodeFeedbackOfs) + 
+                    ' L' + (visNode.x+algoNodeSize+algoNodeMargin) + ',' + (visNode.y+algoNodeMargin+algoNodeFeedbackOfs) + 
+                    ' L' + (visNode.x+algoNodeSize+algoNodeMargin) + ',' + (visNode.y-algoNodeMargin) + 
+                    ' L' + (visNode.x+algoNodeSize/2+algoNodeMargin) + ',' + (visNode.y-algoNodeMargin) + 
+                    ' L' + (visNode.x+algoNodeSize/2+algoNodeMargin) + ',' + (visNode.y+algoNodeMargin) "/>
+  </g>
+
+  <g *ngFor="let visNode of algorithmVisualizationNodes" 
+    [attr.transform]="'translate(' + visNode.x + ',' + visNode.y + ')'"
+    (click)="handleAlgorithmGraphNodeClicked(visNode)">
+
+    <rect class="algo-node" 
+          [attr.x]="algoNodeMargin" 
+          [attr.y]="algoNodeMargin" 
+          [attr.width]="algoNodeSize-2*algoNodeMargin" 
+          [attr.height]="algoNodeSize-2*algoNodeMargin" rx="6"/>
+
+    <rect *ngIf="visNode == selectedAlgorithmVisualizationNode"
+          class="algo-node-selection" x="0" y="0" [attr.width]="algoNodeSize" [attr.height]="algoNodeSize" rx="6"/>
+
+    <text *ngIf="visNode.fmAlgorithmNodeDescriptor.oscType == 'adder'"
+          class="algo-node-label" x="6" y="11">+</text>
+
+    <text class="algo-node-label" 
+          [attr.x]="algoNodeSize/2" 
+          [attr.y]="algoNodeSize/2+3" text-anchor="middle">{{visNode.label}}</text>
+
+  </g>
+</svg>  

@@ -7,10 +7,6 @@ import { ScriptSynthFmInstrument } from 'src/lib/thrush_engine/synth/scriptsynth
 import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentDescriptor } from 'src/lib/thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface';
 import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
 
-const GRAPH_NODE_HEIGHT = 30;
-const GRAPH_LAYER_WIDTH = 80;
-const GRAPH_SIBLING_SPACING = 20;
-
 const DEFAULT_FM_RENDER_DURATION = 4;
 
 type TopologyDescriptionNode = {
@@ -108,20 +104,7 @@ const TOPOLOOGY_TEMPLATES: TopologyDescriptionNode[] = [
     { isAdder: false, subNodes: [] },
     { isAdder: false, subNodes: [ { isAdder: false, subNodes: [ { isAdder: false, subNodes: [] } ] } ] }
   ] },
-
-
 ]
-
-type AlgorithmVisualizationNode = {
-  x: number;
-  y: number;
-
-  label: string;
-
-  children: AlgorithmVisualizationNode[];
-
-  fmAlgorithmNodeDescriptor: FmInstrumentAlgorithmNodeDescriptor;
-}
 
 type FmInstrumentEditorState = {
   selectedAlgorithmNodeIndex: number | null;
@@ -132,15 +115,16 @@ type FmInstrumentEditorState = {
   styleUrls: ['./fm-instrument-editor.component.scss']
 })
 export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<ResourceTypeFmInstrument, FmInstrumentEditorState>, ResourceEditorWithPlaySupport {
-
+  readonly algoNodeSize = 30;
+  readonly algoNodeMargin = 3;
+  readonly algoNodeFeedbackOfs = 10;
+  
   constructor(private _synthEngine: ThrushEngineService) { }
 
   set editedResource(resource: ResourceTypeFmInstrument) {
     this._editedResource = resource;
     this.selectedTopologyId = this.identifyTopology(this._editedResource.rootAlgorithmNode);
-    this.computeAlgorithmVisualizationGraph();
-    this.resultWaveform = this.computeWaveform(ScriptSynthFmInstrument.fromDescriptor(this._editedResource!), DEFAULT_FM_RENDER_DURATION);
-    this.ensureValidEditedOperator();
+    this.resultWaveform = this.computeWaveform(ScriptSynthFmInstrument.fromDescriptor(this._editedResource!), DEFAULT_FM_RENDER_DURATION);    
   }
 
   get editedResource(): ResourceTypeFmInstrument {
@@ -149,14 +133,9 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
   
   resourceEdited = new EventEmitter<boolean>();
 
-
   selectedTopologyId: number = 0;
-  algorithmVisualizationNodes: AlgorithmVisualizationNode[] = [];
-  editedAlgorithmVisualizationNode: AlgorithmVisualizationNode | null = null;
-
-  get editedAlgorithmNode(): FmInstrumentAlgorithmNodeDescriptor | null {
-    return this.editedAlgorithmVisualizationNode?.fmAlgorithmNodeDescriptor ?? null;
-  }
+  selectedAlgorithmNodeBookmark: number = 0;
+  editedAlgorithmNode: FmInstrumentAlgorithmNodeDescriptor | null = null;
 
   get editedAlgorithmNodeFreq(): number {
     return this.editedAlgorithmNode!.freqValue;
@@ -173,7 +152,6 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
 
   set editedAlgorithmNodeFeedback(f: number) {
     this.editedAlgorithmNode!.feedback = f;
-    this.computeAlgorithmVisualizationGraph();
     this.notifyResourceDirty();
   }
 
@@ -202,6 +180,54 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
 
   set editedAlgorithmNodeRelease(e: EnvelopeCurveCoordinate[]) {
     this.editedAlgorithmNode!.releaseEnvelope = e;
+    this.notifyResourceDirty();
+  }
+
+  get editedInstrumentChorusEnabled(): boolean {
+    return !!this._editedResource.chorusFilterParameters;
+  }
+
+  set editedInstrumentChorusEnabled(v: boolean) {
+    if(!v) {
+      this.editedInstrumentChorus = undefined;
+    } else 
+    if(!this.editedInstrumentChorus) {
+      this.editedInstrumentChorus = { 
+        chorusDelay: 0.003,
+        chorusLfoFrequency: 6,
+        chorusMixLevel: 0.4,
+        chorusScaling: 0.002
+      }
+    }
+  }
+
+  get editedInstrumentChorus() {
+    return this._editedResource.chorusFilterParameters;
+  }
+
+  set editedInstrumentChorus(v) {
+    this._editedResource.chorusFilterParameters = v;
+    this.notifyResourceDirty();
+  }
+
+  get editedInstrumentEqFilterEnabled(): boolean {
+    return !!this._editedResource.eqFilterParameters;
+  }
+
+  set editedInstrumentEqFilterEnabled(v: boolean) {
+    if(!v) {
+      this.editedInstrumentEqFilter = undefined;
+    } else {
+      this.editedInstrumentEqFilter = {};
+    }
+  }
+  
+  get editedInstrumentEqFilter() {
+    return this._editedResource.eqFilterParameters;
+  }
+
+  set editedInstrumentEqFilter(v) {
+    this._editedResource.eqFilterParameters = v;
     this.notifyResourceDirty();
   }
 
@@ -235,55 +261,6 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
   ngOnInit(): void {
   }
 
-  private computeAlgorithmVisualizationGraph() {
-    let labelGenerator = 0;
-    const createNodesForSubgraph = (
-      node: FmInstrumentAlgorithmNodeDescriptor, 
-      startX: number,
-      startY: number): [number, number, AlgorithmVisualizationNode] => {
-        
-        let subgraphStartY = startY;
-        let graphMaxX = startX;
-        const children: AlgorithmVisualizationNode[] = [];
-        
-        node.modulators.forEach((modulator, index) => {
-          let [subgraphMaxX, subgraphMaxY, subnode] = createNodesForSubgraph(modulator, startX + GRAPH_LAYER_WIDTH, subgraphStartY);
-          subgraphStartY = subgraphMaxY + ((index<node.modulators.length-1) ? GRAPH_SIBLING_SPACING : 0);
-          graphMaxX = Math.max(graphMaxX, subgraphMaxX);
-          children.push(subnode);
-        });
-
-        if(subgraphStartY - startY < GRAPH_NODE_HEIGHT) {
-          subgraphStartY = startY + GRAPH_NODE_HEIGHT;
-        }
-
-        const myNode: AlgorithmVisualizationNode = {
-          x: startX,
-          y: (subgraphStartY + startY)/2,
-          children: children,
-          fmAlgorithmNodeDescriptor: node,
-          label: `${++labelGenerator}`
-        };
-
-        this.algorithmVisualizationNodes.push(myNode);
-
-        return [graphMaxX, subgraphStartY, myNode];
-    };
-
-    this.algorithmVisualizationNodes = [];
-    const rootNode = this._editedResource.rootAlgorithmNode;
-    if(rootNode) {
-      const [maxX, maxY] = createNodesForSubgraph(rootNode, 0, 0);
-      const offsetX = (300 - maxX - 40) / 2;
-      const offsetY = (150 - maxY - 40) / 2;
-
-      this.algorithmVisualizationNodes.forEach(node => {
-        node.x += offsetX;
-        node.y += offsetY;
-      })
-    }    
-  }
-
   private computeWaveform(instrument : ScriptSynthFmInstrument, length: number): EditedWaveform {
     const outputSampleRate = 22050;
     const noteGenerator = instrument.createNoteGenerator(24, outputSampleRate, 0);
@@ -310,16 +287,6 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     } 
 
     return editedWaveform;
-  }
-
-  private ensureValidEditedOperator() {
-    if(!this.editedAlgorithmVisualizationNode || this.algorithmVisualizationNodes.indexOf(this.editedAlgorithmVisualizationNode)<0) {
-      if(this.algorithmVisualizationNodes?.length) {
-        this.editedAlgorithmVisualizationNode = this.algorithmVisualizationNodes[this.algorithmVisualizationNodes.length-1];
-      } else {
-        this.editedAlgorithmVisualizationNode = null;
-      }
-    }
   }
 
   handleNextAlgo(): void {
@@ -356,8 +323,6 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     }
     
     this._editedResource.rootAlgorithmNode = cloneTopology(TOPOLOOGY_TEMPLATES[topologyId]);
-    this.computeAlgorithmVisualizationGraph();
-    this.ensureValidEditedOperator();
     this.notifyResourceDirty();
   }
 
@@ -375,12 +340,6 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     this.resultWaveform = this.computeWaveform(ScriptSynthFmInstrument.fromDescriptor(this._editedResource!), DEFAULT_FM_RENDER_DURATION);    
     this.resourceEdited.emit();    
   }
-  
-  handleAlgorithmGraphNodeClicked(node: AlgorithmVisualizationNode) {
-    this.editedAlgorithmVisualizationNode = node;
-  }
-
-
 
   async playResourcePreview(): Promise<PlayingPreviewStopHandler | null> { 
     const fmInstrument = this.editedResource;
@@ -392,8 +351,7 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
       this._registeredInstrument = `$$WAVEDITOR${Math.random()}`;
     }
     
-    await synth.createFmInstrument(this._registeredInstrument, 
-      this._editedResource);
+    await synth.createFmInstrument(this._registeredInstrument, this._editedResource);
 
     await synth.executeImmediateCommand({
       releaseNote: true
@@ -478,16 +436,16 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
   }
 
   set editorState(value: FmInstrumentEditorState) {
-    if(value.selectedAlgorithmNodeIndex !== null) {
-      const visualizationNode = this.algorithmVisualizationNodes[value.selectedAlgorithmNodeIndex];
-      this.editedAlgorithmVisualizationNode = visualizationNode;
-    }
+    this.selectedAlgorithmNodeBookmark = value.selectedAlgorithmNodeIndex ?? 0;
   }
 
   get editorState(): FmInstrumentEditorState {
     return {
-      selectedAlgorithmNodeIndex: 
-        this.editedAlgorithmVisualizationNode && this.algorithmVisualizationNodes.indexOf(this.editedAlgorithmVisualizationNode)
+      selectedAlgorithmNodeIndex: this.selectedAlgorithmNodeBookmark
     }
+  }
+
+  handleEditedAlgorithmNodeSelected(algorithmNode: FmInstrumentAlgorithmNodeDescriptor | null) {
+    this.editedAlgorithmNode = algorithmNode;
   }
 }

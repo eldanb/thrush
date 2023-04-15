@@ -33,10 +33,11 @@
   
   overflow-y: hidden;
 
+  min-height: 6rem;
   border: solid 1px silver;
   border-radius: 0.25rem;
-  margin: 0 1rem;
-  flex-grow: 1;
+  margin: 0rem 1rem;
+  margin-bottom: 1rem;
 }
 
 .waveform-editor-heading {
@@ -67,6 +68,7 @@
 .algo-node-label {
   font-weight: bold;
   fill: white;
+  font-size: 10px;
 }
 
 .algo-node-connection {

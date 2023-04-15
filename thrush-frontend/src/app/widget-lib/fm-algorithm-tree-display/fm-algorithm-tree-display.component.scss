@@ -1,0 +1,20 @@
+
+.algo-node {
+  fill: green;
+}
+
+.algo-node-selection {
+  fill: none;
+  stroke: gray;
+}
+
+.algo-node-label {
+  font-weight: bold;
+  fill: white;
+  font-size: 10px;
+}
+
+.algo-node-connection {
+  stroke: blue;
+  fill: none;
+}

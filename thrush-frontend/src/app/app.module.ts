@@ -35,6 +35,8 @@ import { UiRegionComponent } from './widget-lib/ui-region/ui-region.component';
 import { ResourceOpenDialogComponent } from './widget-lib/resource-open-dialog/resource-open-dialog.component';
 import { ResourceOpenDialogService } from './widget-lib/resource-open-dialog/resource-open-dialog-service';
 import { FmInstrumentEditorComponent } from './resource-editors/fm-instrument-editor/fm-instrument-editor.component';
+import { ChorusEffectEditorComponent } from './widget-lib/chorus-effect-editor/chorus-effect-editor.component';
+import { FmAlgorithmTreeDisplayComponent } from './widget-lib/fm-algorithm-tree-display/fm-algorithm-tree-display.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -51,6 +53,8 @@ import { FmInstrumentEditorComponent } from './resource-editors/fm-instrument-ed
     UiRegionComponent,
     ResourceOpenDialogComponent,
     FmInstrumentEditorComponent,
+    ChorusEffectEditorComponent,
+    FmAlgorithmTreeDisplayComponent,
   ],
   imports: [
     BrowserModule,
