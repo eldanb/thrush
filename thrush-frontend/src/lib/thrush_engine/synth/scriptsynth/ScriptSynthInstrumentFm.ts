@@ -1,4 +1,4 @@
-import { Base64ToUint8Array } from "../../../util/buffers";
+import { CheckboxRequiredValidator } from "@angular/forms";
 import { EnvelopeCurveCoordinate, EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator } from "../common/WaveFormGenerators";
 import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
@@ -9,6 +9,10 @@ export type EqFilterParameters = {
 }
 
 export type ChorusEffectParameters = {
+  chorusMixLevel: number;
+  chorusScaling: number;
+  chorusLfoFrequency: number;
+  chorusDelay: number;
 
 }
 
@@ -109,7 +113,9 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
   }
 
   override createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null {
-    return new WasmFilterState(this._eqFilterParameters, this._chorusEffectParameters);
+    return (this._eqFilterParameters || this._chorusEffectParameters) 
+      ? new WasmFilterState(outputSampleRate, this._eqFilterParameters, this._chorusEffectParameters)
+      : null;
   }
 
   get algo(): FmAlgorithmNode {
@@ -442,61 +448,76 @@ try {
 const FIXEDPOINT_FACTOR = 32767*65536;
 
 class WasmFilterState implements IScriptSynthInstrumentFilter {
-  filterHandle1: number;
-  filterHandle2: number;
+  filterHandle1: number | null = null;
+  filterHandle2: number | null = null;
 
   // Chorus effect
-  sampleBuffer: Float32Array[];
-  sampleBufferCounter: number = 0;
-  sampleBufferLen: number = 100;
-  
-  sampleOutCounter: number = 1;
-  lfoIndex: number = 0;
-  lfoIncrement: number = 0;
+  chorusSampleBuffer: Float32Array[];
+  chorusSampleBufferCounter: number = 0;
+  chorusSampleBufferLen: number = 100;
+  chorusSampleOutCursor: number = 1;
+  chorusLfoIndex: number = 0;
+  chorusLfoIncrement: number = 0;
+  chorusLfoScaling: number = 1;
+  chorusMixLevel: number = 1;
 
-  constructor(private _eqFilterParameters?: EqFilterParameters, 
-    private _chorusEffectParameters?: ChorusEffectParameters) {
+  constructor(sampleRate: number, 
+    private _eqFilterParameters?: EqFilterParameters, 
+    chorusEffectParameters?: ChorusEffectParameters) {
 
-    this.filterHandle1 = allocFilterHandle();
-    this.filterHandle2 = allocFilterHandle();
+    if(this._eqFilterParameters) {
+      this.filterHandle1 = allocFilterHandle();
+      this.filterHandle2 = allocFilterHandle();
 
-    wasmModule.instance.exports.initFilter(this.filterHandle1, filterBufferStartOfs, 256);
-    wasmModule.instance.exports.initFilter(this.filterHandle2, filterBufferStartOfs, 256);
+      wasmModule.instance.exports.initFilter(this.filterHandle1, filterBufferStartOfs, 256);
+      wasmModule.instance.exports.initFilter(this.filterHandle2, filterBufferStartOfs, 256);
+    }
 
-    this.lfoIncrement = (STEPS_PER_SINE_CYCLE * 6.0 / 44100);
-    this.sampleBuffer = [ new Float32Array(this.sampleBufferLen), new Float32Array(this.sampleBufferLen) ];
+    if(chorusEffectParameters) {
+      this.chorusSampleBufferLen = Math.round(chorusEffectParameters.chorusDelay * sampleRate);
+      this.chorusLfoIncrement = (STEPS_PER_SINE_CYCLE * chorusEffectParameters.chorusLfoFrequency / sampleRate);
+      this.chorusLfoScaling = chorusEffectParameters.chorusScaling;
+      this.chorusMixLevel = chorusEffectParameters.chorusMixLevel;
+    }
+
+    this.chorusSampleBuffer = [ 
+      new Float32Array(this.chorusSampleBufferLen), 
+      new Float32Array(this.chorusSampleBufferLen) ];
   }
+
 
   filter(inputOutput: number[]): void {
 
-    /*inputOutput[0] = 
-      wasmModule.instance.exports.applyFilter(this.filterHandle1, Math.round(inputOutput[0]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
-    inputOutput[1] = 
-      wasmModule.instance.exports.applyFilter(this.filterHandle2, Math.round(inputOutput[1]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);*/
-
-    this.sampleBuffer[0][this.sampleBufferCounter] = inputOutput[0];
-    this.sampleBuffer[1][this.sampleBufferCounter] = inputOutput[1];
-
-    this.sampleBufferCounter++;
-    if(this.sampleBufferCounter >= this.sampleBufferLen) {
-      this.sampleBufferCounter = 0;
+    if(this.filterHandle1 != null) {
+      inputOutput[0] = 
+        wasmModule.instance.exports.applyFilter(this.filterHandle1, Math.round(inputOutput[0]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
+      inputOutput[1] = 
+        wasmModule.instance.exports.applyFilter(this.filterHandle2, Math.round(inputOutput[1]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
     }
 
-    this.sampleOutCounter += 1 + 0.002 * SinLookup[Math.round(this.lfoIndex)];
-    if(this.sampleOutCounter > this.sampleBufferLen - 1) {
-      this.sampleOutCounter = 0;
+    if(this.chorusSampleBufferLen) {
+      this.chorusSampleBuffer[0][this.chorusSampleBufferCounter] = inputOutput[0];
+      this.chorusSampleBuffer[1][this.chorusSampleBufferCounter] = inputOutput[1];
+
+      this.chorusSampleBufferCounter++;
+      if(this.chorusSampleBufferCounter >= this.chorusSampleBufferLen) {
+        this.chorusSampleBufferCounter = 0;
+      }
+
+      this.chorusSampleOutCursor += 1 + this.chorusLfoScaling * SinLookup[Math.round(this.chorusLfoIndex)];
+      if(this.chorusSampleOutCursor > this.chorusSampleBufferLen - 1) {
+        this.chorusSampleOutCursor = 0;
+      }
+
+      const sout = Math.round(this.chorusSampleOutCursor);
+      inputOutput[0] += this.chorusMixLevel * this.chorusSampleBuffer[0][sout] || 0;
+      inputOutput[1] += this.chorusMixLevel * this.chorusSampleBuffer[1][sout] || 0;
+
+      this.chorusLfoIndex += this.chorusLfoIncrement;        
+      if(this.chorusLfoIndex >= STEPS_PER_SINE_CYCLE-1) {
+        this.chorusLfoIndex = 0;
+      }
     }
-
-    const sout = Math.round(this.sampleOutCounter);
-    inputOutput[0] += 0.4 * this.sampleBuffer[0][sout] || 0;
-    inputOutput[1] += 0.4 * this.sampleBuffer[1][sout] || 0;
-
-    this.lfoIndex += this.lfoIncrement;        
-    if(this.lfoIndex >= STEPS_PER_SINE_CYCLE-1) {
-      this.lfoIndex = 0;
-    }
-
-
   }
 
 }

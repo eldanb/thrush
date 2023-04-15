@@ -42,7 +42,14 @@ export class ScriptSynthEngine {
             new FmAlgorithmNode('sine', false, 16, [{time: 0, value: 0.37 }, {time: 0.05, value: 0.20}], [], 0, [])
           ])
         ])
-      ])
+      ]),
+      undefined, 
+      {
+        chorusScaling: 0.002,
+        chorusMixLevel: 0.4,
+        chorusDelay: 0.003,
+        chorusLfoFrequency: 6.0
+      }
     );
   }
 
