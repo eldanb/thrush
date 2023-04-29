@@ -43,7 +43,11 @@ export class ScriptSynthEngine {
           ])
         ])
       ]),
-      undefined, 
+      {
+        highFreq: 900,
+        lowFreq: 400,
+        windowSize: 128
+      }, 
       {
         chorusScaling: 0.002,
         chorusMixLevel: 0.4,

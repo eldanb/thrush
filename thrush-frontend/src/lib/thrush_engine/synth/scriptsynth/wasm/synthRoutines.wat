@@ -142,19 +142,9 @@
       i64.extend_i32_s
       i64.store offset=0
 
+      ;; Convolution loop:
       i64.const 0
-
       (loop (param i64) (result i64)
-        ;; acc += Mem[locBufferPtr] * filter[idx]
-        local.get $locBufferPtr
-        i64.load offset=0
-        local.get $locFilterOfs
-        i64.load offset=0
-        i64.mul
-        i64.const 31
-        i64.shr_s
-        i64.add
-        
         ;; Increment locBufferPtr 
         local.get $locBufferPtr
         i32.const 8
@@ -169,6 +159,16 @@
            (then            
             local.get $locBufferStart
             local.set $locBufferPtr))
+
+        ;; acc += Mem[locBufferPtr] * filter[idx]
+        local.get $locBufferPtr
+        i64.load offset=0
+        local.get $locFilterOfs
+        i64.load offset=0
+        i64.mul
+        i64.const 24
+        i64.shr_s
+        i64.add
             
         ;; Increment locFilterOfs
         local.get $locFilterOfs
@@ -176,13 +176,15 @@
         i32.add
         local.set $locFilterOfs
 
+        ;; This loops len(filter)+1 times; filter's last smaple expected to be 0
+        ;; The last iteration serves only to advance locBfferPtr
         local.get $locFilterOfs
         local.get $locFilterEnd
         i32.le_u
         br_if 0
       )      
 
-      local.get $locFcbStart      
+      local.get $locFcbStart
       local.get $locBufferPtr
       i32.store offset=16
 

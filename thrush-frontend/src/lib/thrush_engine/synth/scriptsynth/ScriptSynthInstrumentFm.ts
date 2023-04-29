@@ -4,7 +4,10 @@ import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, Scri
 import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentAlgorithmNodeOscillatorType, FmInstrumentDescriptor } from "./worklet/ScriptSynthWorkerRpcInterface";
 
 export type EqFilterParameters = {
-
+  windowSize: number;
+  
+  lowFreq: number | null;
+  highFreq: number | null;
 }
 
 export type ChorusEffectParameters = {
@@ -404,10 +407,14 @@ for(let idx=0; idx < STEPS_PER_SINE_CYCLE; idx++) {
 //let loadedFilters: any[] | null = null;
 
 let wasmModule: any;
+
 const numFilterHandles = 32;
+const maxFilterLen = 1024;
+
 let nextHandleToAlloc = 0;
 let filterBufferStartOfs = 0;
 const filterMemory = new WebAssembly.Memory({initial: 10});
+let filterArray: BigInt64Array;
 
 async function initializeFilters() {
    
@@ -419,19 +426,14 @@ async function initializeFilters() {
       }
     });
 
-    filterBufferStartOfs = wasmModule.instance.exports.allocFilterHandles(numFilterHandles, 1024);
-    const filterArray = new BigInt64Array(filterMemory.buffer, filterBufferStartOfs, 16384);
-
-    for(let i=0; i<256; i++) {
-      filterArray[i] = BigInt(Math.round(0.02 * 32767*65536));  
-    }
-    
+    filterBufferStartOfs = wasmModule.instance.exports.allocFilterHandles(numFilterHandles, maxFilterLen);    
+    filterArray = new BigInt64Array(filterMemory.buffer, filterBufferStartOfs, numFilterHandles * maxFilterLen);    
     console.log('filters loaded!');
 }
 
 function allocFilterHandle() {
   const ret = nextHandleToAlloc++;
-  if(nextHandleToAlloc > numFilterHandles) {
+  if(nextHandleToAlloc >= numFilterHandles) {
     nextHandleToAlloc = 0;
   }
   return ret;
@@ -443,37 +445,36 @@ try {
   console.log("error loading filters", e);  
 }
 
-const FIXEDPOINT_FACTOR = 32767*65536;
+const FIXEDPOINT_FACTOR = 256 * 65536;
 
 class WasmFilterState implements IScriptSynthInstrumentFilter {
-  filterHandle1: number | null = null;
-  filterHandle2: number | null = null;
 
+  filterHandleLeft: number | null = null;
+  filterHandleRight: number | null = null;
+
+  
   // Chorus effect
   chorusSampleBuffer: Float32Array[];
   chorusSampleBufferCounter: number = 0;
-  chorusSampleBufferLen: number = 100;
+  chorusSampleBufferLen: number = 0;
   chorusSampleOutCursor: number = 1;
   chorusLfoIndex: number = 0;
   chorusLfoIncrement: number = 0;
   chorusLfoScaling: number = 1;
   chorusMixLevel: number = 1;
 
-  constructor(sampleRate: number, 
+  constructor(private _sampleRate: number, 
     private _eqFilterParameters?: EqFilterParameters, 
     chorusEffectParameters?: ChorusEffectParameters) {
-
+    
     if(this._eqFilterParameters) {
-      this.filterHandle1 = allocFilterHandle();
-      this.filterHandle2 = allocFilterHandle();
-
-      wasmModule.instance.exports.initFilter(this.filterHandle1, filterBufferStartOfs, 256);
-      wasmModule.instance.exports.initFilter(this.filterHandle2, filterBufferStartOfs, 256);
+      this.filterHandleLeft = this.allocEqFilter();
+      this.filterHandleRight = this.allocEqFilter();      
     }
 
     if(chorusEffectParameters) {
-      this.chorusSampleBufferLen = Math.round(chorusEffectParameters.chorusDelay * sampleRate);
-      this.chorusLfoIncrement = (STEPS_PER_SINE_CYCLE * chorusEffectParameters.chorusLfoFrequency / sampleRate);
+      this.chorusSampleBufferLen = Math.round(chorusEffectParameters.chorusDelay * this._sampleRate);
+      this.chorusLfoIncrement = (STEPS_PER_SINE_CYCLE * chorusEffectParameters.chorusLfoFrequency / this._sampleRate);
       this.chorusLfoScaling = chorusEffectParameters.chorusScaling;
       this.chorusMixLevel = chorusEffectParameters.chorusMixLevel;
     }
@@ -483,14 +484,92 @@ class WasmFilterState implements IScriptSynthInstrumentFilter {
       new Float32Array(this.chorusSampleBufferLen) ];
   }
 
+  private allocEqFilter(): number {
+    const eqFilterHandle = allocFilterHandle();
+
+    const filterOffset = maxFilterLen * eqFilterHandle;
+
+    wasmModule.instance.exports.initFilter(eqFilterHandle, filterBufferStartOfs + filterOffset * 8, this._eqFilterParameters!.windowSize);
+
+    const freqResponse = this.createFrequencyResponseArray(this._sampleRate, this._eqFilterParameters!);
+    const impulseResponse = this.truncatedIfft(freqResponse, this._eqFilterParameters!.windowSize);
+
+    this.applyBlackmanWindow(impulseResponse);
+
+  
+    for(let idx=0; idx<this._eqFilterParameters!.windowSize; idx++) {
+      filterArray[filterOffset + idx] = BigInt(Math.round(impulseResponse[idx] * FIXEDPOINT_FACTOR));      
+    }
+
+    return eqFilterHandle;
+  }
+  
+  private applyBlackmanWindow(samples: Float64Array) {
+    for(let index = 0; index < samples.length; index++) {
+      samples[index] *= 
+        0.42 - 
+        0.5 * Math.cos(index/samples.length * 2 * Math.PI) + 
+        0.08 * Math.cos(index/samples.length * 2 * Math.PI);
+    }
+  }
+  
+  private truncatedIfft(frequencyDomain: Float64Array, truncatedWindow: number) {            
+    const impulseResponse = new Float64Array(truncatedWindow);
+    const windowMid = truncatedWindow / 2;
+    for(let index=0; index < windowMid; index++) {
+      let responseElement = 0;
+      for(let freqIndex = 0; freqIndex < frequencyDomain.length; freqIndex++) {
+        responseElement += frequencyDomain[freqIndex] 
+          * Math.cos((index / frequencyDomain.length) * Math.PI * freqIndex);
+      }
+
+      responseElement /= frequencyDomain.length;
+      
+      impulseResponse[windowMid + index] = responseElement;
+      impulseResponse[windowMid - 1 - index] = responseElement;
+    }
+
+    return impulseResponse;
+  }
+
+  private createFrequencyResponseArray(sampleRate: number, filter: EqFilterParameters) {
+    const filterFrequencyResponse = new Float64Array(sampleRate / 2);
+
+    // Lowpass
+    if(filter.lowFreq == null) {
+      for(let index = 0; index < filter.highFreq!; index++) {
+        filterFrequencyResponse[index] = 1;
+      }
+
+      return filterFrequencyResponse;
+    } 
+
+    // Highpass
+    if(filter.highFreq == null) {
+      for(let index = filter.lowFreq!; index<filterFrequencyResponse.length; index++) {
+        filterFrequencyResponse[index] = 1;
+      }
+
+      return filterFrequencyResponse;
+    } 
+
+    // Bandpass    
+    {
+      for(let index = filter.lowFreq; index < filter.highFreq!; index++) {
+        filterFrequencyResponse[index] = 1;
+      }
+
+      return filterFrequencyResponse;
+    }
+  }
+  
 
   filter(inputOutput: number[]): void {
-
-    if(this.filterHandle1 != null) {
+    if(this._eqFilterParameters != null) {
       inputOutput[0] = 
-        wasmModule.instance.exports.applyFilter(this.filterHandle1, Math.round(inputOutput[0]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
+        wasmModule.instance.exports.applyFilter(this.filterHandleLeft, Math.round(inputOutput[0]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
       inputOutput[1] = 
-        wasmModule.instance.exports.applyFilter(this.filterHandle2, Math.round(inputOutput[1]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
+        wasmModule.instance.exports.applyFilter(this.filterHandleRight, Math.round(inputOutput[1]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
     }
 
     if(this.chorusSampleBufferLen) {

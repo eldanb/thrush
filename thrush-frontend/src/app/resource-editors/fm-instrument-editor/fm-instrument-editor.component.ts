@@ -218,14 +218,18 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     if(!v) {
       this.editedInstrumentEqFilter = undefined;
     } else {
-      this.editedInstrumentEqFilter = {};
+      this.editedInstrumentEqFilter = {
+        windowSize: 128,
+        lowFreq: 500,
+        highFreq: 750                
+      };
     }
   }
   
   get editedInstrumentEqFilter() {
     return this._editedResource.eqFilterParameters;
   }
-
+ 
   set editedInstrumentEqFilter(v) {
     this._editedResource.eqFilterParameters = v;
     this.notifyResourceDirty();
@@ -266,6 +270,8 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     const noteGenerator = instrument.createNoteGenerator(24, outputSampleRate, 0);
     const lenInSamples = Math.round(outputSampleRate * length);
 
+    const filter = instrument.createFilterState(outputSampleRate);
+
     noteGenerator.setPanning(0);
       
     const editedWaveform: EditedWaveform = {
@@ -282,6 +288,8 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
       if(!noteGenerator.getNoteSample(idx, idx/outputSampleRate, outputChannels)) {
         break;
       }
+
+      filter?.filter(outputChannels);
 
       editedWaveform.channelSamples[0][idx] = outputChannels[0];
     } 
