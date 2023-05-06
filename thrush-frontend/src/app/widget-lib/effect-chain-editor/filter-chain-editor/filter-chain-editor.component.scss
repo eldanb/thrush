@@ -1,0 +1,54 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+@import '~@angular/material/theming';
+
+$app-primary: mat-palette($mat-pink);
+$primary: mat-color($app-primary, 100);
+
+div.effect-section {
+  margin: 0 1rem 1rem 1rem;
+  border: solid 1px gray;
+  border-radius: 0.25rem;
+  
+  .effect-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    padding: 0 0.25rem;
+
+    background: gray;
+    color: lightgray;
+
+    height: 20px;
+
+    .serial {
+      min-width: 2rem;
+    }
+
+    h1 {
+      color: lightgray;
+      font-size: 12px;
+      line-height: 12px;
+      margin: 0;
+      padding: 0;
+    }
+
+    mat-icon {
+      height: 16px;
+      width: 16px;
+      font-size: 16px;
+      color: white;
+
+      &:hover {
+        color: $primary;
+      }
+    }
+  }
+
+  app-filter-editor-container {
+    margin: 1rem;
+  }
+  
+}
+

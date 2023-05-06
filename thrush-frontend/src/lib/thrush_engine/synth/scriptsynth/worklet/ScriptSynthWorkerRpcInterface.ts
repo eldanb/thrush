@@ -1,15 +1,14 @@
 import { EnvelopeCurveCoordinate } from "../../common/Envelopes";
 import { ScriptSynthEngineEvent } from "../ScriptSynthEngine";
-import { ChorusEffectParameters, EqFilterParameters } from "../ScriptSynthInstrumentFm";
 import { Envelopes } from "../ScriptSynthInstrumentWave";
+import { FilterDefinition } from "../filters/FilterParametersParser";
 
 
 export type FmInstrumentAlgorithmNodeOscillatorType = "sine" | "adder";
 
 export type FmInstrumentDescriptor = {
   rootAlgorithmNode: FmInstrumentAlgorithmNodeDescriptor;  
-  chorusFilterParameters?: ChorusEffectParameters;
-  eqFilterParameters?: EqFilterParameters;
+  filters?: FilterDefinition[];
 }
 
 export type FmInstrumentAlgorithmNodeDescriptor = {

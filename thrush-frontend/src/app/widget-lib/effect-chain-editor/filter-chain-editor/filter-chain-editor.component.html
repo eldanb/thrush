@@ -1,0 +1,20 @@
+<div class="effect-section" *ngFor="let filter of filterChain; let index = index">
+  <div class="effect-header">
+    <div class="serial">#{{index+1}}</div>
+    <h1 class="spacer">{{getFilterTitle(filter.type)}}</h1>
+    <mat-icon *ngIf="index>0" (click)="swapFilters(index, index-1)">arrow_upward</mat-icon>
+    <mat-icon *ngIf="index < filterChain!.length-1" (click)="swapFilters(index, index+1)">arrow_downward</mat-icon>
+    <mat-icon (click)="deleteFilter(index)">delete</mat-icon>
+  </div>
+  <app-filter-editor-container [editedFilter]="filter" (editedFilterChanged)="updateFilter(index, $event)">
+  </app-filter-editor-container>
+</div>
+
+<div style="text-align: center">
+  <button mat-button color="primary" [matMenuTriggerFor]="addFilterMenu">Add</button>
+  <mat-menu #addFilterMenu="matMenu">    
+    <button mat-menu-item *ngFor="let filterType of filterTypeNames" (click)="addFilter(filterType)">
+      {{getFilterTitle(filterType)}}
+    </button>
+  </mat-menu>
+</div>

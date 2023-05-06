@@ -43,17 +43,19 @@ export class ScriptSynthEngine {
           ])
         ])
       ]),
-      {
+      [{
+        type: 'eq',
         highFreq: 900,
         lowFreq: 400,
         windowSize: 128
-      }, 
+      },       
       {
-        chorusScaling: 0.002,
-        chorusMixLevel: 0.4,
-        chorusDelay: 0.003,
-        chorusLfoFrequency: 6.0
-      }
+        type: 'chorus',
+        depth: 0.002,
+        mixLevel: 0.4,
+        delay: 0.003,
+        frequency: 6.0
+      }]
     );
   }
 

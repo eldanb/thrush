@@ -84,7 +84,16 @@
             ]
           }
         ]
-      }
+      },
+      "filters": [
+        {
+          "type": "chorus",
+          "delay": 0.05,
+          "frequency": 4,
+          "mixLevel": 0.4,
+          "depth": 0.03
+        }
+      ]
     }
   }
 }

@@ -1,0 +1,27 @@
+<div class="vertical-stack">
+  <div class="property">
+    <div class="property-label">Minimum Freq.: </div>
+    <select class="param-input spacer" [(ngModel)]="filterType">
+      <option>lowpass</option>
+      <option>highpass</option>
+      <option>bandpass</option>
+    </select>
+  </div>
+
+  <div class="property">
+      <div class="property-label">Minimum Freq.: </div>
+      <input type="number" class="param-input spacer" [(ngModel)]="lowFreq" />
+      <span>&nbsp;Hz</span>
+  </div>
+
+  <div class="property">
+      <div class="property-label">Maximum Freq.: </div>
+      <input type="number" class="param-input spacer" [(ngModel)]="highFreq" />
+      <span>&nbsp;Hz</span>
+  </div>
+
+  <div class="property">
+      <div class="property-label">Window Size: </div>
+      <input type="number" class="param-input spacer" [(ngModel)]="windowSize" />
+  </div>
+</div>

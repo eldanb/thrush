@@ -1,20 +1,15 @@
 import { EnvelopeCurveCoordinate, EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator } from "../common/WaveFormGenerators";
 import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { STEPS_PER_SINE_CYCLE } from "./WaveformLookupTables";
+import { CreateFilterChain, FilterDefinition } from "./filters/FilterParametersParser";
 import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentAlgorithmNodeOscillatorType, FmInstrumentDescriptor } from "./worklet/ScriptSynthWorkerRpcInterface";
 
-export type EqFilterParameters = {
-  windowSize: number;
-  
-  lowFreq: number | null;
-  highFreq: number | null;
-}
 
-export type ChorusEffectParameters = {
-  chorusMixLevel: number;
-  chorusScaling: number;
-  chorusLfoFrequency: number;
-  chorusDelay: number;
+const SinLookup: number[] = [];
+
+for(let idx=0; idx < STEPS_PER_SINE_CYCLE; idx++) {
+  SinLookup[idx] = Math.sin((idx / STEPS_PER_SINE_CYCLE) * 2 * Math.PI);
 }
 
 
@@ -22,20 +17,14 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
   private _algo: FmAlgorithmNode;
   private _algoToneGeneratorFactory: FmToneGeneratorFactory;
   private _nodesBySlot: FmAlgorithmNode[] = [];
-  private _chorusEffectParameters?: ChorusEffectParameters;
-  private _eqFilterParameters?: EqFilterParameters;
 
   constructor(
     algo: FmAlgorithmNode, 
-    eqFilterParameters?: EqFilterParameters, 
-    chorusEffectParameters?: ChorusEffectParameters) {
+    private _filters?: FilterDefinition[]) {
     super();
     this._algo = algo;
     this.allocateStateSlots();
     this._algoToneGeneratorFactory = this.compileFmAlgorithm();
-
-    this._eqFilterParameters = eqFilterParameters;
-    this._chorusEffectParameters = chorusEffectParameters;
   }
 
 
@@ -114,9 +103,7 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
   }
 
   override createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null {
-    return (this._eqFilterParameters || this._chorusEffectParameters) 
-      ? new WasmFilterState(outputSampleRate, this._eqFilterParameters, this._chorusEffectParameters)
-      : null;
+    return this._filters ? CreateFilterChain(this._filters, outputSampleRate) : null;
   }
 
   get algo(): FmAlgorithmNode {
@@ -143,15 +130,11 @@ export class ScriptSynthFmInstrument extends ScriptSynthInstrument {
 
     return new ScriptSynthFmInstrument(
       createInstrumentAlgoNode(descriptor.rootAlgorithmNode),
-      descriptor.eqFilterParameters,
-      descriptor.chorusFilterParameters);
+      descriptor.filters);
   }
 }
 
 let ii=0;
-
-const STEPS_PER_SINE_CYCLE = 2048;
-
 
 type FmToneGeneratorFactory = 
   (startSample: number, sampleRate: number, EnvelopeCurveState: any) => 
@@ -394,207 +377,4 @@ export class FmAlgorithmNode {
   get stateSlot() {
     return this._stateSlot;
   }
-
-}
-
-const SinLookup: number[] = [];
-for(let idx=0; idx < STEPS_PER_SINE_CYCLE; idx++) {
-  SinLookup[idx] = Math.sin((idx / STEPS_PER_SINE_CYCLE) * 2 * Math.PI);
-}
-
-
-
-//let loadedFilters: any[] | null = null;
-
-let wasmModule: any;
-
-const numFilterHandles = 32;
-const maxFilterLen = 1024;
-
-let nextHandleToAlloc = 0;
-let filterBufferStartOfs = 0;
-const filterMemory = new WebAssembly.Memory({initial: 10});
-let filterArray: BigInt64Array;
-
-async function initializeFilters() {
-   
-    const wasmContent = require('!!uint8array-loader!./wasm/synthRoutines.wasm.embed');
-    
-    wasmModule = await WebAssembly.instantiate(wasmContent!, {
-      "js": {
-        "memory": filterMemory
-      }
-    });
-
-    filterBufferStartOfs = wasmModule.instance.exports.allocFilterHandles(numFilterHandles, maxFilterLen);    
-    filterArray = new BigInt64Array(filterMemory.buffer, filterBufferStartOfs, numFilterHandles * maxFilterLen);    
-    console.log('filters loaded!');
-}
-
-function allocFilterHandle() {
-  const ret = nextHandleToAlloc++;
-  if(nextHandleToAlloc >= numFilterHandles) {
-    nextHandleToAlloc = 0;
-  }
-  return ret;
-}
-
-try { 
-  initializeFilters();
-} catch(e) {
-  console.log("error loading filters", e);  
-}
-
-const FIXEDPOINT_FACTOR = 256 * 65536;
-
-class WasmFilterState implements IScriptSynthInstrumentFilter {
-
-  filterHandleLeft: number | null = null;
-  filterHandleRight: number | null = null;
-
-  
-  // Chorus effect
-  chorusSampleBuffer: Float32Array[];
-  chorusSampleBufferCounter: number = 0;
-  chorusSampleBufferLen: number = 0;
-  chorusSampleOutCursor: number = 1;
-  chorusLfoIndex: number = 0;
-  chorusLfoIncrement: number = 0;
-  chorusLfoScaling: number = 1;
-  chorusMixLevel: number = 1;
-
-  constructor(private _sampleRate: number, 
-    private _eqFilterParameters?: EqFilterParameters, 
-    chorusEffectParameters?: ChorusEffectParameters) {
-    
-    if(this._eqFilterParameters) {
-      this.filterHandleLeft = this.allocEqFilter();
-      this.filterHandleRight = this.allocEqFilter();      
-    }
-
-    if(chorusEffectParameters) {
-      this.chorusSampleBufferLen = Math.round(chorusEffectParameters.chorusDelay * this._sampleRate);
-      this.chorusLfoIncrement = (STEPS_PER_SINE_CYCLE * chorusEffectParameters.chorusLfoFrequency / this._sampleRate);
-      this.chorusLfoScaling = chorusEffectParameters.chorusScaling;
-      this.chorusMixLevel = chorusEffectParameters.chorusMixLevel;
-    }
-
-    this.chorusSampleBuffer = [ 
-      new Float32Array(this.chorusSampleBufferLen), 
-      new Float32Array(this.chorusSampleBufferLen) ];
-  }
-
-  private allocEqFilter(): number {
-    const eqFilterHandle = allocFilterHandle();
-
-    const filterOffset = maxFilterLen * eqFilterHandle;
-
-    wasmModule.instance.exports.initFilter(eqFilterHandle, filterBufferStartOfs + filterOffset * 8, this._eqFilterParameters!.windowSize);
-
-    const freqResponse = this.createFrequencyResponseArray(this._sampleRate, this._eqFilterParameters!);
-    const impulseResponse = this.truncatedIfft(freqResponse, this._eqFilterParameters!.windowSize);
-
-    this.applyBlackmanWindow(impulseResponse);
-
-  
-    for(let idx=0; idx<this._eqFilterParameters!.windowSize; idx++) {
-      filterArray[filterOffset + idx] = BigInt(Math.round(impulseResponse[idx] * FIXEDPOINT_FACTOR));      
-    }
-
-    return eqFilterHandle;
-  }
-  
-  private applyBlackmanWindow(samples: Float64Array) {
-    for(let index = 0; index < samples.length; index++) {
-      samples[index] *= 
-        0.42 - 
-        0.5 * Math.cos(index/samples.length * 2 * Math.PI) + 
-        0.08 * Math.cos(index/samples.length * 2 * Math.PI);
-    }
-  }
-  
-  private truncatedIfft(frequencyDomain: Float64Array, truncatedWindow: number) {            
-    const impulseResponse = new Float64Array(truncatedWindow);
-    const windowMid = truncatedWindow / 2;
-    for(let index=0; index < windowMid; index++) {
-      let responseElement = 0;
-      for(let freqIndex = 0; freqIndex < frequencyDomain.length; freqIndex++) {
-        responseElement += frequencyDomain[freqIndex] 
-          * Math.cos((index / frequencyDomain.length) * Math.PI * freqIndex);
-      }
-
-      responseElement /= frequencyDomain.length;
-      
-      impulseResponse[windowMid + index] = responseElement;
-      impulseResponse[windowMid - 1 - index] = responseElement;
-    }
-
-    return impulseResponse;
-  }
-
-  private createFrequencyResponseArray(sampleRate: number, filter: EqFilterParameters) {
-    const filterFrequencyResponse = new Float64Array(sampleRate / 2);
-
-    // Lowpass
-    if(filter.lowFreq == null) {
-      for(let index = 0; index < filter.highFreq!; index++) {
-        filterFrequencyResponse[index] = 1;
-      }
-
-      return filterFrequencyResponse;
-    } 
-
-    // Highpass
-    if(filter.highFreq == null) {
-      for(let index = filter.lowFreq!; index<filterFrequencyResponse.length; index++) {
-        filterFrequencyResponse[index] = 1;
-      }
-
-      return filterFrequencyResponse;
-    } 
-
-    // Bandpass    
-    {
-      for(let index = filter.lowFreq; index < filter.highFreq!; index++) {
-        filterFrequencyResponse[index] = 1;
-      }
-
-      return filterFrequencyResponse;
-    }
-  }
-  
-
-  filter(inputOutput: number[]): void {
-    if(this._eqFilterParameters != null) {
-      inputOutput[0] = 
-        wasmModule.instance.exports.applyFilter(this.filterHandleLeft, Math.round(inputOutput[0]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
-      inputOutput[1] = 
-        wasmModule.instance.exports.applyFilter(this.filterHandleRight, Math.round(inputOutput[1]*FIXEDPOINT_FACTOR))/(FIXEDPOINT_FACTOR);
-    }
-
-    if(this.chorusSampleBufferLen) {
-      this.chorusSampleBuffer[0][this.chorusSampleBufferCounter] = inputOutput[0];
-      this.chorusSampleBuffer[1][this.chorusSampleBufferCounter] = inputOutput[1];
-
-      this.chorusSampleBufferCounter++;
-      if(this.chorusSampleBufferCounter >= this.chorusSampleBufferLen) {
-        this.chorusSampleBufferCounter = 0;
-      }
-
-      this.chorusSampleOutCursor += 1 + this.chorusLfoScaling * SinLookup[Math.round(this.chorusLfoIndex)];
-      if(this.chorusSampleOutCursor > this.chorusSampleBufferLen - 1) {
-        this.chorusSampleOutCursor = 0;
-      }
-
-      const sout = Math.round(this.chorusSampleOutCursor);
-      inputOutput[0] += this.chorusMixLevel * this.chorusSampleBuffer[0][sout] || 0;
-      inputOutput[1] += this.chorusMixLevel * this.chorusSampleBuffer[1][sout] || 0;
-
-      this.chorusLfoIndex += this.chorusLfoIncrement;        
-      if(this.chorusLfoIndex >= STEPS_PER_SINE_CYCLE-1) {
-        this.chorusLfoIndex = 0;
-      }
-    }
-  }
-
 }

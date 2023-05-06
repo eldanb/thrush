@@ -21,11 +21,15 @@ The Main Event in the current setup is CodeSynth -- allowing you to write JavaSc
 - Simple part notation sequences. These are sequences that are specified in a simple language for musical notation.
 - Project editing UI -- with tabbed editors, resource lists, etc.
 
-### News: March 2022 (2)
+
+### News: May 2023 (2)
+- Support for equalizer and chorus filters
+
+### News: March 2023 (2)
 - Support for note modification in part notation
 - Support for pitch-bend
 
-### News: March 2022
+### News: March 2023
 - Project editor UI including code and wavetable synthesis editing
 - FM synthesis and instrument editor
 

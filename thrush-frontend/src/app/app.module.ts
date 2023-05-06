@@ -35,8 +35,11 @@ import { UiRegionComponent } from './widget-lib/ui-region/ui-region.component';
 import { ResourceOpenDialogComponent } from './widget-lib/resource-open-dialog/resource-open-dialog.component';
 import { ResourceOpenDialogService } from './widget-lib/resource-open-dialog/resource-open-dialog-service';
 import { FmInstrumentEditorComponent } from './resource-editors/fm-instrument-editor/fm-instrument-editor.component';
-import { ChorusEffectEditorComponent } from './widget-lib/chorus-effect-editor/chorus-effect-editor.component';
+import { ChorusFilterEditorComponent } from './widget-lib/effect-chain-editor/chorus-filter-editor/chorus-filter-editor.component';
 import { FmAlgorithmTreeDisplayComponent } from './widget-lib/fm-algorithm-tree-display/fm-algorithm-tree-display.component';
+import { FilterChainEditorComponent } from './widget-lib/effect-chain-editor/filter-chain-editor/filter-chain-editor.component';
+import { FilterEditorContainerComponent } from './widget-lib/effect-chain-editor/filter-editor-container/filter-editor-container.component';
+import { EqualizerFilterEditorComponent } from './widget-lib/effect-chain-editor/equalizer-filter-editor/equalizer-filter-editor.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -53,8 +56,11 @@ import { FmAlgorithmTreeDisplayComponent } from './widget-lib/fm-algorithm-tree-
     UiRegionComponent,
     ResourceOpenDialogComponent,
     FmInstrumentEditorComponent,
-    ChorusEffectEditorComponent,
+    ChorusFilterEditorComponent,
     FmAlgorithmTreeDisplayComponent,
+    FilterChainEditorComponent,
+    FilterEditorContainerComponent,
+    EqualizerFilterEditorComponent,
   ],
   imports: [
     BrowserModule,

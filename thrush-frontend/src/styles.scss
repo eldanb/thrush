@@ -89,20 +89,20 @@ $wavetable-editor-theme: (
   }
 }
 
-.property-pane {
+div.property-pane {
   @extend .vertical-stack;
   overflow-y: scroll;
   
   h1 {
     @extend .small-header;
 
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.5rem;
   }
 
   .property {
     @extend .horizontal-stack;
     align-items: baseline;
-    font-size: 10pt !important;
+    font-size: 10pt;
     display: flex;
     margin: 0.5rem 1rem;
   }
@@ -174,10 +174,10 @@ a.unhinted-link {
 }
 
 .small-header {
-  font-size: 10pt !important;
+  font-size: 10pt ;
   padding: 0.5rem;
   color: darkgray;
-  font-weight: bolder !important;
+  font-weight: bolder;
   text-transform: uppercase;
 }
 

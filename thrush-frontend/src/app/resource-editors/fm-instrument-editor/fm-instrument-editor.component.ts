@@ -6,6 +6,7 @@ import { EnvelopeCurveCoordinate } from 'src/lib/thrush_engine/synth/common/Enve
 import { ScriptSynthFmInstrument } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrumentFm';
 import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentDescriptor } from 'src/lib/thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface';
 import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
+import { FilterDefinition, FilterTypes } from 'src/lib/thrush_engine/synth/scriptsynth/filters/FilterParametersParser';
 
 const DEFAULT_FM_RENDER_DURATION = 4;
 
@@ -155,7 +156,6 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     this.notifyResourceDirty();
   }
 
-
   get editedAlgorithmNodeFreqFixed(): boolean {
     return this.editedAlgorithmNode!.freqType == 'fixed';
   }
@@ -183,58 +183,14 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
     this.notifyResourceDirty();
   }
 
-  get editedInstrumentChorusEnabled(): boolean {
-    return !!this._editedResource.chorusFilterParameters;
+  get editedInstrumentFilters(): FilterDefinition[] | undefined {
+    return this.editedResource.filters;
   }
 
-  set editedInstrumentChorusEnabled(v: boolean) {
-    if(!v) {
-      this.editedInstrumentChorus = undefined;
-    } else 
-    if(!this.editedInstrumentChorus) {
-      this.editedInstrumentChorus = { 
-        chorusDelay: 0.003,
-        chorusLfoFrequency: 6,
-        chorusMixLevel: 0.4,
-        chorusScaling: 0.002
-      }
-    }
-  }
-
-  get editedInstrumentChorus() {
-    return this._editedResource.chorusFilterParameters;
-  }
-
-  set editedInstrumentChorus(v) {
-    this._editedResource.chorusFilterParameters = v;
+  set editedInstrumentFilters(filters: FilterDefinition[] | undefined) {
+    this.editedResource.filters = filters;
     this.notifyResourceDirty();
   }
-
-  get editedInstrumentEqFilterEnabled(): boolean {
-    return !!this._editedResource.eqFilterParameters;
-  }
-
-  set editedInstrumentEqFilterEnabled(v: boolean) {
-    if(!v) {
-      this.editedInstrumentEqFilter = undefined;
-    } else {
-      this.editedInstrumentEqFilter = {
-        windowSize: 128,
-        lowFreq: 500,
-        highFreq: 750                
-      };
-    }
-  }
-  
-  get editedInstrumentEqFilter() {
-    return this._editedResource.eqFilterParameters;
-  }
- 
-  set editedInstrumentEqFilter(v) {
-    this._editedResource.eqFilterParameters = v;
-    this.notifyResourceDirty();
-  }
-
 
   resultWaveform: EditedWaveform | null = null;
   resultDisplayStartTime: number = 0;

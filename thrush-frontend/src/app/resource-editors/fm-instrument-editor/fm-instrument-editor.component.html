@@ -59,6 +59,7 @@
         [(selectedAlgorithmNodeBookmark)]="selectedAlgorithmNodeBookmark"
         (selectedAlgorithmNodeChange)="handleEditedAlgorithmNodeSelected($event)">
       </app-fm-algorithm-tree-display>
+    </div>
 
     <ng-container *ngIf="editedAlgorithmNode">
       <h1>Operator Parameters</h1>
@@ -88,25 +89,8 @@
     </ng-container>
 
     <ng-container *ngIf="editedAlgorithmNode == editedResource.rootAlgorithmNode">
-      <h1>Instrument Parameters</h1>
-      
-      <div class="property">
-        <div class="property-label">Eq:</div>        
-        <div class="vertical-stack" style="gap: 0.5rem">
-          <div>Off <mat-slide-toggle [(ngModel)]="editedInstrumentEqFilterEnabled"></mat-slide-toggle> On</div>
-        </div>
-      </div>
-
-      <div class="property">
-        <div class="property-label">Chorus:</div>        
-        <div class="vertical-stack" style="gap: 0.5rem">
-          <div>Off <mat-slide-toggle [(ngModel)]="editedInstrumentChorusEnabled"></mat-slide-toggle> On</div>
-          <app-chorus-effect-editor 
-            *ngIf="editedInstrumentChorusEnabled"
-            [(chorusEffectParameters)]="editedInstrumentChorus">
-          </app-chorus-effect-editor>                      
-        </div>
-      </div>
+      <h1>Instrument Filters</h1>
+      <app-filter-chain-editor [(filterChain)]="editedInstrumentFilters"></app-filter-chain-editor>
     </ng-container>
 
     <h1>Preview Pane</h1>
@@ -115,7 +99,7 @@
         [editedWaveform]="resultWaveform" 
         [displayStartTime]="resultDisplayStartTime" 
         [displayEndTime]="resultDisplayEndTime">
-    </app-waveform-editor>    
+      </app-waveform-editor>    
     </div>
   </div>
 </div>
