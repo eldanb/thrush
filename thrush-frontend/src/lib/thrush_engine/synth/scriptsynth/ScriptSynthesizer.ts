@@ -1,7 +1,8 @@
 import { createMessagePortRpcProxy } from "src/lib/util/MessagePortRpc";
 import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerEventCommands, ThrushCommonSynthesizerInterface } from "../../ThrushSynthesizerInterface";
-import { FmInstrumentAlgorithmNodeDescriptor, FmInstrumentDescriptor, ScriptSynthWorkerRpcInterface } from "./worklet/ScriptSynthWorkerRpcInterface";
 import { Envelopes } from "./ScriptSynthInstrumentWave";
+import { FilterDefinition } from "./filters/FilterParametersParser";
+import { FmInstrumentDescriptor, ScriptSynthWorkerRpcInterface } from "./worklet/ScriptSynthWorkerRpcInterface";
 
 
 export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
@@ -46,7 +47,8 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
     loopLen: number,
     volume: number,
     entryEnvelopes?: Envelopes,
-    exitEnvelopes?: Envelopes): Promise<void> {
+    exitEnvelopes?: Envelopes,
+    filters?: FilterDefinition[]): Promise<void> {
       return this._workletNodeRpcProxy.createWaveInstrument(
         instrumentId,
         instrument, 
@@ -55,7 +57,8 @@ export class ScriptSynthesizer implements ThrushCommonSynthesizerInterface {
         loopLen, 
         volume,
         entryEnvelopes,
-        exitEnvelopes);
+        exitEnvelopes,
+        filters);
   }
 
   createFmInstrument(instrumentId: string,

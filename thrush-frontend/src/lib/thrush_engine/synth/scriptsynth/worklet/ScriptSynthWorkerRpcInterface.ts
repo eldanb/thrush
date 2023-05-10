@@ -35,7 +35,8 @@ export interface ScriptSynthWorkerRpcInterface {
     loopStart: number, loopLen: number,
     volume: number,
     enterEnvelopes?: Envelopes,
-    exitEnvelopes?: Envelopes): Promise<void>;
+    exitEnvelopes?: Envelopes,
+    filters?: FilterDefinition[]): Promise<void>;
 
   createFmInstrument(instrumentId: string, 
     instrumentDescriptor: FmInstrumentDescriptor): Promise<void>;

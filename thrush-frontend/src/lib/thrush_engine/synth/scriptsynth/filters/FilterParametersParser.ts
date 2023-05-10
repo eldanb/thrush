@@ -1,9 +1,8 @@
-import { filter } from "benchmark";
 import { IScriptSynthInstrumentFilter } from "../ScriptSynthInstrument";
+import { ChorusFilter } from "./ChorusFilter";
 import { FilterChain } from "./FilterChain";
 import { ModeledFrequencyResponseFilter } from "./ModeledFrequencyResponseFilter";
-import { ChorusFilter } from "./ChorusFilter";
-
+import { ResonantMultimodeFilter, ResonantMultimodeFilterMode } from "./ResonantMultimodeFilter";
 
 
 export type EqFilterParameters = {
@@ -21,8 +20,14 @@ export type ChorusFilterParameters = {
   delay: number;
 }
 
+export type ResonantMultimodeFilterParameters = {
+  type: 'resonant';
+  mode: ResonantMultimodeFilterMode;
+  cutoff: number;
+  resonance: number;
+}
 
-export type FilterDefinition = EqFilterParameters | ChorusFilterParameters;
+export type FilterDefinition = EqFilterParameters | ChorusFilterParameters | ResonantMultimodeFilterParameters;
 export type FilterTypes = FilterDefinition['type'];
 export type FilterParamsByTypes = {
   [filterType in FilterTypes]: FilterDefinition & {type: filterType};
@@ -32,7 +37,8 @@ const FilterBuilders: {
   [filterType in FilterTypes]: (params: FilterParamsByTypes[filterType], sampleRate: number) => IScriptSynthInstrumentFilter
 } = {
   eq: CreateEqFilter,
-  chorus: CreateChorusFilter
+  chorus: CreateChorusFilter,
+  resonant: CreateMultimodeResonantFilter
 };
 
 function CreateEqFilter(params: EqFilterParameters, sampleRate: number): IScriptSynthInstrumentFilter {
@@ -71,4 +77,8 @@ export function CreateFilterChain(filterDefinitions: FilterDefinition[], sampleR
   return filters.length == 1 
     ? filters[0]
     : new FilterChain(filters);
+}
+
+function CreateMultimodeResonantFilter(params: ResonantMultimodeFilterParameters, sampleRate: number): IScriptSynthInstrumentFilter {
+  return new ResonantMultimodeFilter(params.mode, params.cutoff, params.resonance, sampleRate);
 }

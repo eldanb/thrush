@@ -1,4 +1,5 @@
 import { Envelopes } from "../thrush_engine/synth/native/NativeSynthesizerInstrument";
+import { FilterDefinition } from "../thrush_engine/synth/scriptsynth/filters/FilterParametersParser";
 import { FmInstrumentDescriptor } from "../thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface";
 import { Base64ToFloat32ArrayLe, Float32ArrayToBase64Le } from "../util/buffers";
 
@@ -31,7 +32,8 @@ export type ResourceTypeAbstractWaveInstrument = {
   loopStartTime: number,
   loopEndTime: number,
   entryEnvelopes: Envelopes,
-  exitEnvelopes: Envelopes
+  exitEnvelopes: Envelopes,
+  filters?: FilterDefinition[];
 }
 
 export type ResourceTypeFmInstrument = FmInstrumentDescriptor;

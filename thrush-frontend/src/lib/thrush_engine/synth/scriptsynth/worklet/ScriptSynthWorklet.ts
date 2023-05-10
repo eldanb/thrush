@@ -2,7 +2,8 @@ import { MessagePortRpcDispatcher } from "../../../../util/MessagePortRpc";
 import { ScriptSynthEngine, ScriptSynthEngineEvent } from "../ScriptSynthEngine";
 import { ScriptSynthFmInstrument } from "../ScriptSynthInstrumentFm";
 import { Envelopes, ScriptSynthWaveInstrument } from "../ScriptSynthInstrumentWave";
-import { FmInstrumentAlgorithmNodeDescriptor, ScriptSynthWorkerRpcInterface } from "./ScriptSynthWorkerRpcInterface";
+import { FilterDefinition } from "../filters/FilterParametersParser";
+import { FmInstrumentDescriptor, ScriptSynthWorkerRpcInterface } from "./ScriptSynthWorkerRpcInterface";
 
 class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorkerRpcInterface {
   _rpcDispathcer: MessagePortRpcDispatcher<ScriptSynthWorkerRpcInterface>;
@@ -50,7 +51,8 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
     loopStart: number, loopLen: number,
     volume: number,
     entryEnvelopes?: Envelopes,
-    exitEnvelopes?: Envelopes): Promise<void> {
+    exitEnvelopes?: Envelopes,
+    filters?: FilterDefinition[]): Promise<void> {
     if(!this._synthEngine) {
       throw Error("Node not conigured")
     }
@@ -63,11 +65,12 @@ class WorkletProcessor extends AudioWorkletProcessor implements ScriptSynthWorke
         loopStart, loopLen,
         volume, 
         entryEnvelopes,
-        exitEnvelopes
+        exitEnvelopes,
+        filters
         ));
   }
 
-  async createFmInstrument(instrumentId: string, algorithm: FmInstrumentAlgorithmNodeDescriptor): Promise<void> {    
+  async createFmInstrument(instrumentId: string, algorithm: FmInstrumentDescriptor): Promise<void> {    
     this._synthEngine?.registerInstrument(instrumentId, 
       ScriptSynthFmInstrument.fromDescriptor(algorithm));
   }

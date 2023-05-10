@@ -93,7 +93,8 @@ export class NativeSynthesizer implements ThrushCommonSynthesizerInterface {
     loopStart: number, 
     loopLen: number, 
     volume: number,
-    enterEnvelopes?: Envelopes, exitEnvelopes?: Envelopes): void {
+    enterEnvelopes?: Envelopes, 
+    exitEnvelopes?: Envelopes): void {
 
     this._instruments[instrumentId] = 
       new NativeSynthesizerInstrument(new Float32Array(sampleBuff), sampleRate, loopStart, loopLen,

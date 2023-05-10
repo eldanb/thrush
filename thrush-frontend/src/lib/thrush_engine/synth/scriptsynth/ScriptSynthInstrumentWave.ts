@@ -1,6 +1,7 @@
 import { EnvelopeCurveCoordinate, EnvelopeCurveState } from "../common/Envelopes";
 import { WaveFormGenerator } from "../common/WaveFormGenerators";
 import { IScriptSynthInstrumentFilter, IScriptSynthInstrumentNoteGenerator, ScriptSynthInstrument } from "./ScriptSynthInstrument";
+import { CreateFilterChain, FilterDefinition } from "./filters/FilterParametersParser";
 
 export type Envelopes = {
   volume: EnvelopeCurveCoordinate[];
@@ -171,7 +172,8 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     loopStart?: number, loopLen?: number,
     volume: number = 1,
     enterEnvelopes: Envelopes | null = null,
-    exitEnvelopes: Envelopes | null = null) {
+    exitEnvelopes: Envelopes | null = null,
+    private _filters?: FilterDefinition[]) {
     super();
     this._sample = sample;
     this._sampleRate = sampleRate;
@@ -180,7 +182,7 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
     this._sampleLoopLen = loopLen || 0;
     this._volume = volume;
     this._enterEnvelopes = enterEnvelopes;
-    this._exitEnvelopes = exitEnvelopes;
+    this._exitEnvelopes = exitEnvelopes;    
   }
 
 
@@ -189,7 +191,9 @@ export class ScriptSynthWaveInstrument extends ScriptSynthInstrument {
   }
   
   override createFilterState(outputSampleRate: number): IScriptSynthInstrumentFilter | null {
-    return null;
+    return this._filters 
+            ? CreateFilterChain(this._filters, outputSampleRate) 
+            : null;
   }
 
   get sample(): Float32Array {

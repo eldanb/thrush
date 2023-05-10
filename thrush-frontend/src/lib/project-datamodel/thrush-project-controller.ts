@@ -51,7 +51,8 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
         : 0,
       1, 
       resource.entryEnvelopes,
-      resource.exitEnvelopes);
+      resource.exitEnvelopes,
+      resource.filters);
 
     await this._sequencer.waveTableSynthesizer.registerInstrument(
         name,

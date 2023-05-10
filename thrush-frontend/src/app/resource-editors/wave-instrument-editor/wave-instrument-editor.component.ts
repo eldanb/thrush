@@ -7,6 +7,7 @@ import {  JsonToWaveform, WaveformToJson, ResourceTypeAbstractWaveInstrument } f
 import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
 import { ResourceOpenDialogService } from 'src/app/widget-lib/resource-open-dialog/resource-open-dialog-service';
 import { Envelopes } from 'src/lib/thrush_engine/synth/scriptsynth/ScriptSynthInstrumentWave';
+import { FilterDefinition } from 'src/lib/thrush_engine/synth/scriptsynth/filters/FilterParametersParser';
 
 
 @Component({
@@ -33,6 +34,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   private _playbackCursorUpdateTimer: any;
   private _loopStartTime: number | null = null;
   private _loopEndTime: number | null = null;
+  private _editedInstrumentFilters?: FilterDefinition[];
 
 
   private _editedEntryEnvelopes: Envelopes = {
@@ -52,6 +54,14 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
     this.resourceDirty();
   }
 
+  public get editedInstrumentFilters(): FilterDefinition[] | undefined {
+    return this._editedInstrumentFilters;
+  }
+
+  public set editedInstrumentFilters(v: FilterDefinition[] | undefined) {
+    this._editedInstrumentFilters = v;
+    this.resourceDirty();
+  }
 
   private _editedExitEnvelopes: Envelopes = {
     volume: []
@@ -321,6 +331,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
         loopEndTime: this.loopEndTime!,
         entryEnvelopes: this._editedEntryEnvelopes,
         exitEnvelopes: this._editedExitEnvelopes,
+        filters: this._editedInstrumentFilters
       };
     }    
     return this._cachedEditedResource;
@@ -337,6 +348,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
       this.loopEndTime = resource.loopEndTime;
       this._editedEntryEnvelopes = resource.entryEnvelopes;
       this._editedExitEnvelopes = resource.exitEnvelopes;
+      this._editedInstrumentFilters = resource.filters;
     }
   }
 
@@ -358,7 +370,7 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
         (abstInstrument.loopStartTime && abstInstrument.loopEndTime) 
           ? (abstInstrument.loopEndTime - abstInstrument.loopStartTime) * abstInstrument.sampleRate
           : 0,
-        1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes        
+        1, abstInstrument.entryEnvelopes, abstInstrument.exitEnvelopes, abstInstrument.filters
     );
 
     await synth.executeImmediateCommand({
