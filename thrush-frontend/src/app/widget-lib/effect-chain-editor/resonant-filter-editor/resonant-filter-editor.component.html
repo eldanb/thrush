@@ -1,0 +1,20 @@
+<div class="vertical-stack">
+    <div class="property">
+        <div class="property-label">Mode: </div>
+        <select [(ngModel)]="mode">
+            <option>lp</option>
+            <option>hp</option>
+            <option>bp</option>
+        </select>
+    </div>
+
+    <div class="property">
+        <div class="property-label">Cutoff: </div>
+        <input type="number" class="param-input spacer" [(ngModel)]="cutoff" />
+    </div>
+
+    <div class="property">
+        <div class="property-label">Resonance: </div>
+        <input type="number" class="param-input spacer" [(ngModel)]="resonance" />
+    </div>
+</div>

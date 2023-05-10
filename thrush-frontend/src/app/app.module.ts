@@ -40,6 +40,7 @@ import { FmAlgorithmTreeDisplayComponent } from './widget-lib/fm-algorithm-tree-
 import { FilterChainEditorComponent } from './widget-lib/effect-chain-editor/filter-chain-editor/filter-chain-editor.component';
 import { FilterEditorContainerComponent } from './widget-lib/effect-chain-editor/filter-editor-container/filter-editor-container.component';
 import { EqualizerFilterEditorComponent } from './widget-lib/effect-chain-editor/equalizer-filter-editor/equalizer-filter-editor.component';
+import { ResonantFilterEditorComponent } from './widget-lib/effect-chain-editor/resonant-filter-editor/resonant-filter-editor.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -61,6 +62,7 @@ import { EqualizerFilterEditorComponent } from './widget-lib/effect-chain-editor
     FilterChainEditorComponent,
     FilterEditorContainerComponent,
     EqualizerFilterEditorComponent,
+    ResonantFilterEditorComponent,
   ],
   imports: [
     BrowserModule,

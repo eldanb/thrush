@@ -5,7 +5,6 @@ export class FilterChain implements IScriptSynthInstrumentFilter {
 
   }
 
-
   filter(inputOutput: number[]): void {
     let numFilters = this._filters.length;
     for(let i=0; i<numFilters; i++) {

@@ -2,6 +2,7 @@ import { Component, Type } from "@angular/core";
 import { FilterParamsByTypes, FilterTypes } from "src/lib/thrush_engine/synth/scriptsynth/filters/FilterParametersParser";
 import { ChorusFilterEditorComponent } from "./chorus-filter-editor/chorus-filter-editor.component";
 import { EqualizerFilterEditorComponent } from "./equalizer-filter-editor/equalizer-filter-editor.component";
+import { ResonantFilterEditorComponent } from "./resonant-filter-editor/resonant-filter-editor.component";
 
 export interface IFilterEditorComponent<TFilter> {
   filter: TFilter;
@@ -37,6 +38,17 @@ export const FilterEditingSupport: {
       frequency: 4,
       mixLevel: 0.1,
       depth: 0.5
+    })
+  },
+
+  resonant: {
+    componentType: ResonantFilterEditorComponent,
+    displayName: "Resonant",
+    createDefault: () => ({
+      type: "resonant",
+      cutoff: 0.2,
+      resonance: 0,
+      mode: "lp"
     })
   }
 }
