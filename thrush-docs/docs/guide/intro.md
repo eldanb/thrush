@@ -22,6 +22,9 @@ The Main Event in the current setup is CodeSynth -- allowing you to write JavaSc
 - Project editing UI -- with tabbed editors, resource lists, etc.
 
 
+### News: May 2023 (4)
+- Support for reverb filter
+
 ### News: May 2023 (3)
 - Support for multimode resonant filter
 - Filters can now be applied to wave instruments

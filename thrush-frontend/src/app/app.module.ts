@@ -41,6 +41,7 @@ import { FilterChainEditorComponent } from './widget-lib/effect-chain-editor/fil
 import { FilterEditorContainerComponent } from './widget-lib/effect-chain-editor/filter-editor-container/filter-editor-container.component';
 import { EqualizerFilterEditorComponent } from './widget-lib/effect-chain-editor/equalizer-filter-editor/equalizer-filter-editor.component';
 import { ResonantFilterEditorComponent } from './widget-lib/effect-chain-editor/resonant-filter-editor/resonant-filter-editor.component';
+import { ReverbFilterEditorComponent } from './widget-lib/effect-chain-editor/reverb-filter-editor/reverb-filter-editor.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -63,6 +64,7 @@ import { ResonantFilterEditorComponent } from './widget-lib/effect-chain-editor/
     FilterEditorContainerComponent,
     EqualizerFilterEditorComponent,
     ResonantFilterEditorComponent,
+    ReverbFilterEditorComponent
   ],
   imports: [
     BrowserModule,

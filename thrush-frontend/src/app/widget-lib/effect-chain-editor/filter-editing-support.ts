@@ -3,6 +3,7 @@ import { FilterParamsByTypes, FilterTypes } from "src/lib/thrush_engine/synth/sc
 import { ChorusFilterEditorComponent } from "./chorus-filter-editor/chorus-filter-editor.component";
 import { EqualizerFilterEditorComponent } from "./equalizer-filter-editor/equalizer-filter-editor.component";
 import { ResonantFilterEditorComponent } from "./resonant-filter-editor/resonant-filter-editor.component";
+import { ReverbFilterEditorComponent } from "./reverb-filter-editor/reverb-filter-editor.component";
 
 export interface IFilterEditorComponent<TFilter> {
   filter: TFilter;
@@ -49,6 +50,18 @@ export const FilterEditingSupport: {
       cutoff: 0.2,
       resonance: 0,
       mode: "lp"
+    })
+  },
+
+  reverb: {
+    componentType: ReverbFilterEditorComponent,
+    displayName: "Reverb",
+    createDefault: () => ({
+      type: "reverb",
+      combDelays: [0.1, 0.102, 0.104, 0.12], 
+      combGains: [0.742, 0.733, 0.715, 0.697], 
+      allPassDelays: [0.025, 0.007], 
+      allPassGains: [0.7, 0.7]
     })
   }
 }
