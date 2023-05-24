@@ -17,7 +17,9 @@ export class ReverbFilterEditorComponent
       combDelays: [], 
       combGains: [], 
       allPassDelays: [], 
-      allPassGains: []
+      allPassGains: [],
+      mix: 0
+      
     }
     this.onFilterChange = () => 0;
   }
@@ -59,6 +61,11 @@ export class ReverbFilterEditorComponent
     const updatedAllPassGains = [...this.filter.allPassGains];
     updatedAllPassGains[index] = gain;    
     this._updateFilter({ allPassGains: updatedAllPassGains });
+  }
+  
+  handleFilterMixChange(event: Event)
+  {
+    this._updateFilter({ mix: (event.target as HTMLInputElement).valueAsNumber });
   }
 
   private _updateFilter(changes: Partial<ReverbFilterParameters>) {

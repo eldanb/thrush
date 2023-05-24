@@ -74,9 +74,10 @@ export class EnvelopeCurveState {
     }
   
     if(this.running) {
-      this.currentValue = this._startValue + 
-      this._delta * 
-        (currentSample - this._startSample)/this._durationSamples;
+      this.currentValue = this._durationSamples 
+        ? this._startValue + this._delta * 
+            (currentSample - this._startSample)/this._durationSamples
+        : this._endValue;
     }
   }
 

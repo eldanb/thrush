@@ -11,7 +11,8 @@ export class ReverbFilter implements IScriptSynthInstrumentFilter {
     private _combDelays: number[],
     private _combGains: number[],
     private _allPassDelays: number[],
-    private _aallPassGains: number[]) 
+    private _allPassGains: number[],
+    private _reverbMix: number) 
   {
 
     this._combBuffers = _combDelays.flatMap(delay => 
@@ -20,7 +21,7 @@ export class ReverbFilter implements IScriptSynthInstrumentFilter {
         new Float32Array(delay), 
       ]);
 
-    this._combBufferCounters = _combDelays.map(delay => 
+    this._combBufferCounters = _combDelays.map(_ => 
         0);
   
     this._allPassBuffers = _allPassDelays.flatMap(delay => 
@@ -76,7 +77,7 @@ export class ReverbFilter implements IScriptSynthInstrumentFilter {
     bufferIndex = 0;
     for(let allpassFilterIndex = 0; allpassFilterIndex < allpassFilterCount; allpassFilterIndex++, bufferIndex += 2) {
       let allpassFilterCounter = this._allPassBufferCounters[allpassFilterIndex];
-      const allpassGain = this._aallPassGains[allpassFilterIndex];
+      const allpassGain = this._allPassGains[allpassFilterIndex];
 
       let allpassOutputChan0 = 
         (resultChan0 * -allpassGain) + 
@@ -94,7 +95,7 @@ export class ReverbFilter implements IScriptSynthInstrumentFilter {
       this._allPassInputBuffers[bufferIndex+1][allpassFilterCounter] = resultChan1;
 
       allpassFilterCounter = 
-        allpassFilterCounter == this._allPassDelays[allpassFilterIndex]-1 
+        allpassFilterCounter >= this._allPassDelays[allpassFilterIndex]-1 
           ? 0
           : allpassFilterCounter + 1;
       
@@ -105,7 +106,7 @@ export class ReverbFilter implements IScriptSynthInstrumentFilter {
       resultChan1 = allpassOutputChan1;
     }
 
-    inputOutput[0] = resultChan0;
-    inputOutput[1] = resultChan1;
+    inputOutput[0] += Math.max(Math.min(resultChan0 * this._reverbMix + inputOutput[0], 1), -1);    
+    inputOutput[1] += Math.max(Math.min(resultChan1 * this._reverbMix + inputOutput[1], 1), -1);    
   }
 }

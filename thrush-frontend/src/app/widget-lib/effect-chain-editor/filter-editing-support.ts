@@ -35,10 +35,10 @@ export const FilterEditingSupport: {
     displayName: "Chorus",
     createDefault: () => ({
       type: "chorus",
-      delay: 0.05,
+      delay: 0.007,
       frequency: 4,
-      mixLevel: 0.1,
-      depth: 0.5
+      mixLevel: 0.5,
+      depth: 0.01
     })
   },
 
@@ -61,7 +61,8 @@ export const FilterEditingSupport: {
       combDelays: [0.1, 0.102, 0.104, 0.12], 
       combGains: [0.742, 0.733, 0.715, 0.697], 
       allPassDelays: [0.025, 0.007], 
-      allPassGains: [0.7, 0.7]
+      allPassGains: [0.7, 0.7],
+      mix: 0.2
     })
   }
 }

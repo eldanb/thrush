@@ -34,6 +34,7 @@ export type ReverbFilterParameters = {
   combGains: number[];
   allPassDelays: number[];
   allPassGains: number[];
+  mix: number;
 }
 
 export type FilterDefinition = EqFilterParameters | ChorusFilterParameters | ResonantMultimodeFilterParameters | ReverbFilterParameters;
@@ -95,6 +96,7 @@ function CreateMultimodeResonantFilter(params: ResonantMultimodeFilterParameters
 
 function CreateReverbFilter(params: ReverbFilterParameters, sampleRate: number): IScriptSynthInstrumentFilter {
   return new ReverbFilter(
-    params.combDelays.map(delay => delay * sampleRate), params.combGains, 
-    params.allPassDelays.map(delay => delay * sampleRate), params.allPassGains);
+    params.combDelays.map(delay => Math.floor(delay * sampleRate)), params.combGains, 
+    params.allPassDelays.map(delay => Math.floor(delay * sampleRate)), params.allPassGains,
+    params.mix);
 }

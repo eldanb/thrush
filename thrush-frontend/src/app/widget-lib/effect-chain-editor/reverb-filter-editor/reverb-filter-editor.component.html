@@ -40,4 +40,10 @@
             
         </div>
     </div>
+
+    <div class="property">
+        <div class="property-label">Mix: </div>
+        <input type="number" class="reverb-param-table-input-col" 
+                    [value]="filter.mix" (change)="handleFilterMixChange($event)" />
+    </div>
 </div>

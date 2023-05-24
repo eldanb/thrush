@@ -68,7 +68,8 @@ export const ScriptSynthBenchmark =
           combDelays: [4800, 5000, 5400, 5802], 
           combGains: [0.742, 0.733, 0.715, 0.697], 
           allPassDelays: [1051, 337], 
-          allPassGains: [0.7, 0.7]
+          allPassGains: [0.7, 0.7],
+          mix: 0.2
         }
       ]
     ));
