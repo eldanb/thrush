@@ -274,19 +274,51 @@ export class FmInstrumentEditorComponent implements OnInit, ResourceEditor<Resou
   private loadTopology(topologyId: number) {
     this.selectedTopologyId = topologyId;
     
-    const cloneTopology = (node: TopologyDescriptionNode): FmInstrumentAlgorithmNodeDescriptor =>  {
-      return {
-        oscType: node.isAdder ? 'adder' : 'sine',
-        releaseEnvelope: [],
-        attackEnvelope: [],
-        freqType: 'multiplier',
-        freqValue: 1,
-        feedback: 0,
-        modulators: node.subNodes.map(modulator => cloneTopology(modulator))
-      };
+    const cloneNodeFromBase = (baseNode: FmInstrumentAlgorithmNodeDescriptor) => Object.assign(
+      {}, 
+      baseNode, 
+      { modulators: [] }
+    );
+
+    const cloneTopology = (topologyDescriptionNode: TopologyDescriptionNode, baseNode?: FmInstrumentAlgorithmNodeDescriptor): FmInstrumentAlgorithmNodeDescriptor =>  {      
+      if(baseNode?.oscType === 'adder' && !topologyDescriptionNode.isAdder) {
+        return Object.assign(
+          {}, 
+          cloneNodeFromBase(baseNode.modulators[0]), 
+          { modulators: topologyDescriptionNode.subNodes.map((modulator, index) => 
+            cloneTopology(modulator, baseNode.modulators[0].modulators[index])) });
+      } 
+      else if(baseNode?.oscType !== 'adder' && topologyDescriptionNode.isAdder) {
+        return {
+            oscType: 'adder',
+            freqType: 'fixed',
+            freqValue: 1,
+            attackEnvelope: [],
+            releaseEnvelope: [],
+            feedback: 0,
+            modulators: topologyDescriptionNode.subNodes.map((modulator, index) => 
+              cloneTopology(modulator, index === 0 ? baseNode : undefined))            
+          };        
+      } else {
+        const nonNullBaseNode = baseNode ?? {
+          oscType: topologyDescriptionNode.isAdder ? 'adder' : 'sine',
+          freqType: 'multiplier',
+          freqValue: 1,
+          attackEnvelope: [],
+          releaseEnvelope: [],
+          feedback: 0,
+          modulators: []
+        };
+
+        return Object.assign(
+          {}, 
+          nonNullBaseNode,
+          { modulators: topologyDescriptionNode.subNodes.map((modulator, index) => 
+            cloneTopology(modulator, nonNullBaseNode.modulators[index])) });
+      }
     }
     
-    this._editedResource.rootAlgorithmNode = cloneTopology(TOPOLOOGY_TEMPLATES[topologyId]);
+    this._editedResource.rootAlgorithmNode = cloneTopology(TOPOLOOGY_TEMPLATES[topologyId], this.editedResource.rootAlgorithmNode);
     this.notifyResourceDirty();
   }
 

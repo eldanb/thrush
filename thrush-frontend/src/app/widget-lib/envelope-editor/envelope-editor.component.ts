@@ -38,6 +38,9 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
   private _pixelsInTimeUnit: number = 0;
   private _margin: number = ENVELOPE_EDITOR_MARGIN;
 
+  @Input()
+  public assumedStartValue: number | null = null;
+
   constructor(private _vcr: ViewContainerRef) {
   }
 
@@ -143,7 +146,7 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
     const targetTime = this.xCoordToTime(targetX);
 
     let lastSegmentStartTime = 0;
-    let lastSegmentStartValue = 0; // TODO startValue
+    let lastSegmentStartValue = this.assumedStartValue || 0; // TODO startValue
     let closeToLine = false;
 
     let hitTestIndex = this._editedEnvelope.findIndex(envelopCoordinate =>  {
@@ -252,9 +255,21 @@ export class EnvelopeEditorComponent implements AfterViewInit, OnDestroy {
 
   
     renderContext.beginPath();
-    
-    // TOOD Start value
-    let lastValue = 0;
+
+    let lastValue;
+    const firstValue = this._editedEnvelope[0];
+    if(firstValue?.time === 0) {
+      lastValue = firstValue.value;
+    } else 
+    if(this.assumedStartValue == null && firstValue) {
+      renderContext.moveTo(this.timeToXCoord(0), this.valueToYCoord(0));
+      renderContext.lineTo(this.timeToXCoord(firstValue.time), 
+        this.valueToYCoord(firstValue.value));
+      lastValue = 1;
+    } else {
+      lastValue = this.assumedStartValue!;
+    }
+
     renderContext.moveTo(this.timeToXCoord(0), this.valueToYCoord(lastValue));
     this._editedEnvelope.forEach(envelopeCoordinate => {        
       lastValue = envelopeCoordinate.value;

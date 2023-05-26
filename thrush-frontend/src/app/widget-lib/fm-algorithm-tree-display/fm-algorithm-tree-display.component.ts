@@ -98,26 +98,30 @@ export class FmAlgorithmTreeDisplayComponent implements OnInit {
         let graphMaxX = startX;
         const children: AlgorithmVisualizationNode[] = [];
         
+        const myLabel = `${++labelGenerator}`;
+
+        const myNode: AlgorithmVisualizationNode = {
+          x: startX,
+          y: 0,
+          children: children,
+          fmAlgorithmNodeDescriptor: node,
+          label: myLabel
+        };
+
+        this.algorithmVisualizationNodes.push(myNode);
+
         node.modulators.forEach((modulator, index) => {
           let [subgraphMaxX, subgraphMaxY, subnode] = createNodesForSubgraph(modulator, startX + GRAPH_LAYER_WIDTH, subgraphStartY);
           subgraphStartY = subgraphMaxY + ((index<node.modulators.length-1) ? GRAPH_SIBLING_SPACING : 0);
           graphMaxX = Math.max(graphMaxX, subgraphMaxX);
           children.push(subnode);
         });
-
+        
         if(subgraphStartY - startY < GRAPH_NODE_HEIGHT) {
           subgraphStartY = startY + GRAPH_NODE_HEIGHT;
         }
 
-        const myNode: AlgorithmVisualizationNode = {
-          x: startX,
-          y: (subgraphStartY + startY)/2,
-          children: children,
-          fmAlgorithmNodeDescriptor: node,
-          label: `${++labelGenerator}`
-        };
-
-        this.algorithmVisualizationNodes.push(myNode);
+        myNode.y = (subgraphStartY + startY)/2;
 
         return [graphMaxX, subgraphStartY, myNode];
     };
