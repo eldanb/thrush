@@ -64,6 +64,9 @@
     <button mat-menu-item (click)="handleNewScript()">
       New Script
     </button>
+    <button mat-menu-item (click)="handleNewPattern()">
+      New Pattern
+    </button>
   </mat-menu>
 
 
@@ -97,6 +100,8 @@
         <button mat-menu-item>New</button>  
         <button mat-menu-item (click)="handleLoadProject()">Open...</button>  
         <button mat-menu-item (click)="handleDownloadProject()">Download project...</button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="handleImportModfile()">Import MOD file...</button>
       </mat-menu>  
       <button mat-button [matMenuTriggerFor]="helpMenu">Help</button>  
       <mat-menu #helpMenu>  

@@ -202,17 +202,17 @@ export class WaveInstrumentEditorComponent implements OnInit, OnDestroy,
   }
 
   public async handleImportRequest() {
-    const fileArrayBuffer = await this._fileOpenDlg.open({
+    const fileOpenResult = await this._fileOpenDlg.open({
       title: 'Select Waveform to Import',
       allowLocal: true,
       browseSources: []
     });
 
-    if(!fileArrayBuffer) {
+    if(!fileOpenResult) {
       return;
     }
 
-    const wavFile = parseWav(fileArrayBuffer);
+    const wavFile = parseWav(fileOpenResult.fileBuffer);
 
     this.editedWaveform = { 
       channelSamples: wavFile.samples,

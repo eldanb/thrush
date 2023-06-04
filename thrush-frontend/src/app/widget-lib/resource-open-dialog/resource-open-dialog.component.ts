@@ -2,6 +2,11 @@ import { AfterContentInit, Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 
+export type OpenFileResult = {
+  fileBuffer: ArrayBuffer;
+  fileName: string;
+}
+
 export type FileBrowserFileDetails = {
   id: string;
   name: string;
@@ -36,7 +41,7 @@ export class ResourceOpenDialogComponent implements OnInit, AfterContentInit {
   private _loading: boolean = false;
    
   constructor(
-    private _dialogRef: MatDialogRef<ResourceOpenDialogComponent>,
+    private _dialogRef: MatDialogRef<ResourceOpenDialogComponent, OpenFileResult | null>,
     @Inject(MAT_DIALOG_DATA) public dialogData: ResourceOpenDialogData
 
     ) { 
@@ -69,8 +74,11 @@ export class ResourceOpenDialogComponent implements OnInit, AfterContentInit {
     } else {
       this._loading = true;
       try {
-        const fileContent = await this._currentFileSystem?.getFileContent(browserItem.id);
-        this._dialogRef.close(fileContent);
+        const fileContent = await this._currentFileSystem!.getFileContent(browserItem.id);
+        this._dialogRef.close({
+          fileBuffer: fileContent,
+          fileName: browserItem.name
+        });
       } finally {
         this._loading = false;
       }
@@ -84,7 +92,10 @@ export class ResourceOpenDialogComponent implements OnInit, AfterContentInit {
     const reader = new FileReader();
 
     reader.onloadend = () => { 
-      this._dialogRef.close(reader.result);
+      this._dialogRef.close({
+        fileBuffer: reader.result as ArrayBuffer,
+        fileName: sampleFile.name
+      });
     };
 
     reader.readAsArrayBuffer(sampleFile);  

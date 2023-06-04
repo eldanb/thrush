@@ -1,7 +1,9 @@
 import { Injectable } from "@angular/core";
 import { MatDialog } from "@angular/material/dialog";
-import { ResourceOpenDialogComponent, ResourceOpenDialogConfig, ResourceOpenDialogData } from "./resource-open-dialog.component";
+import { OpenFileResult, ResourceOpenDialogComponent, ResourceOpenDialogConfig, ResourceOpenDialogData } from "./resource-open-dialog.component";
 import { firstValueFrom } from "rxjs";
+
+
 
 @Injectable()
 export class ResourceOpenDialogService {
@@ -9,7 +11,7 @@ export class ResourceOpenDialogService {
 
   }
 
-  async open(config: ResourceOpenDialogConfig): Promise<ArrayBuffer> {
+  async open(config: ResourceOpenDialogConfig): Promise<OpenFileResult> {
     const dlgRef = this._dlgService.open<ResourceOpenDialogComponent, ResourceOpenDialogData>(ResourceOpenDialogComponent, {
       minHeight: '50vh',
       data: { 

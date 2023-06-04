@@ -1,0 +1,108 @@
+:host {
+  overflow-y: auto;
+}
+
+.pattern-row {
+  display: flex;  
+  gap: 1rem;
+  align-items: center;
+
+  font-family: 'Courier New', Courier, monospace;
+
+  * {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+  }
+
+  &.selected-row {
+    background: #f0f0f0;
+
+    .pattern-channel {
+      background: #f8f8f8;
+    }
+
+    .selected-channel {
+      background: #e0e0e0;
+    }
+  }
+
+  .pattern-line-heading {
+    flex-shrink: 0;
+    flex-grow: 0;
+    flex-basis: 2rem;
+    text-align: right;
+  }
+  
+  .pattern-line-channels {
+    flex-grow: 1;
+
+    display: flex;
+    justify-items: stretch;
+
+    gap: 1rem;
+  }  
+}
+
+.pattern-channel {  
+  flex-grow: 1;
+  flex-basis: 0;
+  
+  display: flex;
+
+  gap: 0.25rem;
+  padding: 0.25rem;
+
+  background: white;
+  
+  &.selected-channel {
+    background: #f4f4f4;
+  }  
+
+  .note {
+    width: 3rem;
+
+    border: solid 1px #d0d0d0;
+    border-radius: 0.5rem;
+
+    background: none;
+  }
+
+  .sample {
+    border: solid 1px #d0d0d0;
+    border-radius: 0.5rem;
+
+    width: 3rem;
+  }
+}
+
+.pattern-container {
+  outline: none;
+}
+
+.pattern-binding-editor {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(auto-fill);
+  grid-row-gap: .5em;
+  grid-column-gap: 1em;
+
+  padding: 1rem;
+
+  .pattern-binding {
+    display: flex;
+    background: #f0f0f0;
+    border-radius: 0.5rem;
+    height: 1.5rem;
+
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    .pattern-binding-index {
+      background: #e0e0e0;
+      width: 2rem;
+      border-top-left-radius: 0.5rem;
+      border-bottom-left-radius: 0.5rem;
+      margin-right: 1rem;
+    }
+  }
+}

@@ -52,7 +52,9 @@ export type ThrushPatternRow = {
 export type ThrushPattern = {
   bpm: number;
   ticksPerDivision: number;
-
+  numChannels: number;
+  defaultInstrumentBindings: string[];
+    
   rows: ThrushPatternRow[];
 }
 

@@ -1,0 +1,51 @@
+<as-split direction="vertical" [useTransition]="true">
+  <as-split-area [visible]="showInstrumentBindings" [order]="0">
+    <div class="pattern-binding-editor">
+      <div *ngFor="let boundInstrument of editedResource?.pattern?.defaultInstrumentBindings; let bindingIndex = index"
+        class="pattern-binding">
+        <div class="pattern-binding-index">{{bindingIndex}}</div>
+        {{boundInstrument}}
+      </div>
+    </div>
+  </as-split-area>
+  <as-split-area [order]="1">
+    <div class="pattern-container" (keydown)="handleEditorKeyDown($event)" tabindex="0">
+      <div *ngFor="let row of patternRows; let rowIndex = index" 
+        class="pattern-row"
+        [ngClass]="{'selected-row': rowIndex == selectedRow}"
+        (click)="handleRowClick(rowIndex)">
+    
+        <div class="pattern-line-heading">{{rowIndex}}</div>
+        
+        <div class="pattern-line-channels">
+          <div class="pattern-channel"       
+            [ngClass]="{'selected-channel': channelIndex == selectedChannel}"
+            *ngFor="let rowChannel of row.channelCommands; let channelIndex = index"
+            (click)="handleChannelClick(channelIndex)">
+    
+            
+              <select class="note" (change)="handleNoteChange(rowIndex, channelIndex, $event)">
+                <option *ngFor="let noteSelectOption of noteSelectOptions" 
+                      [value]="noteSelectOption.value"
+                      [selected]="noteSelectOption.value == rowChannel.note">
+                  {{noteSelectOption.name}}
+                </option>
+              </select>        
+            
+            <div class="sample">        
+              {{rowChannel.sampleNumber}}
+            </div>        
+          </div>
+        </div>
+      </div>
+    </div>
+  </as-split-area>
+</as-split>
+
+<app-ui-region-content region="toolbar">
+  <div class="spacer"></div>
+
+  <button mat-icon-button (click)="showInstrumentBindings = !showInstrumentBindings">
+    <mat-icon>list</mat-icon>
+  </button>
+  </app-ui-region-content>

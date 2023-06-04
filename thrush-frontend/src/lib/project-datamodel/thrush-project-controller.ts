@@ -1,5 +1,5 @@
 import { ThrushSequencer } from "../thrush_engine/ThrushSequencer";
-import { JsonToWaveform, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeFmInstrument, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectResourceWithType, ThrushProjectTypedResource } from "./project-datamodel";
+import { JsonToWaveform, ResourceType, ResourceTypeAbstractWaveInstrument, ResourceTypeFmInstrument, ResourceTypePattern, ResourceTypeScript, ResourceTypes, ThrushProject, ThrushProjectResourceWithType, ThrushProjectTypedResource } from "./project-datamodel";
 
 type ResourceUpdateHandler = {
   [resourceType in ResourceType as `update_${resourceType}`]: (name: string, resource: ResourceTypes[resourceType]) => Promise<void>;
@@ -73,6 +73,14 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     await this._sequencer.tsynthToneGenerator.createFmInstrument(name, resource);
   }
 
+  async update_pattern(name: string, resource: ResourceTypePattern): Promise<void> {
+    return ;
+  }
+
+  async delete_pattern(name: string, resource: ResourceTypePattern) {
+    return ;    
+  }
+
   async create_script(): Promise<ThrushProjectResourceWithType<'script'>> {
     return {
       type: 'script',
@@ -111,6 +119,18 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     };
   }
 
+  async create_pattern(): Promise<ThrushProjectResourceWithType<'pattern'>> {
+    return {
+      type: 'pattern',
+      pattern: {
+        bpm: 120,
+        ticksPerDivision: 6,
+        numChannels: 4,
+        rows: [],
+        defaultInstrumentBindings: []
+      }      
+    };
+  }
 
   async delete_script(name: string, resource: ResourceTypeScript) {
   } 
@@ -173,4 +193,18 @@ export class ThrushProjectController implements ResourceUpdateHandler, ResourceC
     }    
   }
 
+  suggestResourceName(baseName: string): string {
+    if(!this._dataModel.resources[baseName]) {
+      return baseName;
+    }
+
+    let baseIndex = 0;
+    let suggestedName: string;
+    do {
+      baseIndex++;
+      suggestedName = `${baseName}_${baseIndex}`;
+    } while(this._dataModel.resources[suggestedName]);
+    
+    return suggestedName;
+  }
 }

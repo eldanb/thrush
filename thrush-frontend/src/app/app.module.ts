@@ -42,6 +42,8 @@ import { FilterEditorContainerComponent } from './widget-lib/effect-chain-editor
 import { EqualizerFilterEditorComponent } from './widget-lib/effect-chain-editor/equalizer-filter-editor/equalizer-filter-editor.component';
 import { ResonantFilterEditorComponent } from './widget-lib/effect-chain-editor/resonant-filter-editor/resonant-filter-editor.component';
 import { ReverbFilterEditorComponent } from './widget-lib/effect-chain-editor/reverb-filter-editor/reverb-filter-editor.component';
+import { PatternEditorComponent } from './resource-editors/pattern-editor/pattern-editor.component';
+import { AngularSplitModule } from 'angular-split';
 @NgModule({
   declarations: [
     AppComponent,
@@ -64,7 +66,8 @@ import { ReverbFilterEditorComponent } from './widget-lib/effect-chain-editor/re
     FilterEditorContainerComponent,
     EqualizerFilterEditorComponent,
     ResonantFilterEditorComponent,
-    ReverbFilterEditorComponent
+    ReverbFilterEditorComponent,
+    PatternEditorComponent
   ],
   imports: [
     BrowserModule,
@@ -86,7 +89,8 @@ import { ReverbFilterEditorComponent } from './widget-lib/effect-chain-editor/re
     MatButtonToggleModule,
     MatMenuModule,
     MatToolbarModule,
-    MatSlideToggleModule
+    MatSlideToggleModule,
+    AngularSplitModule
   ],
   providers: [
     ResourceEditorDialogService, 

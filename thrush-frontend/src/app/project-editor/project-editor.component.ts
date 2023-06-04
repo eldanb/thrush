@@ -10,6 +10,8 @@ import { WaveInstrumentEditorComponent } from '../resource-editors/wave-instrume
 import { ThrushEngineService } from '../services/thrush-engine.service';
 import { ResourceOpenDialogService } from '../widget-lib/resource-open-dialog/resource-open-dialog-service';
 import { FileBrowserFileDetails, IFileOpenBrowseSource } from '../widget-lib/resource-open-dialog/resource-open-dialog.component';
+import { PatternEditorComponent } from '../resource-editors/pattern-editor/pattern-editor.component';
+import { AmigaModPlayer2, parseModFile } from 'src/lib/formats/AmigaModParser';
 
 
 type ResourceEditorDescriptor = {
@@ -26,7 +28,8 @@ type ResourceEditorDescriptor = {
 const ResourceEditorTypes: Record<ResourceType, ComponentType<ResourceEditor<any, any>>>  = {
   abst_wave_instrument: WaveInstrumentEditorComponent,
   script: SynthScriptEditorComponent,
-  fm_instrument: FmInstrumentEditorComponent
+  fm_instrument: FmInstrumentEditorComponent,
+  pattern: PatternEditorComponent
 }
 
 @Component({
@@ -198,6 +201,11 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
     this.openResource(newResourceName);    
   }
 
+  public async handleNewPattern() {
+    const newResourceName = await this._editedProjectController!.createResource('pattern');
+    this.openResource(newResourceName);    
+  }
+
   public handleRequestRename(oldResourceName: string) {
     this.renamedResourceName = oldResourceName;
     this.renamedResourceNewName = oldResourceName;
@@ -222,13 +230,13 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
   }
 
   async handleLoadProject() {
-    const fileArrayBuffer = await this._fileOpenDlg.open({
+    const fileOpenResult = await this._fileOpenDlg.open({
       title: 'Select Project to Open',
       allowLocal: true,
       browseSources: [new SampleProjectsBrowser()]
     });
 
-    const projectJson = JSON.parse(new TextDecoder().decode(fileArrayBuffer));
+    const projectJson = JSON.parse(new TextDecoder().decode(fileOpenResult.fileBuffer));
     this.loadProject(projectJson);    
   }
   
@@ -250,6 +258,42 @@ export class ProjectEditorComponent implements OnInit, AfterViewInit {
   }
 
 
+  async handleImportModfile() {
+    if(!this._editedProjectController) {
+      return;
+    }
+
+    const projectController = this._editedProjectController;
+
+    const fileOpenResult = await this._fileOpenDlg.open({
+      title: 'Select MOD file to Open',
+      allowLocal: true,
+      browseSources: []
+    });
+
+    const parsedFile = parseModFile(fileOpenResult.fileBuffer);
+    const modImporter = new AmigaModPlayer2(parsedFile);
+    const patternsAndSong = modImporter.compileSong();
+    const samples = await modImporter.createAbstWavInstruments();
+
+    let defaultSampleBindings: string[] = [];
+
+    samples.forEach(([modSample, abstSample]) => {
+      const sampleName = projectController.suggestResourceName(`${fileOpenResult.fileName}_${modSample.sampleName}`);
+      projectController.saveResource(
+        sampleName,
+        { type: 'abst_wave_instrument', ...abstSample });
+      defaultSampleBindings.push(sampleName);
+    });
+
+    patternsAndSong.patterns.forEach((pattern, patternIndex) =>  {
+      pattern.defaultInstrumentBindings =defaultSampleBindings;
+      projectController.saveResource(
+        projectController.suggestResourceName(`${fileOpenResult.fileName}_pattern_${patternIndex}`),
+        { type: 'pattern', pattern }
+      )
+    });
+  }
   public handleCloseTab(editor: ResourceEditorDescriptor) {
     this.closeEditor(editor);
   }

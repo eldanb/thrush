@@ -1,9 +1,7 @@
-import { NativeSynthesizer } from "../thrush_engine/synth/native/NativeSynthesizer";
-import { ScriptSynthEngineEvent } from "../thrush_engine/synth/scriptsynth/ScriptSynthEngine";
-import { ScriptSynthesizer } from "../thrush_engine/synth/scriptsynth/ScriptSynthesizer";
+import { ResourceTypeAbstractWaveInstrument, WaveformToJson } from "../project-datamodel/project-datamodel";
 import { ThrushPattern, ThrushPatternBinding, ThrushPatternChannelCommand, ThrushPatternChannelEffectSetVolume, ThrushPatternRow } from "../thrush_engine/sequences/ThrushPatternSequenceGenerator";
-import { ThrushSequenceEvent, ThrushSequenceGenerator, ThrushSequencer } from "../thrush_engine/ThrushSequencer";
-import { ThrushCommonSynthesizerEvent, ThrushCommonSynthesizerInterface } from "../thrush_engine/ThrushSynthesizerInterface";
+import { NativeSynthesizer } from "../thrush_engine/synth/native/NativeSynthesizer";
+import { ScriptSynthesizer } from "../thrush_engine/synth/scriptsynth/ScriptSynthesizer";
 
 // File format taken from:
 // See https://www.ocf.berkeley.edu/~eek/index.html/tiny_examples/ptmod/ap12.html
@@ -247,11 +245,23 @@ export class AmigaModPlayer2 {
   private _ticksPerDiv = 6;
   private _bpm = 125;
 
-  constructor(private _modFile: AmigaModFile, private _driver: AmigaModImportSynthDriver) {    
+  constructor(private _modFile: AmigaModFile, private _driver?: AmigaModImportSynthDriver) {    
   }
 
   public createPatternBinding(): Promise<ThrushPatternBinding> {
-    return this._driver.createPatternBindings(this._modFile.songName, this._modFile.samples)
+    return this._driver!.createPatternBindings(this._modFile.songName, this._modFile.samples)
+  }
+
+  public async createAbstWavInstruments(): Promise<[AmigaModSampleInfo, ResourceTypeAbstractWaveInstrument][]> {
+    const sampleRate = 4143;
+    return this._modFile.samples.map(sample => [sample, {
+        sampleRate,
+        samplesBase64: WaveformToJson(new Float32Array(Array.from(new Int8Array(sample.content!)).map((s) => (s)/256))),
+        entryEnvelopes: { volume: [ { time: 0, value: 1 } ] },
+        exitEnvelopes:  { volume: [ { time: 0, value: 0 } ] },
+        loopStartTime: sample.loopStart / sampleRate, 
+        loopEndTime: (sample.loopLen+sample.loopStart) / sampleRate
+    }])
   }
 
   private compilePattern(pattern: AmigaModPattern): { 
@@ -262,7 +272,9 @@ export class AmigaModPlayer2 {
     const thrushPattern: ThrushPattern = {
       bpm: this._bpm,
       ticksPerDivision: this._ticksPerDiv,
-      rows: patternRows
+      numChannels: 4,
+      rows: patternRows,
+      defaultInstrumentBindings: []
     }
     let nextPatternOffset = 0;
 

@@ -1,3 +1,4 @@
+import { ThrushPattern } from "../thrush_engine/sequences/ThrushPatternSequenceGenerator";
 import { Envelopes } from "../thrush_engine/synth/native/NativeSynthesizerInstrument";
 import { FilterDefinition } from "../thrush_engine/synth/scriptsynth/filters/FilterParametersParser";
 import { FmInstrumentDescriptor } from "../thrush_engine/synth/scriptsynth/worklet/ScriptSynthWorkerRpcInterface";
@@ -19,7 +20,8 @@ export type ResourceType = keyof ResourceTypes;
 export type ResourceTypes = {
   'script': ResourceTypeScript,
   'abst_wave_instrument': ResourceTypeAbstractWaveInstrument,
-  'fm_instrument': ResourceTypeFmInstrument
+  'fm_instrument': ResourceTypeFmInstrument,
+  'pattern': ResourceTypePattern,
 }
 
 export type ResourceTypeScript = {
@@ -37,6 +39,10 @@ export type ResourceTypeAbstractWaveInstrument = {
 }
 
 export type ResourceTypeFmInstrument = FmInstrumentDescriptor;
+
+export type ResourceTypePattern = {
+  pattern: ThrushPattern;
+}
 
 export function WaveformToJson(waveform: Float32Array) {
   return Float32ArrayToBase64Le(waveform);
