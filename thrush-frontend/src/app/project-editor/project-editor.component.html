@@ -8,15 +8,17 @@
 
         <div *ngFor="let resource of editedProjectResourceNames"
             class="list-item" 
-            [attr.data-active]="activeEditor?.resourceName == resource">
+            [attr.data-active]="activeEditor?.resourceName == resource"            
+            (click)="renamedResourceName !== resource && handleOpenResource(resource)">
             <input mat-input *ngIf="renamedResourceName == resource" 
                    id="resource-rename-input"
                    [(ngModel)]="renamedResourceNewName" 
                    (keydown.enter)="handleRenameResourceFieldBlurs()"
                    (blur)="handleRenameResourceFieldBlurs()"
                    />
-            <div class="horizontal-stack" *ngIf="renamedResourceName !== resource">
-              <div class="spacer" (click)="handleOpenResource(resource)">{{resource}}</div>              
+            <div *ngIf="renamedResourceName !== resource" 
+              class="horizontal-stack">
+              <div class="spacer">{{resource}}</div>              
               <button mat-icon-button class="item-hover-button" (click)="handleRequestRename(resource)">
                 <mat-icon class="small">edit</mat-icon>
               </button>

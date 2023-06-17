@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, ViewChild } from '@angular/core';
 import { ResourceTypePattern } from 'src/lib/project-datamodel/project-datamodel';
 import { PlayingPreviewStopHandler, ResourceEditor, ResourceEditorWithPlaySupport } from '../resource-editor';
 import _ from 'lodash';
@@ -25,15 +25,31 @@ export class PatternEditorComponent implements OnInit,
         value: octaveIndex*12 + noteIndex
       })))];
 
-  editedResource?: ResourceTypePattern | undefined;
   editorState?: PatternEditorState | undefined;
   resourceEdited = new EventEmitter<boolean>();
   showInstrumentBindings: boolean = false;
-  
+  channelLabels: string[] = [];
+
+  @ViewChild('patternRowsContainer', {read: ElementRef, static: false})
+  public patternRowsContainer: ElementRef<HTMLDivElement> | null = null;
 
   private _selectedRow: number = 0;
   private _selectedChannel: number = 0;
   private _previewUpdateTimer: any = null;
+  private _editedResource: ResourceTypePattern | undefined;
+
+  get editedResource() {
+    return this._editedResource;
+  }
+
+  set editedResource(v: ResourceTypePattern | undefined) {
+    this._editedResource = v;
+
+    this.channelLabels = [];
+    for(let i=0; i<(this.editedResource?.pattern?.numChannels ?? 0); i++) {
+      this.channelLabels.push(`Channel #${i+1}`);
+    }
+  }
   
   get selectedRow(): number {
     return this._selectedRow;
@@ -45,6 +61,21 @@ export class PatternEditorComponent implements OnInit,
 
   set selectedRow(row: number) {
     this._selectedRow = row;
+    const containerElement = this.patternRowsContainer?.nativeElement;
+    if(containerElement) {      
+      containerElement.querySelectorAll('div.pattern-row').forEach(candidateElement => {
+        const divElement = candidateElement as HTMLDivElement;
+        if(divElement.getAttribute('data-row-index') == String(row)) {
+          if(divElement.offsetTop + divElement.clientHeight > containerElement.scrollTop + containerElement.clientHeight - 16) {
+            containerElement.scrollTo({ top: divElement.offsetTop + divElement.clientHeight - containerElement.clientHeight});      
+          } else 
+          if(divElement.offsetTop < containerElement.scrollTop + 16)
+          {
+            containerElement.scrollTo({ top: divElement.offsetTop });      
+          }          
+        }
+      });      
+    }
   }
 
   set selectedChannel(channel: number) {
@@ -61,7 +92,7 @@ export class PatternEditorComponent implements OnInit,
     this._previewUpdateTimer = setInterval(() => {
       this.selectedRow = this._synthEngine.sequencer.cursorTracker.getCursor(previewPlaybackCursorName);
     }, 50);
-    
+
     this._synthEngine.playSequence(new ThrushPatternSequenceGenerator(
       this.editedResource?.pattern,
       {
@@ -139,4 +170,7 @@ export class PatternEditorComponent implements OnInit,
   ngOnInit(): void {
   }
 
+  noteToText(noteValue?: number): string {
+    return this.noteSelectOptions.find(opt => opt.value == noteValue)?.name || '';
+  }
 }

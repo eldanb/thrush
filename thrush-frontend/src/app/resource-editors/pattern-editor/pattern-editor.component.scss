@@ -1,5 +1,15 @@
 :host {
-  overflow-y: auto;
+  overflow-y: hidden;
+}
+
+.pattern-row.pattern-heading-row {
+  display: flex;  
+  gap: 1rem;
+  align-items: center;
+
+  & .pattern-channel {
+    background: #c8c8c8;  
+  }
 }
 
 .pattern-row {
@@ -75,8 +85,18 @@
   }
 }
 
-.pattern-container {
+.pattern-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: hidden;
+}
+
+.pattern-rows-container {
   outline: none;
+  overflow-y: auto;
+  height: 100%;
+  position: relative;
 }
 
 .pattern-binding-editor {

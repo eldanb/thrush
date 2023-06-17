@@ -9,32 +9,44 @@
     </div>
   </as-split-area>
   <as-split-area [order]="1">
-    <div class="pattern-container" (keydown)="handleEditorKeyDown($event)" tabindex="0">
-      <div *ngFor="let row of patternRows; let rowIndex = index" 
-        class="pattern-row"
-        [ngClass]="{'selected-row': rowIndex == selectedRow}"
-        (click)="handleRowClick(rowIndex)">
-    
-        <div class="pattern-line-heading">{{rowIndex}}</div>
-        
-        <div class="pattern-line-channels">
-          <div class="pattern-channel"       
-            [ngClass]="{'selected-channel': channelIndex == selectedChannel}"
-            *ngFor="let rowChannel of row.channelCommands; let channelIndex = index"
-            (click)="handleChannelClick(channelIndex)">
-    
-            
-              <select class="note" (change)="handleNoteChange(rowIndex, channelIndex, $event)">
-                <option *ngFor="let noteSelectOption of noteSelectOptions" 
-                      [value]="noteSelectOption.value"
-                      [selected]="noteSelectOption.value == rowChannel.note">
-                  {{noteSelectOption.name}}
+    <div class="pattern-view">
+      <div class="pattern-row pattern-heading-row">
+        <div class="pattern-line-heading">#</div>
+        <div class="pattern-channel" *ngFor="let channelLabel of channelLabels">{{channelLabel}}</div>      
+      </div>
+      <div #patternRowsContainer class="pattern-rows-container" (keydown)="handleEditorKeyDown($event)" tabindex="0">      
+        <div *ngFor="let row of patternRows; let rowIndex = index" 
+          class="pattern-row"
+          [attr.data-row-index]="rowIndex"
+          [ngClass]="{'selected-row': rowIndex == selectedRow}"
+          (click)="handleRowClick(rowIndex)">
+      
+          <div class="pattern-line-heading">{{rowIndex}}</div>
+          
+          <div class="pattern-line-channels">
+            <div class="pattern-channel"       
+              [ngClass]="{'selected-channel': channelIndex == selectedChannel}"
+              *ngFor="let rowChannel of row.channelCommands; let channelIndex = index"
+              (click)="handleChannelClick(channelIndex)">
+              <select 
+                class="note" 
+                (change)="handleNoteChange(rowIndex, channelIndex, $event)">
+                <ng-container *ngIf="channelIndex == selectedChannel && rowIndex == selectedRow" >
+                  <option *ngFor="let noteSelectOption of noteSelectOptions" 
+                        [value]="noteSelectOption.value"
+                        [selected]="noteSelectOption.value == rowChannel.note">
+                    {{noteSelectOption.name}}
+                  </option>
+                </ng-container>
+                <option *ngIf="!(channelIndex == selectedChannel && rowIndex == selectedRow)" [selected]="true">
+                  {{noteToText(rowChannel.note)}}
                 </option>
-              </select>        
+              </select>
             
-            <div class="sample">        
-              {{rowChannel.sampleNumber}}
-            </div>        
+              <div class="sample">        
+                {{rowChannel.sampleNumber}}
+              </div>        
+            </div>
           </div>
         </div>
       </div>

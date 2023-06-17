@@ -121,6 +121,7 @@ div.property-pane {
   .list-item {
     padding: 0.25rem;
     border: transparent 1px solid;
+    cursor: pointer;
 
     &:hover {
       border: silver 1px solid;
