@@ -1,0 +1,24 @@
+<app-dropdown-edited-field 
+  [editorTemplate]="instrumentSelector" 
+  [editedValue]="selectedInstrument"
+  (editedValueChange)="selectedInstrumentChange.emit($event)"> 
+  <div class="instrument-name">
+    {{selectedInstrument != undefined ? instruments[selectedInstrument] : "---"}}
+  </div>
+
+  <div class="instrument-index">    
+    {{selectedInstrument != undefined ? selectedInstrument : "---"}}    
+  </div>
+</app-dropdown-edited-field>
+
+
+<ng-template #instrumentSelector let-editedValue="editedValue" let-onEditDone="onEditDone">  
+  <div class="selectable-list instrument-list">
+    <div *ngFor="let item of instruments; let index = index"
+      class="list-item instrument-item"
+      [attr.data-active]="index === selectedInstrument"
+      (click)="onEditDone(index)">
+      {{item}}
+    </div>
+  </div>
+</ng-template>

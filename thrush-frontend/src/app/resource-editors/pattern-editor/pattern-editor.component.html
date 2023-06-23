@@ -28,24 +28,20 @@
               [ngClass]="{'selected-channel': channelIndex == selectedChannel}"
               *ngFor="let rowChannel of row.channelCommands; let channelIndex = index"
               (click)="handleChannelClick(channelIndex)">
-              <select 
+
+              <app-dropdown-note-editor 
                 class="note" 
-                (change)="handleNoteChange(rowIndex, channelIndex, $event)">
-                <ng-container *ngIf="channelIndex == selectedChannel && rowIndex == selectedRow" >
-                  <option *ngFor="let noteSelectOption of noteSelectOptions" 
-                        [value]="noteSelectOption.value"
-                        [selected]="noteSelectOption.value == rowChannel.note">
-                    {{noteSelectOption.name}}
-                  </option>
-                </ng-container>
-                <option *ngIf="!(channelIndex == selectedChannel && rowIndex == selectedRow)" [selected]="true">
-                  {{noteToText(rowChannel.note)}}
-                </option>
-              </select>
+                [noteValue]="rowChannel.note" 
+                (noteValueChange)="handleNoteChange(rowIndex, channelIndex, $event)">
+              </app-dropdown-note-editor>
+              
+              <app-dropdown-pattern-instrument-selector
+                class="sample"
+                [instruments]="editedResource?.pattern?.defaultInstrumentBindings || []"
+                [selectedInstrument]="rowChannel.sampleNumber"
+                (selectedInstrumentChange)="handleInstrumentChange(rowIndex, channelIndex, $event)">
+              </app-dropdown-pattern-instrument-selector>
             
-              <div class="sample">        
-                {{rowChannel.sampleNumber}}
-              </div>        
             </div>
           </div>
         </div>

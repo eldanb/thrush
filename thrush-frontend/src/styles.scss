@@ -160,7 +160,8 @@ mat-toolbar .spacer {
 
 a.unhinted-link {
   text-decoration: none;
-
+  color: inherit;
+  
   &:hover {
     color: inherit;
   }
@@ -192,4 +193,11 @@ a.unhinted-link {
     font-size: 10pt;
     line-height: 1.5rem;
   }
+}
+
+/* Importing Bootstrap SCSS file. */
+@import 'bootstrap/scss/bootstrap';
+
+.dropdownEditorPopover {
+  max-width: 480px;  
 }

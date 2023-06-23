@@ -112,10 +112,16 @@ export class PatternEditorComponent implements OnInit,
     return this.editedResource?.pattern.rows ?? [];
   }
 
-  handleNoteChange(rowIndex: number, channelIndex: number, event: Event) {
-    const newNote = (event.target as HTMLSelectElement).value;
+  handleNoteChange(rowIndex: number, channelIndex: number, newNote: number) {
     if(this.editedResource) {
-      this.editedResource.pattern.rows[rowIndex].channelCommands[channelIndex].note = newNote ? Number(newNote) : undefined;
+      this.editedResource.pattern.rows[rowIndex].channelCommands[channelIndex].note = !_.isNil(newNote) ? Number(newNote) : undefined;
+      this.resourceEdited.emit(true);
+    }    
+  }
+
+  handleInstrumentChange(rowIndex: number, channelIndex: number, sampleNumber: number) {
+    if(this.editedResource) {
+      this.editedResource.pattern.rows[rowIndex].channelCommands[channelIndex].sampleNumber = !_.isNil(sampleNumber) ? Number(sampleNumber) : undefined;
       this.resourceEdited.emit(true);
     }    
   }
@@ -170,7 +176,4 @@ export class PatternEditorComponent implements OnInit,
   ngOnInit(): void {
   }
 
-  noteToText(noteValue?: number): string {
-    return this.noteSelectOptions.find(opt => opt.value == noteValue)?.name || '';
-  }
 }

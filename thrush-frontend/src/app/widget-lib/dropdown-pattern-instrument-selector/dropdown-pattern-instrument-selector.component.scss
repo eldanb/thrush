@@ -1,0 +1,33 @@
+app-dropdown-edited-field {
+  position: relative;
+
+  .instrument-name {
+    display: none;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    max-width: 96px;
+  }
+
+  &:hover {
+    .instrument-name {
+      display: block;
+    }
+    .instrument-index {
+      display: none;
+    }
+  }
+}
+
+.instrument-list {
+  max-height: 160px;
+  overflow-y: scroll;
+}
+
+.instrument-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

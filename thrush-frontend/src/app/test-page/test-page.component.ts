@@ -43,6 +43,8 @@ export class TestPageComponent implements OnInit {
     value: 1
   }];
  
+  public eNoteValue: number = 11;
+  
   public fmWaveform: EditedWaveform | null = null;
   constructor(private _thrushEngine: ThrushEngineService) { }
 

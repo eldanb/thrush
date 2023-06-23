@@ -44,6 +44,10 @@ import { ResonantFilterEditorComponent } from './widget-lib/effect-chain-editor/
 import { ReverbFilterEditorComponent } from './widget-lib/effect-chain-editor/reverb-filter-editor/reverb-filter-editor.component';
 import { PatternEditorComponent } from './resource-editors/pattern-editor/pattern-editor.component';
 import { AngularSplitModule } from 'angular-split';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { DropdownEditedFieldComponent } from './widget-lib/dropdown-edited-field/dropdown-edited-field.component';
+import { DropdownNoteEditorComponent } from './widget-lib/dropdown-note-editor/dropdown-note-editor.component';
+import { DropdownPatternInstrumentSelectorComponent } from './widget-lib/dropdown-pattern-instrument-selector/dropdown-pattern-instrument-selector.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -67,7 +71,10 @@ import { AngularSplitModule } from 'angular-split';
     EqualizerFilterEditorComponent,
     ResonantFilterEditorComponent,
     ReverbFilterEditorComponent,
-    PatternEditorComponent
+    PatternEditorComponent,
+    DropdownEditedFieldComponent,
+    DropdownNoteEditorComponent,
+    DropdownPatternInstrumentSelectorComponent
   ],
   imports: [
     BrowserModule,
@@ -90,7 +97,8 @@ import { AngularSplitModule } from 'angular-split';
     MatMenuModule,
     MatToolbarModule,
     MatSlideToggleModule,
-    AngularSplitModule
+    AngularSplitModule,
+    NgbModule
   ],
   providers: [
     ResourceEditorDialogService, 

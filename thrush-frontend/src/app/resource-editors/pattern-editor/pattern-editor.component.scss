@@ -69,19 +69,17 @@
   }  
 
   .note {
-    width: 3rem;
-
-    border: solid 1px #d0d0d0;
-    border-radius: 0.5rem;
+    width: 3.5rem;
 
     background: none;
   }
+  
 
   .sample {
     border: solid 1px #d0d0d0;
     border-radius: 0.5rem;
 
-    width: 3rem;
+    min-width: 3.5rem;
   }
 }
 

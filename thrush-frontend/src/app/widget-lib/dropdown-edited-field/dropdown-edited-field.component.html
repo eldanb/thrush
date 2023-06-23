@@ -1,0 +1,10 @@
+<div 
+    [ngbPopover]="editorTemplate" 
+    popoverClass="dropdownEditorPopover"
+    autoClose="outside" 
+    triggers="" 
+    (click)="handlePopoverClick()">
+  <ng-content></ng-content>
+  <div class="spacer">&nbsp;</div>
+  <mat-icon fontIcon="expand_more"></mat-icon>
+</div>

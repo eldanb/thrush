@@ -53,8 +53,10 @@ div.project-title, input.project-title {
   border: solid 1px transparent;
   border-radius: 0.25rem;
 
+  transition: border 0.2s;
+  
   &:hover {
-    border: solid 1px black;
+    border: solid 1px #d0d0d0;;
   }
 
 }

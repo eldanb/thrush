@@ -112,5 +112,7 @@
       }
     }
   },
-  "defaultProject": "thrush"
+  "cli": {
+    "analytics": false
+  }
 }

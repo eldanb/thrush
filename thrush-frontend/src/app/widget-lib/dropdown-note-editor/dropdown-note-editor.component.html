@@ -1,0 +1,36 @@
+<app-dropdown-edited-field 
+  [editorTemplate]="pianoEditor" 
+  [editedValue]="noteValue"
+  (editedValueChange)="noteValueChange.emit($event)"> 
+  {{noteToText(noteValue)}}  
+</app-dropdown-edited-field>
+
+
+<ng-template #pianoEditor let-editedValue="editedValue" let-onEditDone="onEditDone">  
+  <div class="piano-editor-container">
+    <mat-icon (click)="setOctave(octave-1)" fontIcon="chevron_left" class="icon-button"></mat-icon>
+    <div class="piano-rows" (click)="handleNoteClick($event, onEditDone)">
+      <div class="piano-row inverted-row">
+        <div class="piano-half-key-space">&nbsp;</div>
+        <div class="piano-full-key" data-note-base="1">C#{{octave}}</div>
+        <div class="piano-full-key" data-note-base="3">D#{{octave}}</div>
+        <div class="piano-half-key-space">&nbsp;</div>
+        <div class="piano-half-key-space">&nbsp;</div>
+        <div class="piano-full-key" data-note-base="6">F#{{octave}}</div>
+        <div class="piano-full-key" data-note-base="8">G#{{octave}}</div>
+        <div class="piano-full-key" data-note-base="10">A#{{octave}}</div>    
+        <div class="piano-half-key-space">&nbsp;</div>
+      </div>
+      <div class="piano-row">    
+        <div class="piano-full-key" data-note-base="0">C{{octave}}</div>
+        <div class="piano-full-key" data-note-base="2">D{{octave}}</div>
+        <div class="piano-full-key" data-note-base="4">E{{octave}}</div>
+        <div class="piano-full-key" data-note-base="5">F{{octave}}</div>
+        <div class="piano-full-key" data-note-base="7">G{{octave}}</div>
+        <div class="piano-full-key" data-note-base="9">A{{octave}}</div>    
+        <div class="piano-full-key" data-note-base="11">B{{octave}}</div>    
+      </div>
+    </div>    
+    <mat-icon (click)="setOctave(octave+1)" fontIcon="chevron_right" class="icon-button"></mat-icon>
+  </div>
+</ng-template>
